@@ -3,6 +3,7 @@ import { TechnologyTyping } from '@/components/technology-typing';
 import { content } from '@/data/content';
 import { Reveal } from '@/components/reveal';
 import { PaintedName } from '@/components/painted-name';
+import { EmailCopy } from '@/components/email-copy';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -34,7 +35,7 @@ export default function Home() {
                 <nav aria-label={content.accessibility.social} className="social-links">
                   {contact.links.map(link => <a key={link.label} className={`social-link social-${link.style} font-mono`} href={link.href} {...(link.href.startsWith('https:') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{link.label}<Arrow /></a>)}
                 </nav>
-                <a href={`mailto:${contact.email}`} className="email font-mono">{contact.email}</a>
+                <EmailCopy email={contact.email} copiedLabel={contact.copiedLabel} copyHint={contact.copyHint} />
               </div>
             </section>
             <TechnologyTyping groups={hero.technologies} />

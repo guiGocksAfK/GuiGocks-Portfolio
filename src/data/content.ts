@@ -92,6 +92,8 @@ export const content = {
   },
   contact: {
     email: 'guigocks@gmail.com',
+    copiedLabel: 'copiado!',
+    copyHint: 'Clique para copiar o e-mail',
     links: [
       { label: 'GitHub', href: 'https://github.com/guiGocksAfK', style: 'primary' },
       { label: 'LinkedIn', href: 'https://www.linkedin.com/in/guilherme-gabriel-gocks-023846352', style: 'outline' },

@@ -43,6 +43,17 @@ export function RobotSprite({ pose, mood }: { pose: RobotPose; mood: RobotMood }
   );
 }
 
+// Envelope carried by the mail robot.
+const ENVELOPE = ['SSSSSSSSS', 'SBBBBBBBS', 'SSBBBBBSS', 'SBSBBBSBS', 'SBBSSSBBS', 'SSSSSSSSS'];
+
+export function EnvelopeSprite() {
+  return (
+    <svg viewBox="0 0 9 6" aria-hidden="true">
+      {ENVELOPE.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] && <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill={COLORS[pixel]} />))}
+    </svg>
+  );
+}
+
 // Crew: smaller robots with hard hats that carry words in and out. They are created outside React, so they render to markup.
 export const CREW_WIDTH = 16;
 export const CREW_HEIGHT = 18;
