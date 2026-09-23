@@ -83,18 +83,36 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 /* Vertical padding follows the viewport height so the whole hero fits above the fold. */
 .hero-main { min-height: calc(100svh - 183px); justify-content: flex-start; padding-top: clamp(8px, 2.5vh, 40px); padding-bottom: clamp(24px, 6vh, 88px); }
 .hero-grid { grid-template-columns: minmax(0, 1fr) 250px; gap: 32px; }
-.braces { padding: 0; flex-direction: column; align-items: flex-start; font-size: 17px; line-height: 1.9; }
+.braces { padding: 0; flex-direction: column; align-items: flex-start; font-size: 17px; line-height: 2.2; }
 .brace { font-size: 48px; line-height: 1; }
-.tech-list { min-height: calc(6 * 1.9em + 24px); padding: 12px 0 12px 32px; color: var(--foreground); letter-spacing: -.03em; white-space: nowrap; text-align: left; }
-.tech-list li { position: relative; isolation: isolate; min-height: 1.9em; }
-/* Editor-style highlight on the line being written, fading between lines. */
-.tech-list li::before { content: ''; position: absolute; inset: 1px -10px 1px -12px; border-radius: 4px; background: color-mix(in srgb, var(--accent) 9%, transparent); opacity: 0; transition: opacity .35s ease; z-index: -1; }
-.tech-list li.tech-active::before { opacity: 1; }
-.char-in { display: inline-block; animation: char-in .16s ease-out; }
-@keyframes char-in { from { opacity: 0; transform: translateY(3px); } }
+.tech-list { align-self: stretch; min-height: calc(6 * 2.2em + 24px); padding: 12px 0 12px 32px; color: var(--foreground); letter-spacing: -.03em; white-space: nowrap; text-align: left; }
+/* --d is each line's cascade delay. Words are absolutely placed so the falling word can overlap and squash the old one without moving anything else. */
+.tech-list li { position: relative; isolation: isolate; min-height: 2.2em; }
+.tech-word { position: absolute; left: 0; top: 0; transform-origin: 0 75%; }
+/* New word falls with gravity, stretches, squashes on impact (~45%), bounces once and settles; it lands blue and cools to white. */
+.tech-drop { animation: tech-drop .5s var(--d) both, tech-landed .7s ease-out calc(var(--d) + .22s) both; }
+@keyframes tech-drop {
+  0% { transform: translateY(-30px) scale(.9, 1.25); opacity: 0; animation-timing-function: cubic-bezier(.55, 0, 1, .45); }
+  20% { opacity: 1; }
+  45% { transform: translateY(0) scale(1.14, .8); animation-timing-function: cubic-bezier(0, .55, .45, 1); }
+  72% { transform: translateY(-4px) scale(.98, 1.05); animation-timing-function: ease-in-out; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes tech-landed { from { color: var(--accent); } to { color: var(--foreground); } }
+/* Old word gets flattened the moment the new one hits it. */
+.tech-squash { animation: tech-squash .2s cubic-bezier(.3, 0, .6, 1) calc(var(--d) + .21s) both; }
+@keyframes tech-squash { to { transform: scale(1.3, .05); opacity: 0; } }
+.line-flash { position: absolute; inset: 1px -10px 1px -12px; border-radius: 4px; background: color-mix(in srgb, var(--accent) 16%, transparent); opacity: 0; z-index: -1; animation: line-flash .75s ease-out calc(var(--d) + .22s); }
+@keyframes line-flash { from { opacity: 1; } to { opacity: 0; } }
+/* Stomped word springs up from the line, overshoots and settles. */
+.tech-grow { animation: tech-grow .45s calc(var(--d) + .33s) both, tech-landed .7s ease-out calc(var(--d) + .35s) both; }
+@keyframes tech-grow { 0% { transform: scale(1, 0); } 55% { transform: scale(1.08, 1.22); } 80% { transform: scale(.98, .94); } 100% { transform: none; } }
 .tech-comma { color: var(--muted); }
-.typing-cursor { display: inline-block; width: 2px; height: 1.1em; margin-left: 3px; vertical-align: -.2em; background: var(--accent); animation: caret-blink 1s steps(1) infinite; }
-@keyframes caret-blink { 50% { opacity: 0; } }
+/* The robot moves inside the stage, which shares its coordinates with the list lines. */
+.tech-stage { position: relative; align-self: stretch; }
+.robot { position: absolute; left: 0; top: 0; width: 22px; height: 24px; opacity: 0; pointer-events: none; z-index: 2; will-change: transform; }
+.robot-body { width: 100%; height: 100%; transform-origin: 50% 100%; }
+.robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .static-tech { display: none; }
 .projects-section { padding: 90px 0 100px; }
 .section-label { color: var(--accent); text-transform: uppercase; font-size: 12px; letter-spacing: .08em; margin-bottom: 20px; }
@@ -137,6 +155,6 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
   .social-link { padding-left: 12px; padding-right: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .animated-tech, .typing-cursor { display: none; }
+  .animated-tech { display: none; }
   .static-tech { display: block; }
 }
