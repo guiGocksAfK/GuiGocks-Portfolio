@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { TechnologyTyping } from '@/components/technology-typing';
 import { content } from '@/data/content';
 import { Reveal } from '@/components/reveal';
+import { PaintedName } from '@/components/painted-name';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -26,7 +27,7 @@ export default function Home() {
           <div className="hero-grid">
             <section aria-labelledby="hero-title">
               <p className="status font-mono"><span aria-hidden="true" />{hero.status}</p>
-              <h1 id="hero-title">{hero.firstName}<br /><span className="text-accent">{hero.lastName}<span className="name-period">.</span></span></h1>
+              <PaintedName firstName={hero.firstName} lastName={hero.lastName} />
               <p className="role font-mono"><span aria-hidden="true" className="text-accent">&gt; </span>{hero.role}<span aria-hidden="true" className="text-accent">_</span></p>
               <div className="intro"><p>{hero.introduction}</p><p>{hero.education}</p></div>
               <div id="contato" className="contact">

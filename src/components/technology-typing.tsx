@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { ROBOT_HEIGHT, ROBOT_WIDTH, RobotSprite, type RobotMood, type RobotPose } from '@/components/robot-sprite';
+import { whenNamePainted } from '@/components/robot-crew';
 
 const VISIBLE_LINES = 6;
 const CASCADE_STEP = 110;
@@ -249,6 +250,8 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
     }
 
     async function run() {
+      // The painter robot works on the name first.
+      await whenNamePainted();
       await pause(200);
       if (readIntroSeen()) await dropIn();
       else {
