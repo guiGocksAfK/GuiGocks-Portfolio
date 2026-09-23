@@ -8,7 +8,7 @@ const STEP_INTERVAL = 140;
 
 class Cancelled extends Error {}
 
-// A guard robot that now and then walks the length of the divider line, alternating direction, with a stop midway to look around.
+// A guard robot that now and then walks the length of a section's divider line, alternating direction, with a stop midway to look around.
 // Pauses while off-screen or in a background tab; absent without motion.
 export function PatrolRobot() {
   const guardRef = useRef<HTMLSpanElement>(null);

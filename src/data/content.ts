@@ -31,6 +31,7 @@ export const content = {
   projects: {
     section: '02 — Projetos',
     title: 'Projetos em destaque.',
+    countLabel: 'projetos',
     screenshotLabel: 'Screenshot em breve',
     siteLabel: 'Ver site',
     repositoryLabel: 'Repositório',

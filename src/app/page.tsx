@@ -56,7 +56,6 @@ export default function Home() {
       </div>
       <div className="hero-footer font-mono"><span>{hero.section}</span><span>{hero.location}</span><PatrolRobot /></div>
       <section id="projetos" aria-labelledby="projects-title" className="projects-section">
-        <p className="section-label font-mono">{projects.section}</p>
         <h2 id="projects-title">{projects.title}</h2>
         <div className="project-list">
           {projects.items.map((project, index) => (
@@ -84,6 +83,8 @@ export default function Home() {
             </Reveal>
           ))}
         </div>
+        {/* Each section ends with its number and name, like the hero. */}
+        <div className="section-footer font-mono"><span>{projects.section}</span><span>{projects.items.length} {projects.countLabel}</span><PatrolRobot /></div>
       </section>
       </main>
     </div>
