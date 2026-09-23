@@ -217,6 +217,22 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
       setAlert(false);
     }
 
+    // The boss's order: a short hop in place and a hard stomp that makes the whole list shake.
+    async function stompFloor() {
+      setPose('crouch');
+      await pause(90);
+      setPose('jump');
+      lift(10, 220);
+      await pause(200);
+      setPose('crouch');
+      squashBody();
+      stage.querySelector('.tech-list')?.animate([0, 3, -2, 1, 0].map(y => ({ transform: `translateY(${y}px)` })), { duration: 260, easing: 'ease-out' });
+      await pause(220);
+      setPose('idle');
+    }
+
+    // Long hop onto a line that swaps its word. Not used by the current story; kept for an upcoming scene.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async function stomp(index: number, next: Slot | null) {
       await hop(onWord(index));
       current[index] = { id: nextId++, slot: next, squashed: current[index]?.slot ?? null, kind: 'stomp' };
@@ -291,7 +307,8 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
     async function deliver(stack: Slot[]) {
       const y = position.y + ROBOT_HEIGHT - CREW_HEIGHT;
       const exitX = stage.clientWidth + 40;
-      const standX = position.x + ROBOT_WIDTH + 2;
+      // Stops on the boss's left (running past behind it) so the stack stays clear of the hero's right edge.
+      const standX = position.x - CREW_WIDTH - 2;
       const crew = spawnCrew({ x: exitX, y });
       try {
         crew.carry(true);
@@ -344,13 +361,9 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
       for (;;) {
         // The boss stomps the group label, the crew hauls the old words away and brings the next group, and the boss tosses it in.
         await getAngry();
-        await stomp(0, null);
-        lift(12, 320);
-        await pause(360);
-        await hop(home());
-        await pause(150);
+        await stompFloor();
         const haul: Promise<void>[] = [];
-        for (let index = 1; index < total; index++) {
+        for (let index = 0; index < total; index++) {
           if (current[index]?.slot) haul.push(fetchWord(index, haul.length * 150));
         }
         await Promise.all(haul);
