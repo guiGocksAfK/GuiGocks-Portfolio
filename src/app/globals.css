@@ -202,8 +202,8 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* Screenshots fill the frame; both current prints keep their key content in the centre.
    Filling the height makes a wide print render ~1200px wide, which is why page.tsx asks next/image for that size. */
 .project-image { object-fit: cover; object-position: center; }
-/* Screenshots sit below a dark strip that holds the inspector's stamp. */
-.project-shot { position: absolute; inset: 64px 0 0; }
+/* Screenshots fill the whole frame; the inspector's stamp sits on top of them. */
+.project-shot { position: absolute; inset: 0; }
 .screenshot-placeholder { height: 100%; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; color: var(--muted); font-size: 12px; }
 .placeholder-number { font-size: 72px; line-height: 1; letter-spacing: -.08em; color: #424d60; }
 /* Compact case study: name, one-line pitch, stack and links up front; technical decisions live in a drawer. */

@@ -86,9 +86,9 @@ export const content = {
         stack: ['Angular', 'Spring Boot 3', 'Java 17', 'Spring Security', 'PostgreSQL', 'Flyway'],
         stamp: { label: 'Projeto acadêmico', tone: 'muted' },
         site: null,
-        repositories: [],
-        screenshot: null,
-        screenshotAlt: 'Interface do sistema AJT Viagens e Turismo',
+        repositories: [{ label: 'Frontend', href: 'https://github.com/k9milly/AJT-Frontend' }, { label: 'Backend', href: 'https://github.com/guiPinheiroAfK/AJT-Backend' }],
+        screenshot: '/projects/AJT.png',
+        screenshotAlt: 'Painel administrativo do AJT Viagens com resumo de transfers e ordens de serviço',
       },
     ] as readonly {
       name: string; category: string; description: string; highlights: readonly string[];
