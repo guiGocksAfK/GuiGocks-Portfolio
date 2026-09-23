@@ -1,3 +1,5 @@
+import Image from 'next/image';
+import { TechnologyTyping } from '@/components/technology-typing';
 import { content } from '@/data/content';
 import { Reveal } from '@/components/reveal';
 
@@ -6,7 +8,7 @@ function Arrow() {
 }
 
 export default function Home() {
-  const { hero, contact } = content;
+  const { hero, contact, projects } = content;
   return (
     <div className="site-shell">
       <a className="skip-link" href="#main">{content.accessibility.skip}</a>
@@ -18,7 +20,8 @@ export default function Home() {
             : <span key={item.label} aria-disabled="true" className="nav-link nav-pending font-mono">{item.label}</span>)}
         </nav>
       </header>
-      <main id="main" className="hero-main">
+      <main id="main">
+      <div className="hero-main">
         <Reveal>
           <div className="hero-grid">
             <section aria-labelledby="hero-title">
@@ -33,11 +36,41 @@ export default function Home() {
                 <a href={`mailto:${contact.email}`} className="email font-mono">{contact.email}</a>
               </div>
             </section>
-            <div className="technical-mark" aria-hidden="true"><div className="braces font-mono"><span>{'{'}</span><span>{'}'}</span></div><p className="font-mono">{hero.technologies.join(' / ')}</p></div>
+            <TechnologyTyping words={hero.technologies} />
           </div>
         </Reveal>
+      </div>
+      <div className="hero-footer font-mono"><span>{hero.section}</span><span>{hero.location}</span></div>
+      <section id="projetos" aria-labelledby="projects-title" className="projects-section">
+        <p className="section-label font-mono">{projects.section}</p>
+        <h2 id="projects-title">{projects.title}</h2>
+        <div className="project-list">
+          {projects.items.map((project, index) => (
+            <Reveal key={project.name}>
+              <article className="project-card" aria-labelledby={`project-${index}`}>
+                <div className="project-visual">
+                  {project.screenshot ? <Image src={project.screenshot} alt={project.screenshotAlt} fill sizes="(max-width: 900px) 100vw, 45vw" className="project-image" /> :
+                    <div className="screenshot-placeholder"><span className="placeholder-number font-mono" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><span className="font-mono">{projects.screenshotLabel}</span></div>}
+                </div>
+                <div className="project-details">
+                  <p className="project-eyebrow font-mono"><span>{String(index + 1).padStart(2, '0')}</span>{project.category}</p>
+                  <h3 id={`project-${index}`}>{project.name}</h3>
+                  <p className="project-description">{project.description}</p>
+                  <h4 className="highlights-label font-mono">{projects.highlightsLabel}</h4>
+                  <ul className="project-highlights">{project.highlights.map(highlight => <li key={highlight}>{highlight}</li>)}</ul>
+                  <ul className="project-stack font-mono" aria-label={project.stack.join(', ')}>{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul>
+                  <div className="project-links font-mono">
+                    {[{ label: projects.siteLabel, href: project.site }, ...(project.repositories.length ? project.repositories.map(repo => ({ label: `${projects.repositoryLabel} · ${repo.label}`, href: repo.href })) : [{ label: projects.repositoryLabel, href: null }])].map(link => link.href
+                      ? <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" aria-label={`${link.label} — ${project.name}`}>{link.label}<Arrow /></a>
+                      : <span key={link.label} aria-disabled="true" title={projects.missingLinkLabel}>{link.label}<Arrow /></span>)}
+                  </div>
+                </div>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+      </section>
       </main>
-      <footer className="hero-footer font-mono"><span>{hero.section}</span><span>{hero.location}</span></footer>
     </div>
   );
 }
