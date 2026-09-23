@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { crewMarkup } from '@/components/robot-sprite';
 
 const TUGS = 3;
@@ -11,7 +12,9 @@ class Cancelled extends Error {}
 // Collapsible list of a project's technical decisions, closed by default. The drawer only moves because a hard-hat
 // robot moves it: it runs in, grabs the handle on the drawer's bottom edge and yanks it open in three tugs (kicking up
 // dust), or pushes it shut from below, then leaves. Without motion the drawer just opens and closes.
-export function ProjectDrawer({ items, openLabel, closeLabel }: { items: readonly string[]; openLabel: string; closeLabel: string }) {
+// The toggle stays in the card's text column; the drawer itself renders into a full-width slot under the whole card,
+// so opening it never stretches the screenshot.
+export function ProjectDrawer({ items, openLabel, closeLabel, slotId }: { items: readonly { title: string; text: string }[]; openLabel: string; closeLabel: string; slotId: string }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -19,8 +22,12 @@ export function ProjectDrawer({ items, openLabel, closeLabel }: { items: readonl
   const edgeRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<() => void>(() => {});
   const panelId = useId();
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
 
   useEffect(() => () => cancelRef.current(), []);
+  // The slot is server-rendered markup, so it can only be looked up after mount.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setSlot(document.getElementById(slotId)), [slotId]);
 
   async function toggle() {
     const body = bodyRef.current;
@@ -120,20 +127,35 @@ export function ProjectDrawer({ items, openLabel, closeLabel }: { items: readonl
     await robot.leave();
   }
 
-  return (
-    <div className={`drawer${open ? ' drawer-open' : ''}${busy ? ' drawer-busy' : ''}`}>
-      <button type="button" className="drawer-toggle font-mono" aria-expanded={open} aria-controls={panelId} onClick={toggle}>
-        {open ? closeLabel : openLabel}<span className="drawer-chevron" aria-hidden="true">▾</span>
-      </button>
+  const state = `${open ? ' drawer-open' : ''}${busy ? ' drawer-busy' : ''}`;
+  const sheet = (
+    <div className={`drawer-sheet${state}`}>
       <div ref={bodyRef} className="drawer-body" style={{ height: 0 }}>
         <div ref={panelRef} className="drawer-panel" id={panelId} hidden={!open && !busy}>
-          <ul className="project-highlights">{items.map(item => <li key={item}>{item}</li>)}</ul>
+          <ul className="project-highlights">
+            {items.map(item => (
+              <li key={item.title}>
+                <strong className="highlight-title">{item.title}</strong>
+                {/* Odd segments between backticks are code. */}
+                <span className="highlight-text">{item.text.split('`').map((part, index) => (index % 2 ? <code key={index}>{part}</code> : part))}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
       {/* The drawer's bottom edge with its handle; the robot hangs from here. */}
       <div ref={edgeRef} className="drawer-edge" aria-hidden="true">
         <span className="drawer-handle" />
       </div>
+    </div>
+  );
+
+  return (
+    <div className={`drawer${state}`}>
+      <button type="button" className="drawer-toggle font-mono" aria-expanded={open} aria-controls={panelId} onClick={toggle}>
+        {open ? closeLabel : openLabel}<span className="drawer-chevron" aria-hidden="true">▾</span>
+      </button>
+      {slot && createPortal(sheet, slot)}
     </div>
   );
 }

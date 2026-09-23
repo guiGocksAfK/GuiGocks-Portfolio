@@ -89,8 +89,10 @@ export default function Home() {
                         : <span className="link-missing" aria-disabled="true" title={projects.missingLinkLabel}>{projects.missingCodeLabel}</span>}
                     </span>
                   </div>
-                  <ProjectDrawer items={project.highlights} openLabel={projects.drawerOpenLabel} closeLabel={projects.drawerCloseLabel} />
+                  <ProjectDrawer items={project.highlights} openLabel={projects.drawerOpenLabel} closeLabel={projects.drawerCloseLabel} slotId={`drawer-slot-${index}`} />
                 </div>
+                {/* Full-width slot under the card where the decisions drawer opens. */}
+                <div className="project-drawer-slot" id={`drawer-slot-${index}`} />
               </article>
             </Reveal>
           ))}

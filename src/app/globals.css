@@ -234,7 +234,16 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .drawer-chevron { display: inline-block; transition: transform .3s; }
 .drawer-open .drawer-chevron { transform: rotate(180deg); }
 .drawer-body { overflow: hidden; }
-.drawer-panel .project-highlights { padding-top: 14px; padding-bottom: 12px; }
+/* The drawer opens in a full-width row under the whole card, with the decisions laid out in columns. */
+.project-drawer-slot { grid-column: 1 / -1; }
+.drawer-sheet { padding: 0 clamp(22px, 2.4vw, 34px); }
+.drawer-sheet.drawer-open, .drawer-sheet.drawer-busy { border-top: 1px solid var(--border); padding-bottom: 26px; }
+.drawer-panel .project-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px 32px; padding: 22px 0 18px; list-style: none; }
+.drawer-panel .project-highlights li + li { margin-top: 0; }
+.drawer-panel .project-highlights li { border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); padding-left: 12px; font-size: 12.5px; line-height: 1.6; }
+.highlight-title { display: block; color: var(--foreground); font-size: 13px; font-weight: 600; }
+.highlight-text { display: block; margin-top: 2px; }
+.highlight-text code { font-family: var(--font-geist-mono), monospace; font-size: 12px; color: var(--foreground); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 3px; padding: 1px 5px; }
 /* Bottom edge of the open drawer, with a pixel handle the robot grabs. */
 .drawer-edge { position: relative; height: 0; }
 .drawer-open .drawer-edge, .drawer-busy .drawer-edge { border-top: 1px solid var(--border); }

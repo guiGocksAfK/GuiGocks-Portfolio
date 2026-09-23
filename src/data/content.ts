@@ -46,10 +46,12 @@ export const content = {
         category: 'Plataforma social',
         description: 'Uma plataforma para organizar e compartilhar rankings de filmes, séries, jogos, livros e animes.',
         highlights: [
-          'Nota ponderada pelo tempo: Nota_Final = Nota_Original + log10(Minutos/60).',
-          'Autenticação JWT e login social com Google e Discord.',
-          'Integração com TMDB, Google Books, RAWG e Jikan.',
-          'Frontend na Vercel, backend em VM Oracle Cloud e PostgreSQL no Neon.',
+          { title: 'Sequestro de conta bloqueado', text: 'Login social só se une a contas com e-mail já confirmado. O link de confirmação é salvo apenas como hash SHA-256, e o "reenviar" responde igual para qualquer e-mail, sem revelar quais estão cadastrados.' },
+          { title: 'Infraestrutura própria numa VM ARM da Oracle', text: 'A API roda com Docker Compose numa VM gratuita da Oracle em São Paulo, com um Caddy compartilhado fazendo o HTTPS de vários projetos e o banco na mesma região. Ela fica sempre ligada, sobe em ~25s, usa ~336 MB de RAM e tem backup diário do banco.' },
+          { title: 'Performance guiada por medição', text: 'Um teste de carga revelou um teto de ~520 req/s causado pelo pool de conexões, que passou de 10 para 30. Consultas N+1 foram eliminadas com fetch joins, e o recálculo de conquistas foi para segundo plano.' },
+          { title: 'Exclusão de conta pensada para a LGPD', text: 'A exclusão apaga tudo em cascata sem levar junto dados de outras pessoas: antes, o cargo de dono dos grupos passa para o próximo membro. Excluir também exige a senha, então um token roubado não basta.' },
+          { title: 'Bot do Discord sem regra de negócio', text: 'O bot é só um cliente HTTP da API Java: autentica com uma chave de serviço, fica desligado se ela faltar e tem limite de requisições por usuário do Discord, já que todos saem do mesmo IP.' },
+          { title: 'Nota ponderada por tempo', text: '`nota + log10(minutos / 60)`: 100 horas de jogo não valem 100 vezes uma hora de filme. O cálculo existe só no backend, então site e bot nunca mostram notas diferentes.' },
         ],
         stack: ['React 19', 'Vite', 'Tailwind CSS', 'Spring Boot 3', 'Java 17', 'PostgreSQL', 'Flyway', 'Docker'],
         stamp: { label: 'Em produção', tone: 'accent' },
@@ -63,9 +65,9 @@ export const content = {
         category: 'Sistema em uso por escolas',
         description: 'Registro de classe e chamada usado por escolas em Curitiba e Cascavel, reunindo a rotina pedagógica e o histórico dos alunos.',
         highlights: [
-          'Acesso por papel: a diretora acompanha todas as turmas; cada professora acessa a própria.',
-          'Chamada diária e avaliações descritivas em um único sistema.',
-          'Preservação do histórico de alunos transferidos e exportação mensal para impressão.',
+          { title: 'Acesso por papel', text: 'A diretora acompanha todas as turmas; cada professora acessa apenas a própria.' },
+          { title: 'Rotina em um só lugar', text: 'Chamada diária e avaliações descritivas no mesmo sistema.' },
+          { title: 'Histórico preservado', text: 'Alunos transferidos mantêm o histórico, e a chamada do mês é exportada para impressão.' },
         ],
         stack: ['Angular', 'NestJS', 'PostgreSQL', 'Prisma'],
         stamp: { label: 'Em uso real', tone: 'accent' },
@@ -79,9 +81,9 @@ export const content = {
         category: 'Projeto acadêmico em grupo',
         description: 'Sistema de gestão de turismo desenvolvido em equipe, com frontend Angular e backend Java/Spring Boot.',
         highlights: [
-          'Autenticação JWT com Spring Security.',
-          'Respostas 401 idênticas para usuário inexistente e senha incorreta, evitando enumeração de usuários.',
-          'Banco PostgreSQL com migrações versionadas pelo Flyway.',
+          { title: 'Autenticação com JWT', text: 'Login protegido com Spring Security e tokens JWT.' },
+          { title: 'Sem enumeração de usuários', text: 'Usuário inexistente e senha incorreta recebem a mesma resposta 401, então o login não revela quem está cadastrado.' },
+          { title: 'Banco versionado', text: 'PostgreSQL com migrações versionadas pelo Flyway.' },
         ],
         stack: ['Angular', 'Spring Boot 3', 'Java 17', 'Spring Security', 'PostgreSQL', 'Flyway'],
         stamp: { label: 'Projeto acadêmico', tone: 'muted' },
@@ -91,7 +93,9 @@ export const content = {
         screenshotAlt: 'Painel administrativo do AJT Viagens com resumo de transfers e ordens de serviço',
       },
     ] as readonly {
-      name: string; category: string; description: string; highlights: readonly string[];
+      name: string; category: string; description: string;
+      // Technical decisions shown in the card's drawer; `backticks` in text render as inline code.
+      highlights: readonly { title: string; text: string }[];
       // Status stamped on the card by the inspector robot.
       stamp: { label: string; tone: 'accent' | 'muted' };
       stack: readonly string[]; site: string | null; repositories: readonly { label: string; href: string }[];
