@@ -19,8 +19,12 @@ export const content = {
     role: 'Full-stack developer',
     introduction: 'Desenvolvo aplicações com Java, Spring Boot e React.',
     education: 'Estudante de Engenharia de Software na UniAmérica.',
-    // Ordered backend → frontend → infra, each group starting with the main tool.
-    technologies: ['Java', 'Spring Boot', 'Node.js', 'Python', 'TypeScript', 'JavaScript', 'React', 'Next.js', 'Angular', 'Docker', 'Oracle Cloud', 'Vercel', 'Neon'],
+    // Shown one group at a time in the hero, each group starting with the main tool.
+    technologies: [
+      { label: 'backend', items: ['Java', 'Spring Boot', 'Node.js', 'Python'] },
+      { label: 'frontend', items: ['TypeScript', 'JavaScript', 'React', 'Next.js', 'Angular'] },
+      { label: 'infra', items: ['Docker', 'Oracle Cloud', 'Vercel', 'Neon'] },
+    ],
     section: '01 — Apresentação',
     location: 'Foz do Iguaçu, PR',
   },

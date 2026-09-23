@@ -85,7 +85,7 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 .hero-grid { grid-template-columns: minmax(0, 1fr) 250px; gap: 32px; }
 .braces { padding: 0; flex-direction: column; align-items: flex-start; font-size: 17px; line-height: 2.2; }
 .brace { font-size: 48px; line-height: 1; }
-.tech-list { align-self: stretch; min-height: calc(6 * 2.2em + 24px); padding: 12px 0 12px 32px; color: var(--foreground); letter-spacing: -.03em; white-space: nowrap; text-align: left; }
+.tech-list { align-self: stretch; min-height: calc(var(--lines, 6) * 2.2em + 24px); padding: 12px 0 12px 32px; color: var(--foreground); letter-spacing: -.03em; white-space: nowrap; text-align: left; }
 /* --d shifts a line's swap animations relative to the robot's landing. Words are absolutely placed so the new word can overlap and squash the old one without moving anything else. */
 .tech-list li { position: relative; isolation: isolate; min-height: 2.2em; }
 .tech-word { position: absolute; left: 0; top: 0; transform-origin: 0 75%; }
@@ -100,6 +100,12 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 .tech-grow { animation: tech-grow .45s calc(var(--d) + .33s) both, tech-landed .7s ease-out calc(var(--d) + .35s) both; }
 @keyframes tech-grow { 0% { transform: scale(1, 0); } 55% { transform: scale(1.08, 1.22); } 80% { transform: scale(.98, .94); } 100% { transform: none; } }
 .tech-comma { color: var(--muted); }
+/* Group label lines ("// backend") read as code comments: muted, and they cool to muted instead of white. */
+.tech-comment { color: var(--muted); }
+.tech-place.tech-comment { animation-name: tech-place, comment-landed; }
+.tech-grow.tech-comment { animation-name: tech-grow, comment-landed; }
+@keyframes comment-landed { from { color: var(--accent); } to { color: var(--muted); } }
+.static-items { white-space: normal; line-height: 1.5; padding-bottom: 8px; }
 /* Painted name: while data-paint is set, the first name is blue except for the part left of --paint, which the roller already covered. */
 .painted-name { position: relative; }
 html[data-paint] .name-first { color: transparent; -webkit-background-clip: text; background-clip: text; background-image: linear-gradient(90deg, var(--foreground) calc(var(--paint, 0px) - 3px), var(--accent) calc(var(--paint, 0px) + 1px)); }

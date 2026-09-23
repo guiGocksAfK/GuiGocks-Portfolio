@@ -37,7 +37,7 @@ export default function Home() {
                 <a href={`mailto:${contact.email}`} className="email font-mono">{contact.email}</a>
               </div>
             </section>
-            <TechnologyTyping words={hero.technologies} />
+            <TechnologyTyping groups={hero.technologies} />
           </div>
         </Reveal>
       </div>

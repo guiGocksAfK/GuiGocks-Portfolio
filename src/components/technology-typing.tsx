@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { ROBOT_HEIGHT, ROBOT_WIDTH, RobotSprite, type RobotMood, type RobotPose } from '@/components/robot-sprite';
 import { whenNamePainted } from '@/components/robot-crew';
 
-const VISIBLE_LINES = 6;
 const HOP_DURATION = 520;
 const TOSS_DURATION = 460;
 const REST = 4000;
@@ -13,21 +12,36 @@ const WORD_TOP = 15;
 // Stomp animations are timed from the landing, so this cancels part of the squash delay.
 const STOMP_DELAY = '-210ms';
 
+export type TechnologyGroup = { label: string; items: readonly string[] };
+// One line of a group: the "// label" comment on top, then its technologies.
+type Slot = { text: string; comment: boolean; comma: boolean };
 type LineKind = 'place' | 'stomp';
-type Line = { id: number; word: string; squashed: string | null; kind: LineKind };
+// slot is null when a stomp left the line empty (the next group is shorter).
+type Line = { id: number; slot: Slot | null; squashed: Slot | null; kind: LineKind };
 type Point = { x: number; y: number };
 
 class Cancelled extends Error {}
 
 const lineDelay = (kind: LineKind) => (kind === 'stomp' ? STOMP_DELAY : '0ms');
+const lineCount = (groups: readonly TechnologyGroup[]) => 1 + Math.max(0, ...groups.map(group => group.items.length));
 
-// A pixel robot runs the technology list as a little story: it carries the words in and tosses them into place,
-// gets angry at them, stomps them top to bottom (each stomp swaps the word), celebrates, rests and starts again.
-export function TechnologyTyping({ words }: { words: readonly string[] }) {
+function slotsFor(group: TechnologyGroup, lines: number): (Slot | null)[] {
+  const slots: Slot[] = [{ text: `// ${group.label}`, comment: true, comma: false }, ...group.items.map((text, index) => ({ text, comment: false, comma: index < group.items.length - 1 }))];
+  return Array.from({ length: lines }, (_, index) => slots[index] ?? null);
+}
+
+function SlotText({ slot }: { slot: Slot }) {
+  return <>{slot.text}{slot.comma && <span className="tech-comma">,</span>}</>;
+}
+
+// A pixel robot shows the technologies one group at a time: it carries the first group in and tosses each line into place,
+// gets angry, stomps the lines top to bottom (each stomp brings in the next group's line), celebrates, rests and starts again.
+export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[] }) {
+  const lineTotal = lineCount(groups);
   const [lines, setLines] = useState<(Line | undefined)[]>([]);
   const [pose, setPose] = useState<RobotPose>('idle');
   const [mood, setMood] = useState<RobotMood>('normal');
-  const [cargo, setCargo] = useState<string[]>([]);
+  const [cargo, setCargo] = useState<Slot[]>([]);
   const [alert, setAlert] = useState(false);
   const markRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -37,14 +51,15 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (!robotRef.current || !bodyRef.current || !stageRef.current || !flyersRef.current || words.length === 0) return;
+    if (!robotRef.current || !bodyRef.current || !stageRef.current || !flyersRef.current || groups.length === 0) return;
     const robot: HTMLDivElement = robotRef.current;
     const body: HTMLDivElement = bodyRef.current;
     const stage: HTMLDivElement = stageRef.current;
     const flyers: HTMLDivElement = flyersRef.current;
+    const total = lineCount(groups);
 
     let current: (Line | undefined)[] = [];
-    let nextWord = 0;
+    let groupIndex = 0;
     let nextId = 0;
     let inView = false;
     let cancelled = false;
@@ -68,19 +83,10 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
       if (cancelled) throw new Cancelled();
     }
 
-    // Next technology in order, skipping any that are already on screen.
-    function takeWord() {
-      const visible = new Set(current.map(line => line?.word));
-      for (let tries = 0; visible.has(words[nextWord]) && tries < words.length; tries++) nextWord = (nextWord + 1) % words.length;
-      const word = words[nextWord];
-      nextWord = (nextWord + 1) % words.length;
-      return word;
-    }
-
     const lineElement = (index: number) => stage.querySelectorAll<HTMLLIElement>('.tech-list li')[index];
     const wordWidth = (index: number) => lineElement(index)?.querySelector<HTMLElement>('.tech-word:last-child')?.offsetWidth ?? 40;
     const home = (): Point => {
-      const last = lineElement(VISIBLE_LINES - 1);
+      const last = lineElement(total - 1);
       return { x: stage.clientWidth - ROBOT_WIDTH - 4, y: last.offsetTop + last.offsetHeight - ROBOT_HEIGHT };
     };
     const onWord = (index: number): Point => {
@@ -138,10 +144,10 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
       }
     }
 
-    // Intro: walks in with all the words stacked on its head and tosses them into their lines, top to bottom.
+    // Intro: walks in with the first group stacked on its head and tosses each line into place, top to bottom.
     async function carryIn() {
-      const stack = Array.from({ length: VISIBLE_LINES }, takeWord);
-      current = Array.from({ length: VISIBLE_LINES }, () => undefined);
+      const stack = slotsFor(groups[0], total).filter((slot): slot is Slot => slot !== null);
+      current = Array.from({ length: total }, () => undefined);
       render();
       setCargo(stack);
       setPose('carry');
@@ -168,14 +174,14 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
       await pause(TOSS_DURATION + 300);
     }
 
-    // Launches a word from the top of the stack along an arc into its line; it lands with a squash.
-    function toss(word: string, index: number) {
+    // Launches a line from the top of the stack along an arc into its place; it lands with a squash.
+    function toss(slot: Slot, index: number) {
       const cargoWord = robot.querySelector<HTMLElement>('.robot-cargo span');
       const stageBox = stage.getBoundingClientRect();
       const line = lineElement(index);
       const flyer = document.createElement('span');
-      flyer.className = 'tech-flyer';
-      flyer.textContent = word;
+      flyer.className = `tech-flyer${slot.comment ? ' tech-comment' : ''}`;
+      flyer.textContent = slot.text;
       flyers.appendChild(flyer);
       const from = cargoWord?.getBoundingClientRect();
       const start = from
@@ -186,7 +192,7 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
       flight.finished.then(() => {
         flyer.remove();
         if (cancelled) return;
-        current[index] = { id: nextId++, word, squashed: null, kind: 'place' };
+        current[index] = { id: nextId++, slot, squashed: null, kind: 'place' };
         render();
       }, () => flyer.remove());
     }
@@ -201,13 +207,12 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
       setAlert(false);
     }
 
-    async function stomp(index: number) {
+    async function stomp(index: number, next: Slot | null) {
       await hop(onWord(index));
-      const old = current[index];
-      current[index] = { id: nextId++, word: takeWord(), squashed: old?.word ?? null, kind: 'stomp' };
+      current[index] = { id: nextId++, slot: next, squashed: current[index]?.slot ?? null, kind: 'stomp' };
       render();
-      // The new word grows out of the line and lifts the robot as it peaks.
-      lift(8, 380, 170);
+      // The new line grows out of the floor and lifts the robot as it peaks.
+      if (next) lift(8, 380, 170);
       await pause(160);
       setPose('idle');
     }
@@ -232,8 +237,12 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
       await rest(1400);
       for (;;) {
         await getAngry();
-        for (let index = 0; index < VISIBLE_LINES; index++) {
-          await stomp(index);
+        groupIndex = (groupIndex + 1) % groups.length;
+        const next = slotsFor(groups[groupIndex], total);
+        // Stomp every line that has something now or will have something next.
+        for (let index = 0; index < total; index++) {
+          if (!current[index]?.slot && !next[index]) continue;
+          await stomp(index, next[index]);
           await pause(240);
         }
         await celebrate();
@@ -263,24 +272,23 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
       preference.removeEventListener('change', resume);
       robot.removeEventListener('click', provoke);
     };
-  }, [words]);
+  }, [groups]);
 
   return (
     <div className="technical-mark" ref={markRef}>
-      <span className="sr-only">{words.join(', ')}</span>
+      <span className="sr-only">{groups.map(group => `${group.label}: ${group.items.join(', ')}`).join('; ')}</span>
       <div className="braces font-mono" aria-hidden="true">
         <span className="brace">{'{'}</span>
         <div className="tech-stage animated-tech" ref={stageRef}>
-          <ul className="tech-list">
-            {Array.from({ length: VISIBLE_LINES }, (_, index) => {
+          <ul className="tech-list" style={{ '--lines': lineTotal } as CSSProperties}>
+            {Array.from({ length: lineTotal }, (_, index) => {
               const line = lines[index];
-              const comma = index < VISIBLE_LINES - 1 && <span className="tech-comma">,</span>;
               return (
                 <li key={index} style={{ '--d': line ? lineDelay(line.kind) : '0ms' } as CSSProperties}>
                   {line && <>
                     <span key={`flash-${line.id}`} className="line-flash" />
-                    {line.squashed && <span key={`old-${line.id}`} className="tech-word tech-squash">{line.squashed}{comma}</span>}
-                    <span key={line.id} className={`tech-word tech-${line.kind === 'stomp' ? 'grow' : line.kind}`}>{line.word}{comma}</span>
+                    {line.squashed && <span key={`old-${line.id}`} className={`tech-word tech-squash${line.squashed.comment ? ' tech-comment' : ''}`}><SlotText slot={line.squashed} /></span>}
+                    {line.slot && <span key={line.id} className={`tech-word tech-${line.kind === 'stomp' ? 'grow' : line.kind}${line.slot.comment ? ' tech-comment' : ''}`}><SlotText slot={line.slot} /></span>}
                   </>}
                 </li>
               );
@@ -288,13 +296,17 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
           </ul>
           <div className="tech-flyers" ref={flyersRef} />
           <div className="robot" ref={robotRef}>
-            {cargo.length > 0 && <div className="robot-cargo">{cargo.map(word => <span key={word}>{word}</span>)}</div>}
+            {cargo.length > 0 && <div className="robot-cargo">{cargo.map(slot => <span key={slot.text} className={slot.comment ? 'tech-comment' : undefined}>{slot.text}</span>)}</div>}
             {alert && <span className="robot-alert">!</span>}
             <div className="robot-body" ref={bodyRef}><RobotSprite pose={pose} mood={mood} /></div>
           </div>
         </div>
+        {/* Without motion every group is listed at once. */}
         <ul className="tech-list static-tech">
-          {words.slice(0, VISIBLE_LINES).map((word, index) => <li key={word}>{word}{index < VISIBLE_LINES - 1 && <span className="tech-comma">,</span>}</li>)}
+          {groups.map(group => [
+            <li key={`${group.label}-label`} className="tech-comment">{`// ${group.label}`}</li>,
+            <li key={`${group.label}-items`} className="static-items">{group.items.join(', ')}</li>,
+          ])}
         </ul>
         <span className="brace">{'}'}</span>
       </div>
