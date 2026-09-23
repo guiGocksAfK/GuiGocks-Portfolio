@@ -36,18 +36,26 @@ export const content = {
       'Comecei a programar em C++, no Code::Blocks. De lá para cá, troquei os primeiros exercícios por sistemas de verdade: hoje construo aplicações completas, do banco de dados à interface.',
       'Gosto de projetos grandes e bem testados, daqueles em que o usuário descobre um detalhe novo a cada uso. Trabalho melhor com organização: escopo bem definido, tarefas claras e uma equipe alinhada.',
     ],
-    lookingFor: { label: 'O que eu busco', text: 'Vagas que usem a minha stack, em qualquer formato: presencial em Foz do Iguaçu, remoto ou em outro país.' },
+    // Construction-site ID badge delivered by the drone.
+    badge: {
+      role: 'Full-stack developer',
+      location: 'Foz do Iguaçu, PR',
+      lookingLabel: 'Procurando',
+      lookingText: 'Vagas que usem a minha stack, em qualquer formato: presencial em Foz do Iguaçu, remoto ou em outro país.',
+    },
     timelineLabel: 'Trajetória',
+    // Dashed top floor of the career building.
+    nextFloor: { label: 'Próximo andar', text: 'sua empresa?', href: 'mailto:guigocks@gmail.com' },
     timeline: [
       { year: '2025', text: 'Entrada em Engenharia de Software na UniAmérica' },
       { year: '2025', text: 'Primeiro contato com programação, em C++' },
       { year: '2026', text: 'Primeiros projetos para uma empresa e uma escola: AJT Viagens e Escola Imaculada' },
       { year: '2026', text: 'Primeiro projeto individual: o MyRank' },
     ],
-    // Placeholder until the real photo arrives: save it in public/ (e.g. /about/foto.webp) and set the path here.
-    photo: '/projects/MyRank.png' as string | null,
+    // Until a real photo exists the badge shows a pixel-art avatar: save the photo in public/ (e.g. /about/foto.webp) and set the path here.
+    photo: null as string | null,
     photoAlt: 'Foto de Guilherme Gabriel Gocks',
-    photoPlaceholder: 'Foto em breve',
+    avatarLabel: 'Avatar em pixel art de Guilherme com capacete de obra',
   },
   projects: {
     section: '02 — Projetos',

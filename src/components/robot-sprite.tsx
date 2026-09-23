@@ -9,7 +9,35 @@ const COLORS: Record<string, string> = {
   A: '#6994ff', // accent: antenna tip, eyes, chest light
   R: '#ff6b6b', // angry eyes
   O: '#ffb347', // crew hard hats
+  K: '#2b2118', // avatar hair
+  F: '#d9a47c', // avatar skin
+  M: '#9b5b4a', // avatar mouth
 };
+
+function pixelRects(rows: string[]) {
+  return rows.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] && <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill={COLORS[pixel]} />));
+}
+
+// Delivery drone: two frames of the rotors (wide/narrow) alternate in CSS to look like spinning.
+const DRONE_BODY = ['.S.........S.', '.SSSSBBBSSSS.', '....BDADB....', '....BBBBB....', '.....S.S.....', '.....S.S.....'];
+const DRONE_ROTORS = ['SSS.......SSS', '.S.........S.'];
+
+export function DroneSprite() {
+  return (
+    <svg viewBox="0 0 13 7" aria-hidden="true">
+      <g className="drone-rotor-a">{pixelRects([DRONE_ROTORS[0]])}</g>
+      <g className="drone-rotor-b">{pixelRects([DRONE_ROTORS[1]])}</g>
+      <g transform="translate(0 1)">{pixelRects(DRONE_BODY)}</g>
+    </svg>
+  );
+}
+
+// Stand-in portrait for the badge until a real photo exists: a person in a hard hat.
+const AVATAR = ['...OOOOOO...', '..OOOOOOOO..', '.OOOOOOOOOO.', '..KKKKKKKK..', '..KFFFFFFK..', '..FDFFFFDF..', '..FFFFFFFF..', '..FFFMMFFF..', '...FFFFFF...', '....FFFF....', '.AAAAAAAAAA.', 'AAAAAAAAAAAA'];
+
+export function AvatarSprite() {
+  return <svg viewBox="0 0 12 12" aria-hidden="true">{pixelRects(AVATAR)}</svg>;
+}
 
 // Five rows: top, three visor rows, bottom.
 const HEADS: Record<RobotMood | 'blink', string[]> = {

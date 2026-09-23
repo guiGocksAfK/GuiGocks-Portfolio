@@ -8,7 +8,8 @@ import { ProjectStamp } from '@/components/project-stamp';
 import { RobotSprite } from '@/components/robot-sprite';
 import { PatrolRobot } from '@/components/patrol-robot';
 import { ProjectDrawer } from '@/components/project-drawer';
-import { TimelineBuilder } from '@/components/timeline-builder';
+import { AboutBadge } from '@/components/about-badge';
+import { CareerBuilding } from '@/components/career-building';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -104,19 +105,15 @@ export default function Home() {
       <section id="sobre" aria-labelledby="about-title" className="about-section">
         <h2 id="about-title">{about.title}</h2>
         <div className="about-grid">
-          <div className="about-photo">
-            {about.photo
-              ? <Image src={about.photo} alt={about.photoAlt} fill quality={90} sizes="(max-width: 900px) 260px, 320px" className="about-image" />
-              : <div className="photo-placeholder"><span className="photo-robot" aria-hidden="true"><RobotSprite pose="idle" mood="happy" /></span><span className="font-mono">{about.photoPlaceholder}</span></div>}
-          </div>
-          <div className="about-text">
-            {about.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
-            <div className="about-looking">
-              <p className="about-label font-mono">{about.lookingFor.label}</p>
-              <p>{about.lookingFor.text}</p>
-            </div>
-            <p className="about-label timeline-label font-mono">{about.timelineLabel}</p>
-            <TimelineBuilder steps={about.timeline} />
+          <AboutBadge
+            name={`${hero.firstName} ${hero.lastName}`} role={about.badge.role} location={about.badge.location}
+            lookingLabel={about.badge.lookingLabel} lookingText={about.badge.lookingText}
+            photo={about.photo} photoAlt={about.photoAlt} avatarLabel={about.avatarLabel}
+          />
+          <div className="about-main">
+            <div className="about-story">{about.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div>
+            <p className="about-label font-mono">{about.timelineLabel}</p>
+            <CareerBuilding steps={about.timeline} next={about.nextFloor} />
           </div>
         </div>
         <div className="section-footer font-mono"><span>{about.section}</span><span>{about.footerNote}</span><PatrolRobot /></div>
