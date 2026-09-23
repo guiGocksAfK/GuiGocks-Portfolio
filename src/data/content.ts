@@ -28,25 +28,24 @@ export const content = {
     section: '01 — Apresentação',
     location: 'Foz do Iguaçu, PR',
   },
-  // Texts in [brackets] are placeholders waiting for the real story.
   about: {
     section: '03 — Sobre',
     title: 'Sobre mim.',
     footerNote: 'Engenharia de Software · UniAmérica',
     paragraphs: [
-      '[Como você começou a programar — 2 ou 3 frases contando a sua história.]',
-      '[O que você gosta de construir e como gosta de trabalhar.]',
+      'Comecei a programar em C++, no Code::Blocks. De lá para cá, troquei os primeiros exercícios por sistemas de verdade: hoje construo aplicações completas, do banco de dados à interface.',
+      'Gosto de projetos grandes e bem testados, daqueles em que o usuário descobre um detalhe novo a cada uso. Trabalho melhor com organização: escopo bem definido, tarefas claras e uma equipe alinhada.',
     ],
-    lookingFor: { label: 'O que eu busco', text: '[Tipo de vaga (backend, full-stack…) e formato: remoto ou presencial em Foz do Iguaçu.]' },
+    lookingFor: { label: 'O que eu busco', text: 'Vagas que usem a minha stack, em qualquer formato: presencial em Foz do Iguaçu, remoto ou em outro país.' },
     timelineLabel: 'Trajetória',
     timeline: [
-      { year: '20XX', text: '[Entrada em Engenharia de Software na UniAmérica]' },
-      { year: '20XX', text: '[Primeiro projeto]' },
-      { year: '20XX', text: '[Escola Imaculada passa a ser usada por escolas]' },
-      { year: '20XX', text: '[MyRank no ar]' },
+      { year: '2025', text: 'Entrada em Engenharia de Software na UniAmérica' },
+      { year: '2025', text: 'Primeiro contato com programação, em C++' },
+      { year: '2026', text: 'Primeiros projetos para uma empresa e uma escola: AJT Viagens e Escola Imaculada' },
+      { year: '2026', text: 'Primeiro projeto individual: o MyRank' },
     ],
-    // Save the photo in public/ (e.g. /about/foto.webp) and set the path here.
-    photo: null as string | null,
+    // Placeholder until the real photo arrives: save it in public/ (e.g. /about/foto.webp) and set the path here.
+    photo: '/projects/MyRank.png' as string | null,
     photoAlt: 'Foto de Guilherme Gabriel Gocks',
     photoPlaceholder: 'Foto em breve',
   },

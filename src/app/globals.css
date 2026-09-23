@@ -139,6 +139,15 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .timeline li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; padding: 12px 0; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; line-height: 1.6; }
 .timeline li:last-child { border-bottom: 1px solid var(--border); }
 .timeline-year { color: var(--accent); font-size: 13px; }
+/* Archivist crew: milestones wait hidden, then land (squash and settle) as each robot drops its crate. */
+.timeline-wrap { position: relative; overflow-x: clip; }
+.timeline-pending { opacity: 0; }
+.timeline-placed { animation: timeline-land .38s ease-out both; }
+@keyframes timeline-land { from { opacity: 0; transform: translateY(-8px) scale(.97, 1.08); } 60% { opacity: 1; transform: translateY(1px) scale(1.01, .97); } to { opacity: 1; transform: none; } }
+.timeline-crew-layer { position: absolute; inset: 0; pointer-events: none; }
+.timeline-crew { position: absolute; left: 0; top: 0; width: 16px; height: 18px; }
+.timeline-sprite, .timeline-sprite svg, .timeline-crate svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.timeline-crate { position: absolute; left: 2px; bottom: 17px; width: 12px; height: 12px; }
 @media (max-width: 900px) { .about-grid { grid-template-columns: minmax(0, 1fr); } .about-photo { max-width: 260px; } }
 /* Mail robot: pops up next to the email with an envelope over its head and a "copied" bubble, then drops back down. */
 .email-wrap { position: relative; display: inline-block; }

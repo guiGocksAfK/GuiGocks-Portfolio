@@ -8,6 +8,7 @@ import { ProjectStamp } from '@/components/project-stamp';
 import { RobotSprite } from '@/components/robot-sprite';
 import { PatrolRobot } from '@/components/patrol-robot';
 import { ProjectDrawer } from '@/components/project-drawer';
+import { TimelineBuilder } from '@/components/timeline-builder';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -115,9 +116,7 @@ export default function Home() {
               <p>{about.lookingFor.text}</p>
             </div>
             <p className="about-label timeline-label font-mono">{about.timelineLabel}</p>
-            <ol className="timeline">
-              {about.timeline.map(step => <li key={step.text}><span className="timeline-year font-mono">{step.year}</span><span>{step.text}</span></li>)}
-            </ol>
+            <TimelineBuilder steps={about.timeline} />
           </div>
         </div>
         <div className="section-footer font-mono"><span>{about.section}</span><span>{about.footerNote}</span><PatrolRobot /></div>
