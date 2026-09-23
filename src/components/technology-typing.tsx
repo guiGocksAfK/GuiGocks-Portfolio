@@ -1,11 +1,10 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { ROBOT_HEIGHT, ROBOT_WIDTH, RobotSprite, type RobotMood, type RobotPose } from '@/components/robot-sprite';
 import { whenNamePainted } from '@/components/robot-crew';
 
 const VISIBLE_LINES = 6;
-const CASCADE_STEP = 110;
 const HOP_DURATION = 520;
 const TOSS_DURATION = 460;
 const REST = 4000;
@@ -13,23 +12,14 @@ const REST = 4000;
 const WORD_TOP = 15;
 // Stomp animations are timed from the landing, so this cancels part of the squash delay.
 const STOMP_DELAY = '-210ms';
-const INTRO_SEEN_KEY = 'robot-intro-seen';
 
-type LineKind = 'drop' | 'place' | 'stomp';
+type LineKind = 'place' | 'stomp';
 type Line = { id: number; word: string; squashed: string | null; kind: LineKind };
 type Point = { x: number; y: number };
 
 class Cancelled extends Error {}
 
-const lineDelay = (kind: LineKind, index: number) => (kind === 'stomp' ? STOMP_DELAY : kind === 'drop' ? `${index * CASCADE_STEP}ms` : '0ms');
-
-function readIntroSeen() {
-  try { return sessionStorage.getItem(INTRO_SEEN_KEY) === '1'; } catch { return false; }
-}
-
-function markIntroSeen() {
-  try { sessionStorage.setItem(INTRO_SEEN_KEY, '1'); } catch { /* storage unavailable: the intro just plays again */ }
-}
+const lineDelay = (kind: LineKind) => (kind === 'stomp' ? STOMP_DELAY : '0ms');
 
 // A pixel robot runs the technology list as a little story: it carries the words in and tosses them into place,
 // gets angry at them, stomps them top to bottom (each stomp swaps the word), celebrates, rests and starts again.
@@ -201,21 +191,6 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
       }, () => flyer.remove());
     }
 
-    // Returning visitors skip the intro: the words fall in and the robot drops in beside them.
-    async function dropIn() {
-      current = Array.from({ length: VISIBLE_LINES }, () => ({ id: nextId++, word: takeWord(), squashed: null, kind: 'drop' as const }));
-      render();
-      await pause(CASCADE_STEP * VISIBLE_LINES + 500);
-      const target = home();
-      place(target);
-      setPose('jump');
-      await animate(robot, [{ transform: `translate(${target.x}px, ${target.y - 70}px)`, opacity: 0 }, { opacity: 1, offset: .3 }, { transform: `translate(${target.x}px, ${target.y}px)`, opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.55, 0, 1, .45)' });
-      robot.style.opacity = '1';
-      setPose('crouch');
-      squashBody();
-      await pause(140);
-    }
-
     async function getAngry() {
       provoked = false;
       setPose('idle');
@@ -253,11 +228,7 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
       // The painter robot works on the name first.
       await whenNamePainted();
       await pause(200);
-      if (readIntroSeen()) await dropIn();
-      else {
-        await carryIn();
-        markIntroSeen();
-      }
+      await carryIn();
       await rest(1400);
       for (;;) {
         await getAngry();
@@ -305,7 +276,7 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
               const line = lines[index];
               const comma = index < VISIBLE_LINES - 1 && <span className="tech-comma">,</span>;
               return (
-                <li key={index} style={{ '--d': line ? lineDelay(line.kind, index) : '0ms' } as CSSProperties}>
+                <li key={index} style={{ '--d': line ? lineDelay(line.kind) : '0ms' } as CSSProperties}>
                   {line && <>
                     <span key={`flash-${line.id}`} className="line-flash" />
                     {line.squashed && <span key={`old-${line.id}`} className="tech-word tech-squash">{line.squashed}{comma}</span>}

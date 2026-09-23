@@ -1,9 +1,8 @@
 // Coordination between the site's robots: the painter works on the name first, then the list robot starts.
-export const NAME_PAINTED_KEY = 'name-painted';
 const EVENT = 'name-painted';
 
-// Runs before the page is painted (see layout.tsx): first visits start with the name unpainted (blue).
-export const PAINT_BOOT_SCRIPT = `try{if(sessionStorage.getItem('${NAME_PAINTED_KEY}')!=='1'&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.dataset.paint='pending'}catch(e){}`;
+// Runs before the page is painted (see layout.tsx) so the name already starts unpainted (blue) on every load.
+export const PAINT_BOOT_SCRIPT = `try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.dataset.paint='pending'}catch(e){}`;
 
 export const isNamePending = () => document.documentElement.dataset.paint === 'pending';
 
@@ -19,6 +18,5 @@ export function whenNamePainted(timeout = 9000) {
 
 export function announceNamePainted() {
   delete document.documentElement.dataset.paint;
-  try { sessionStorage.setItem(NAME_PAINTED_KEY, '1'); } catch { /* storage unavailable: the painter just works again next time */ }
   window.dispatchEvent(new Event(EVENT));
 }

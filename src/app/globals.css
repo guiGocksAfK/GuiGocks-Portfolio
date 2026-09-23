@@ -86,18 +86,10 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 .braces { padding: 0; flex-direction: column; align-items: flex-start; font-size: 17px; line-height: 2.2; }
 .brace { font-size: 48px; line-height: 1; }
 .tech-list { align-self: stretch; min-height: calc(6 * 2.2em + 24px); padding: 12px 0 12px 32px; color: var(--foreground); letter-spacing: -.03em; white-space: nowrap; text-align: left; }
-/* --d is each line's cascade delay. Words are absolutely placed so the falling word can overlap and squash the old one without moving anything else. */
+/* --d shifts a line's swap animations relative to the robot's landing. Words are absolutely placed so the new word can overlap and squash the old one without moving anything else. */
 .tech-list li { position: relative; isolation: isolate; min-height: 2.2em; }
 .tech-word { position: absolute; left: 0; top: 0; transform-origin: 0 75%; }
-/* New word falls with gravity, stretches, squashes on impact (~45%), bounces once and settles; it lands blue and cools to white. */
-.tech-drop { animation: tech-drop .5s var(--d) both, tech-landed .7s ease-out calc(var(--d) + .22s) both; }
-@keyframes tech-drop {
-  0% { transform: translateY(-30px) scale(.9, 1.25); opacity: 0; animation-timing-function: cubic-bezier(.55, 0, 1, .45); }
-  20% { opacity: 1; }
-  45% { transform: translateY(0) scale(1.14, .8); animation-timing-function: cubic-bezier(0, .55, .45, 1); }
-  72% { transform: translateY(-4px) scale(.98, 1.05); animation-timing-function: ease-in-out; }
-  100% { transform: none; opacity: 1; }
-}
+/* New words land blue and cool to white. */
 @keyframes tech-landed { from { color: var(--accent); } to { color: var(--foreground); } }
 /* Old word gets flattened the moment the new one hits it. */
 .tech-squash { animation: tech-squash .2s cubic-bezier(.3, 0, .6, 1) calc(var(--d) + .21s) both; }
