@@ -52,6 +52,8 @@ export const content = {
           { title: 'Exclusão de conta pensada para a LGPD', text: 'A exclusão apaga tudo em cascata sem levar junto dados de outras pessoas: antes, o cargo de dono dos grupos passa para o próximo membro. Excluir também exige a senha, então um token roubado não basta.' },
           { title: 'Bot do Discord sem regra de negócio', text: 'O bot é só um cliente HTTP da API Java: autentica com uma chave de serviço, fica desligado se ela faltar e tem limite de requisições por usuário do Discord, já que todos saem do mesmo IP.' },
           { title: 'Nota ponderada por tempo', text: '`nota + log10(minutos / 60)`: 100 horas de jogo não valem 100 vezes uma hora de filme. O cálculo existe só no backend, então site e bot nunca mostram notas diferentes.' },
+          { title: 'IA Insights barata e trocável', text: 'O Gemini é chamado pelo endpoint compatível com a API da OpenAI, então trocar de provedor é só mudar a configuração. As respostas ficam em cache pelo hash da seleção, e o chat de acompanhamento tem limite de 15 mensagens por dia, o que mantém o custo em zero.' },
+          { title: 'Chat em tempo real com plano B', text: 'DMs e grupos usam o mesmo modelo, com cargos de dono, admin, moderador e membro. O tempo real usa WebSocket (STOMP) com polling como reserva, e as não lidas vêm de um cursor de leitura por membro, em vez de marcar mensagem por mensagem.' },
         ],
         stack: ['React 19', 'Vite', 'Tailwind CSS', 'Spring Boot 3', 'Java 17', 'PostgreSQL', 'Flyway', 'Docker'],
         stamp: { label: 'Em produção', tone: 'accent' },
