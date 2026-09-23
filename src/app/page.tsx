@@ -6,6 +6,7 @@ import { PaintedName } from '@/components/painted-name';
 import { EmailCopy } from '@/components/email-copy';
 import { ProjectStamp } from '@/components/project-stamp';
 import { RobotSprite } from '@/components/robot-sprite';
+import { PatrolRobot } from '@/components/patrol-robot';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -53,7 +54,7 @@ export default function Home() {
           </div>
         </Reveal>
       </div>
-      <div className="hero-footer font-mono"><span>{hero.section}</span><span>{hero.location}</span></div>
+      <div className="hero-footer font-mono"><span>{hero.section}</span><span>{hero.location}</span><PatrolRobot /></div>
       <section id="projetos" aria-labelledby="projects-title" className="projects-section">
         <p className="section-label font-mono">{projects.section}</p>
         <h2 id="projects-title">{projects.title}</h2>

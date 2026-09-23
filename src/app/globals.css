@@ -141,6 +141,10 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 }
 .social-link:focus-visible .spy-robot { transform: translateY(4px); transition: transform .32s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes spy-look { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+/* Patrol guard: walks on top of the divider line; it enters and leaves past the edges, which are clipped. */
+.hero-footer { position: relative; overflow-x: clip; overflow-y: visible; }
+.patrol { position: absolute; left: 0; top: -18px; width: 16px; height: 18px; opacity: 0; pointer-events: none; }
+.patrol svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 /* Project status stamp and the inspector robot that stamps it (~0.7s into its scene). */
 .stamp-area { position: absolute; top: 20px; left: 20px; z-index: 2; }
 .project-stamp { display: inline-block; padding: 5px 10px; border: 2px solid currentColor; border-radius: 4px; background: color-mix(in srgb, var(--background) 75%, transparent); font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; transform: rotate(-7deg); }

@@ -71,11 +71,12 @@ export const CREW_HEIGHT = 18;
 
 const CREW_LEGS = [['..B..B..', '.SS..SS.'], ['.B....B.', 'SS....SS']];
 
-export function crewMarkup(carrying: boolean, step: number) {
+// hat: 'O' is the crew's orange hard hat, 'A' the patrol guard's blue cap.
+export function crewMarkup(carrying: boolean, step: number, hat: 'O' | 'A' = 'O') {
   const top = carrying
     ? ['..OOOO..', 'SOOOOOOS', 'SBDDDDBS', 'SBADDABS', '..BBBB..', '..BABB..', '..BBBB..']
     : ['..OOOO..', '.OOOOOO.', '.BDDDDB.', '.BADDAB.', '..BBBB..', '.SBABBS.', '..BBBB..'];
-  const pixels = [...top, ...CREW_LEGS[step % 2]];
+  const pixels = [...top, ...CREW_LEGS[step % 2]].map((row, index) => (index < 2 ? row.replaceAll('O', hat) : row));
   const rects = pixels.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] ? `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${COLORS[pixel]}"/>` : '')).join('');
   return `<svg viewBox="0 0 8 9" aria-hidden="true">${rects}</svg>`;
 }
