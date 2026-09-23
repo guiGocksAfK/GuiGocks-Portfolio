@@ -8,6 +8,7 @@ const COLORS: Record<string, string> = {
   D: '#151a24', // visor
   A: '#6994ff', // accent: antenna tip, eyes, chest light
   R: '#ff6b6b', // angry eyes
+  O: '#ffb347', // crew hard hats
 };
 
 // Five rows: top, three visor rows, bottom.
@@ -40,4 +41,19 @@ export function RobotSprite({ pose, mood }: { pose: RobotPose; mood: RobotMood }
       {pixels.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] && <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill={COLORS[pixel]} />))}
     </svg>
   );
+}
+
+// Crew: smaller robots with hard hats that carry words in and out. They are created outside React, so they render to markup.
+export const CREW_WIDTH = 16;
+export const CREW_HEIGHT = 18;
+
+const CREW_LEGS = [['..B..B..', '.SS..SS.'], ['.B....B.', 'SS....SS']];
+
+export function crewMarkup(carrying: boolean, step: number) {
+  const top = carrying
+    ? ['..OOOO..', 'SOOOOOOS', 'SBDDDDBS', 'SBADDABS', '..BBBB..', '..BABB..', '..BBBB..']
+    : ['..OOOO..', '.OOOOOO.', '.BDDDDB.', '.BADDAB.', '..BBBB..', '.SBABBS.', '..BBBB..'];
+  const pixels = [...top, ...CREW_LEGS[step % 2]];
+  const rects = pixels.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] ? `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${COLORS[pixel]}"/>` : '')).join('');
+  return `<svg viewBox="0 0 8 9" aria-hidden="true">${rects}</svg>`;
 }

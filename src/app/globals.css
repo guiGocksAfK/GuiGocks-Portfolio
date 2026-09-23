@@ -120,6 +120,14 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .robot-alert { position: absolute; bottom: calc(100% + 4px); left: 50%; color: #ff6b6b; font-size: 20px; font-weight: 700; line-height: 1; animation: alert-pop .3s ease-out both; pointer-events: none; }
 @keyframes alert-pop { from { transform: translate(-50%, 6px) scale(.3); opacity: 0; } 60% { transform: translate(-50%, -3px) scale(1.25); } to { transform: translate(-50%, 0); } }
 .tech-flyers { position: absolute; inset: 0; pointer-events: none; }
+/* Hard-hat crew that hauls words away and delivers the next group. */
+.crew-layer { position: absolute; inset: 0; pointer-events: none; }
+/* Robots that run off to the right vanish at the hero's edge instead of widening the page. */
+.hero-main { overflow-x: clip; }
+.crew { position: absolute; left: 0; top: 0; width: 16px; height: 18px; z-index: 1; }
+.crew-sprite svg { display: block; width: 16px; height: 18px; shape-rendering: crispEdges; }
+.crew-load { position: absolute; bottom: calc(100% + 1px); color: var(--foreground); white-space: nowrap; line-height: 1.15; }
+.crew-tower { display: flex; flex-direction: column; align-items: center; }
 .tech-flyer { position: absolute; left: 0; top: 0; white-space: nowrap; transform-origin: 50% 50%; }
 /* Tossed word hits its line, squashes and settles. */
 .tech-place { animation: tech-place .4s var(--d) both, tech-landed .7s ease-out var(--d) both; }
