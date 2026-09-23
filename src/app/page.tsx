@@ -5,6 +5,7 @@ import { Reveal } from '@/components/reveal';
 import { PaintedName } from '@/components/painted-name';
 import { EmailCopy } from '@/components/email-copy';
 import { ProjectStamp } from '@/components/project-stamp';
+import { RobotSprite } from '@/components/robot-sprite';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -34,7 +35,16 @@ export default function Home() {
               <div className="intro"><p>{hero.introduction}</p><p>{hero.education}</p></div>
               <div id="contato" className="contact">
                 <nav aria-label={content.accessibility.social} className="social-links">
-                  {contact.links.map(link => <a key={link.label} className={`social-link social-${link.style} font-mono`} href={link.href} {...(link.href.startsWith('https:') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{link.label}<Arrow /></a>)}
+                  {contact.links.map(link => {
+                    const external = link.href.startsWith('https:');
+                    return (
+                      <a key={link.label} className={`social-link social-${link.style} font-mono`} href={link.href} {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                        {link.label}<Arrow />
+                        {/* Spy robot that peeks over the button on hover. */}
+                        {external && <span className="spy" aria-hidden="true"><span className="spy-robot"><RobotSprite pose="idle" mood="happy" /></span></span>}
+                      </a>
+                    );
+                  })}
                 </nav>
                 <EmailCopy email={contact.email} copiedLabel={contact.copiedLabel} copyHint={contact.copyHint} />
               </div>
