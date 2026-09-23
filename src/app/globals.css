@@ -83,6 +83,14 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 /* Vertical padding follows the viewport height so the whole hero fits above the fold. */
 .hero-main { min-height: calc(100svh - 183px); justify-content: flex-start; padding-top: clamp(8px, 2.5vh, 40px); padding-bottom: clamp(24px, 6vh, 88px); }
 .hero-grid { grid-template-columns: minmax(0, 1fr) 250px; gap: 32px; }
+/* On short desktop screens (e.g. 1080p at 125% zoom) the name and the gaps shrink with the height, so the email clears the bottom edge. */
+@media (min-width: 601px) {
+  .status { margin-bottom: clamp(16px, 3.8vh, 32px); }
+  h1 { font-size: clamp(48px, min(6.2vw, 12vh), 94px); }
+  .role { font-size: clamp(18px, min(2.3vw, 4.5vh), 34px); margin-top: clamp(12px, 3.2vh, 26px); }
+  .intro { margin-top: clamp(12px, 3.2vh, 26px); line-height: 1.7; }
+  .contact { margin-top: clamp(18px, 4.6vh, 38px); }
+}
 .braces { padding: 0; flex-direction: column; align-items: flex-start; font-size: 17px; line-height: 2.2; }
 .brace { font-size: 48px; line-height: 1; }
 .tech-list { align-self: stretch; min-height: calc(var(--lines, 6) * 2.2em + 24px); padding: 12px 0 12px 32px; color: var(--foreground); letter-spacing: -.03em; white-space: nowrap; text-align: left; }
