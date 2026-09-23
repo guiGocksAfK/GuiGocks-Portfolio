@@ -2,40 +2,60 @@
 
 import { useEffect, useState } from 'react';
 
+const VISIBLE_LINES = 6;
+
+type Line = { word: string; length: number };
+
+// Fills the braces line by line, then rewrites one line at a time in place, from top to bottom, cycling through every technology.
 export function TechnologyTyping({ words }: { words: readonly string[] }) {
-  const [text, setText] = useState(words[0] ?? '');
+  const [lines, setLines] = useState<Line[]>([]);
+  const [active, setActive] = useState<number | null>(null);
+  const [erasing, setErasing] = useState(false);
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     let timer: ReturnType<typeof setTimeout> | undefined;
-    let wordIndex = 0;
-    let length = words[0]?.length ?? 0;
-    let deleting = true;
+    let current: Line[] = [];
+    let nextWord = 0;
+    let slot = 0;
 
-    function tick() {
-      const word = words[wordIndex];
-      if (!word || preference.matches) return;
-      length += deleting ? -1 : 1;
-      setText(word.slice(0, length));
-      let delay = deleting ? 55 : 110;
-      if (length === 0) {
-        deleting = false;
-        wordIndex = (wordIndex + 1) % words.length;
-        delay = 300;
-      } else if (length === word.length && !deleting) {
-        deleting = true;
-        delay = 1800;
-      }
-      timer = setTimeout(tick, delay);
+    const render = (index: number | null, isErasing = false) => { setLines(current.map(line => ({ ...line }))); setActive(index); setErasing(isErasing); };
+    const wait = (delay: number, step: () => void) => { timer = setTimeout(step, delay); };
+    // Small random variation makes the typing feel like a person rather than a metronome.
+    const typingDelay = () => 55 + Math.random() * 45;
+
+    function startLine(index: number) {
+      current[index] = { word: words[nextWord], length: 0 };
+      nextWord = (nextWord + 1) % words.length;
+      typeLine(index);
+    }
+
+    function typeLine(index: number) {
+      if (preference.matches) return;
+      const line = current[index];
+      line.length += 1;
+      render(index);
+      if (line.length < line.word.length) return wait(typingDelay(), () => typeLine(index));
+      if (current.length < VISIBLE_LINES) return wait(260, () => startLine(current.length));
+      slot = (index + 1) % VISIBLE_LINES;
+      wait(1100, () => eraseLine(slot));
+    }
+
+    function eraseLine(index: number) {
+      if (preference.matches) return;
+      const line = current[index];
+      line.length -= 1;
+      render(index, true);
+      if (line.length > 0) return wait(28, () => eraseLine(index));
+      wait(180, () => startLine(index));
     }
 
     function restart() {
       clearTimeout(timer);
-      wordIndex = 0;
-      length = words[0]?.length ?? 0;
-      deleting = true;
-      setText(words[0] ?? '');
-      if (!preference.matches && words.length > 1) timer = setTimeout(tick, 1800);
+      current = [];
+      nextWord = 0;
+      render(null);
+      if (!preference.matches && words.length > 0) wait(600, () => startLine(0));
     }
 
     restart();
@@ -47,9 +67,24 @@ export function TechnologyTyping({ words }: { words: readonly string[] }) {
     <div className="technical-mark">
       <span className="sr-only">{words.join(', ')}</span>
       <div className="braces font-mono" aria-hidden="true">
-        <span>{'{'}</span>
-        <span className="typing-word"><span className="animated-tech">{text}</span><span className="static-tech">{words[0]}</span><span className="typing-cursor">_</span></span>
-        <span>{'}'}</span>
+        <span className="brace">{'{'}</span>
+        <ul className="tech-list animated-tech">
+          {lines.map((line, index) => {
+            const complete = line.length === line.word.length;
+            const typing = index === active && !erasing && line.length > 0;
+            return (
+              <li key={index} className={index === active ? 'tech-active' : undefined}>
+                {typing ? <>{line.word.slice(0, line.length - 1)}<span key={line.length} className="char-in">{line.word[line.length - 1]}</span></> : line.word.slice(0, line.length)}
+                {complete && index < VISIBLE_LINES - 1 && <span className="tech-comma char-in">,</span>}
+                {index === active && <span className="typing-cursor" />}
+              </li>
+            );
+          })}
+        </ul>
+        <ul className="tech-list static-tech">
+          {words.slice(0, VISIBLE_LINES).map((word, index) => <li key={word}>{word}{index < VISIBLE_LINES - 1 && <span className="tech-comma">,</span>}</li>)}
+        </ul>
+        <span className="brace">{'}'}</span>
       </div>
     </div>
   );

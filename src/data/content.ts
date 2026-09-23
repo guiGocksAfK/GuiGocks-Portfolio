@@ -2,7 +2,7 @@
 export const content = {
   metadata: {
     title: 'Guilherme Gabriel Gocks | Desenvolvedor full-stack',
-    description: 'Desenvolvedor full-stack com foco em Java, Spring Boot e React. Estudante de Engenharia de Software na UniAmérica, em busca de estágio.',
+    description: 'Desenvolvedor full-stack com foco em Java, Spring Boot e React. Estudante de Engenharia de Software na UniAmérica, aberto a oportunidades na área.',
   },
   brand: { name: 'gocks', suffix: '.dev', label: 'Guilherme Gabriel Gocks — início' },
   accessibility: { skip: 'Ir para o conteúdo', navigation: 'Navegação principal', social: 'Links de contato' },
@@ -13,13 +13,14 @@ export const content = {
     { label: 'Contato', href: '#contato', enabled: true },
   ],
   hero: {
-    status: 'Buscando estágio',
+    status: 'Aberto a oportunidades',
     firstName: 'Guilherme Gabriel',
     lastName: 'Gocks',
     role: 'Full-stack developer',
     introduction: 'Desenvolvo aplicações com Java, Spring Boot e React.',
     education: 'Estudante de Engenharia de Software na UniAmérica.',
-    technologies: ['Java', 'Spring Boot', 'React', 'PostgreSQL', 'Docker'],
+    // Ordered backend → frontend → infra, each group starting with the main tool.
+    technologies: ['Java', 'Spring Boot', 'Node.js', 'Python', 'TypeScript', 'JavaScript', 'React', 'Next.js', 'Angular', 'Docker', 'Oracle Cloud', 'Vercel', 'Neon'],
     section: '01 — Apresentação',
     location: 'Foz do Iguaçu, PR',
   },

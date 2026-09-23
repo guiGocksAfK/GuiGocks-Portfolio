@@ -83,9 +83,18 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 /* Vertical padding follows the viewport height so the whole hero fits above the fold. */
 .hero-main { min-height: calc(100svh - 183px); justify-content: flex-start; padding-top: clamp(8px, 2.5vh, 40px); padding-bottom: clamp(24px, 6vh, 88px); }
 .hero-grid { grid-template-columns: minmax(0, 1fr) 250px; gap: 32px; }
-.braces { padding: 0; align-items: center; font-size: 64px; }
-.typing-word { font-size: 17px; color: var(--foreground); letter-spacing: -.05em; white-space: nowrap; }
-.typing-cursor { color: var(--accent); }
+.braces { padding: 0; flex-direction: column; align-items: flex-start; font-size: 17px; line-height: 1.9; }
+.brace { font-size: 48px; line-height: 1; }
+.tech-list { min-height: calc(6 * 1.9em + 24px); padding: 12px 0 12px 32px; color: var(--foreground); letter-spacing: -.03em; white-space: nowrap; text-align: left; }
+.tech-list li { position: relative; isolation: isolate; min-height: 1.9em; }
+/* Editor-style highlight on the line being written, fading between lines. */
+.tech-list li::before { content: ''; position: absolute; inset: 1px -10px 1px -12px; border-radius: 4px; background: color-mix(in srgb, var(--accent) 9%, transparent); opacity: 0; transition: opacity .35s ease; z-index: -1; }
+.tech-list li.tech-active::before { opacity: 1; }
+.char-in { display: inline-block; animation: char-in .16s ease-out; }
+@keyframes char-in { from { opacity: 0; transform: translateY(3px); } }
+.tech-comma { color: var(--muted); }
+.typing-cursor { display: inline-block; width: 2px; height: 1.1em; margin-left: 3px; vertical-align: -.2em; background: var(--accent); animation: caret-blink 1s steps(1) infinite; }
+@keyframes caret-blink { 50% { opacity: 0; } }
 .static-tech { display: none; }
 .projects-section { padding: 90px 0 100px; }
 .section-label { color: var(--accent); text-transform: uppercase; font-size: 12px; letter-spacing: .08em; margin-bottom: 20px; }
@@ -129,5 +138,5 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 }
 @media (prefers-reduced-motion: reduce) {
   .animated-tech, .typing-cursor { display: none; }
-  .static-tech { display: inline; }
+  .static-tech { display: block; }
 }
