@@ -4,6 +4,7 @@ import { content } from '@/data/content';
 import { Reveal } from '@/components/reveal';
 import { PaintedName } from '@/components/painted-name';
 import { EmailCopy } from '@/components/email-copy';
+import { ProjectStamp } from '@/components/project-stamp';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -51,6 +52,7 @@ export default function Home() {
             <Reveal key={project.name}>
               <article className="project-card" aria-labelledby={`project-${index}`}>
                 <div className="project-visual">
+                  <ProjectStamp label={project.stamp.label} tone={project.stamp.tone} />
                   {project.screenshot ? <Image src={project.screenshot} alt={project.screenshotAlt} fill sizes="(max-width: 900px) 100vw, 45vw" className="project-image" /> :
                     <div className="screenshot-placeholder"><span className="placeholder-number font-mono" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><span className="font-mono">{projects.screenshotLabel}</span></div>}
                 </div>

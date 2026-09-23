@@ -54,6 +54,17 @@ export function EnvelopeSprite() {
   );
 }
 
+// Rubber stamp held by the inspector robot.
+const STAMP_TOOL = ['..SSS..', '..SSS..', '...S...', '...S...', '.AAAAA.', 'AAAAAAA', 'AAAAAAA'];
+
+export function StampToolSprite() {
+  return (
+    <svg viewBox="0 0 7 7" aria-hidden="true">
+      {STAMP_TOOL.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] && <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill={COLORS[pixel]} />))}
+    </svg>
+  );
+}
+
 // Crew: smaller robots with hard hats that carry words in and out. They are created outside React, so they render to markup.
 export const CREW_WIDTH = 16;
 export const CREW_HEIGHT = 18;

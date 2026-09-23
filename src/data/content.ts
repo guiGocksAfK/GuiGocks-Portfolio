@@ -48,6 +48,7 @@ export const content = {
           'Frontend na Vercel, backend em VM Oracle Cloud e PostgreSQL no Neon.',
         ],
         stack: ['React 19', 'Vite', 'Tailwind CSS', 'Spring Boot 3', 'Java 17', 'PostgreSQL', 'Flyway', 'Docker'],
+        stamp: { label: 'Em produção', tone: 'accent' },
         site: 'https://myrank-oficial.vercel.app',
         repositories: [{ label: 'Frontend', href: 'https://github.com/guiGocksAfK/MyRank-frontend' }, { label: 'Backend', href: 'https://github.com/guiGocksAfK/MyRank-backend' }, { label: 'Bot Discord', href: 'https://github.com/guiGocksAfK/MyRank-discordBot' }],
         screenshot: null,
@@ -63,6 +64,7 @@ export const content = {
           'Preservação do histórico de alunos transferidos e exportação mensal para impressão.',
         ],
         stack: ['Angular', 'NestJS', 'PostgreSQL', 'Prisma'],
+        stamp: { label: 'Em uso real', tone: 'accent' },
         site: 'https://escola-imaculada.vercel.app',
         repositories: [{ label: 'Frontend', href: 'https://github.com/guiGocksAfK/EscolaImaculada-frontend' }, { label: 'Backend', href: 'https://github.com/guiGocksAfK/EscolaImaculada-backend' }],
         screenshot: null,
@@ -78,6 +80,7 @@ export const content = {
           'Banco PostgreSQL com migrações versionadas pelo Flyway.',
         ],
         stack: ['Angular', 'Spring Boot 3', 'Java 17', 'Spring Security', 'PostgreSQL', 'Flyway'],
+        stamp: { label: 'Projeto acadêmico', tone: 'muted' },
         site: null,
         repositories: [],
         screenshot: null,
@@ -85,6 +88,8 @@ export const content = {
       },
     ] as readonly {
       name: string; category: string; description: string; highlights: readonly string[];
+      // Status stamped on the card by the inspector robot.
+      stamp: { label: string; tone: 'accent' | 'muted' };
       stack: readonly string[]; site: string | null; repositories: readonly { label: string; href: string }[];
       // Save images in public/projects/ and use a path such as /projects/myrank.webp.
       screenshot: string | null; screenshotAlt: string;
