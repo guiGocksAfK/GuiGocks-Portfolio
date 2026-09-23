@@ -54,7 +54,6 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 .hero-footer span:first-child { text-transform: uppercase; }
 .skip-link { position: absolute; top: -100px; left: 24px; padding: 12px; background: var(--accent); color: var(--background); z-index: 10; }
 .skip-link:focus { top: 12px; }
-@media (min-width: 1500px) { .hero-main { padding-top: 110px; padding-bottom: 120px; } }
 @media (max-width: 1050px) { .hero-grid { grid-template-columns: minmax(0, 1fr); } .technical-mark { display: none; } }
 @media (max-width: 600px) {
   .wordmark { font-size: 19px; }
@@ -81,7 +80,8 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 
 
 /* Hero + project case studies */
-.hero-main { min-height: calc(100svh - 183px); }
+/* Vertical padding follows the viewport height so the whole hero fits above the fold. */
+.hero-main { min-height: calc(100svh - 183px); justify-content: flex-start; padding-top: clamp(8px, 2.5vh, 40px); padding-bottom: clamp(24px, 6vh, 88px); }
 .hero-grid { grid-template-columns: minmax(0, 1fr) 250px; gap: 32px; }
 .braces { padding: 0; align-items: center; font-size: 64px; }
 .typing-word { font-size: 17px; color: var(--foreground); letter-spacing: -.05em; white-space: nowrap; }
