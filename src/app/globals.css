@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0d0f12;
+  --foreground: #f1f2f4;
+  --muted: #abb0ba;
+  --accent: #6994ff;
+  --border: #2c313b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-geist-sans), sans-serif; }
+::selection { background: var(--accent); color: var(--background); }
+a { text-decoration: none; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 3px; }
+.site-shell { max-width: 1600px; margin: 0 auto; padding: 0 clamp(24px, 5vw, 80px); min-height: 100svh; display: flex; flex-direction: column; }
+.wordmark { font-size: 23px; font-weight: 600; letter-spacing: -.04em; }
+.nav-link { font-size: 13px; color: var(--muted); transition: color .18s; }
+a.nav-link:hover { color: var(--accent); }
+.nav-pending { cursor: default; }
+.hero-main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 72px clamp(0px, 3.2vw, 48px) 96px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) 190px; align-items: center; gap: 48px; }
+.status { display: flex; align-items: center; gap: 16px; color: var(--foreground); text-transform: uppercase; font-size: 13px; letter-spacing: .035em; margin-bottom: 32px; }
+.status > span { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; letter-spacing: -.055em; }
+.name-period { color: #a3bcff; }
+.role { font-size: clamp(18px, 2.3vw, 34px); letter-spacing: -.035em; margin-top: 26px; }
+.intro { font-size: clamp(15px, 1.35vw, 19px); line-height: 1.75; color: var(--muted); margin-top: 26px; }
+.contact { margin-top: 38px; }
+.social-links { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+.social-link { display: inline-flex; justify-content: center; align-items: center; gap: 14px; padding: 15px 27px; min-height: 50px; border-radius: 5px; font-size: 14px; font-weight: 500; transition: transform .18s, background-color .18s, border-color .18s; }
+.social-link:hover { transform: translateY(-3px); }
+.social-primary { background: var(--accent); color: var(--background); border: 1px solid var(--accent); }
+.social-primary:hover { background: #8aabff; }
+.social-outline { border: 1px solid var(--muted); }
+.social-outline:hover { border-color: var(--accent); background: #151b27; }
+.social-text:hover { color: var(--accent); }
+.arrow { width: 18px; height: 18px; }
+.email { display: inline-block; margin-top: 17px; font-size: 14px; color: var(--muted); }
+.email:hover { color: var(--accent); }
+.technical-mark { text-align: center; margin-top: 5px; }
+.braces { display: flex; justify-content: space-between; padding: 0 16px; color: var(--accent); font-size: 85px; line-height: 1.2; font-weight: 300; }
+.technical-mark p { font-size: 11px; margin-top: 24px; color: var(--muted); text-transform: uppercase; white-space: nowrap; }
+.hero-footer { border-top: 1px solid var(--border); display: flex; justify-content: space-between; gap: 24px; padding: 23px 0 28px; font-size: 11px; color: var(--muted); }
+.hero-footer span:first-child { text-transform: uppercase; }
+.skip-link { position: absolute; top: -100px; left: 24px; padding: 12px; background: var(--accent); color: var(--background); z-index: 10; }
+.skip-link:focus { top: 12px; }
+@media (min-width: 1500px) { .hero-main { padding-top: 110px; padding-bottom: 120px; } }
+@media (max-width: 1050px) { .hero-grid { grid-template-columns: minmax(0, 1fr); } .technical-mark { display: none; } }
+@media (max-width: 600px) {
+  .wordmark { font-size: 19px; }
+  .nav-link { font-size: 11px; }
+  .hero-main { padding: 64px 0 72px; }
+  h1 { font-size: clamp(43px, 10vw, 60px); }
+  .status { font-size: 11px; margin-bottom: 27px; gap: 10px; }
+  .role { font-size: clamp(17px, 4.7vw, 25px); margin-top: 23px; }
+  .intro { margin-top: 25px; font-size: 15px; }
+  .intro p + p { margin-top: 8px; }
+  .social-links { gap: 10px; }
+  .social-link { font-size: 12px; padding: 12px 15px; gap: 9px; }
+  .social-text { padding-left: 8px; padding-right: 8px; }
+  .email { font-size: 12px; }
+  .hero-footer { font-size: 9px; gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+@media (max-width: 380px) {
+  header { flex-wrap: wrap; row-gap: 18px; }
+  header nav { width: 100%; justify-content: space-between; }
+  .hero-main { padding-top: 40px; }
+}
+
