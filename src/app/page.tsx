@@ -64,7 +64,7 @@ export default function Home() {
               <article className="project-card" aria-labelledby={`project-${index}`}>
                 <div className="project-visual">
                   <ProjectStamp label={project.stamp.label} tone={project.stamp.tone} />
-                  {project.screenshot ? <Image src={project.screenshot} alt={project.screenshotAlt} fill sizes="(max-width: 900px) 100vw, 45vw" className="project-image" /> :
+                  {project.screenshot ? <div className="project-shot"><Image src={project.screenshot} alt={project.screenshotAlt} fill quality={90} sizes="(max-width: 900px) 100vw, 1200px" className="project-image" /></div> :
                     <div className="screenshot-placeholder"><span className="placeholder-number font-mono" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><span className="font-mono">{projects.screenshotLabel}</span></div>}
                 </div>
                 <div className="project-details">

@@ -51,8 +51,8 @@ export const content = {
         stamp: { label: 'Em produção', tone: 'accent' },
         site: 'https://myrank-oficial.vercel.app',
         repositories: [{ label: 'Frontend', href: 'https://github.com/guiGocksAfK/MyRank-frontend' }, { label: 'Backend', href: 'https://github.com/guiGocksAfK/MyRank-backend' }, { label: 'Bot Discord', href: 'https://github.com/guiGocksAfK/MyRank-discordBot' }],
-        screenshot: null,
-        screenshotAlt: 'Interface da plataforma MyRank',
+        screenshot: '/projects/MyRank.png',
+        screenshotAlt: 'Página inicial do MyRank com capas de filmes e o slogan “Seu gosto. Seu ranking. Sua identidade.”',
       },
       {
         name: 'Escola Imaculada',
@@ -67,8 +67,8 @@ export const content = {
         stamp: { label: 'Em uso real', tone: 'accent' },
         site: 'https://escola-imaculada.vercel.app',
         repositories: [{ label: 'Frontend', href: 'https://github.com/guiGocksAfK/EscolaImaculada-frontend' }, { label: 'Backend', href: 'https://github.com/guiGocksAfK/EscolaImaculada-backend' }],
-        screenshot: null,
-        screenshotAlt: 'Interface do sistema Escola Imaculada',
+        screenshot: '/projects/EscolaImaculada.png',
+        screenshotAlt: 'Tela de login do Registro de Classe da Escola Imaculada',
       },
       {
         name: 'AJT Viagens e Turismo',
