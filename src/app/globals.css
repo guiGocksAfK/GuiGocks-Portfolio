@@ -110,7 +110,16 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 .tech-comma { color: var(--muted); }
 /* The robot moves inside the stage, which shares its coordinates with the list lines. */
 .tech-stage { position: relative; align-self: stretch; }
-.robot { position: absolute; left: 0; top: 0; width: 22px; height: 24px; opacity: 0; pointer-events: none; z-index: 2; will-change: transform; }
+.robot { position: absolute; left: 0; top: 0; width: 22px; height: 24px; opacity: 0; cursor: pointer; z-index: 2; will-change: transform; }
+/* Words the robot carries in, stacked on its head; the top one is tossed first. */
+.robot-cargo { position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; line-height: 1.15; color: var(--foreground); white-space: nowrap; pointer-events: none; }
+.robot-alert { position: absolute; bottom: calc(100% + 4px); left: 50%; color: #ff6b6b; font-size: 20px; font-weight: 700; line-height: 1; animation: alert-pop .3s ease-out both; pointer-events: none; }
+@keyframes alert-pop { from { transform: translate(-50%, 6px) scale(.3); opacity: 0; } 60% { transform: translate(-50%, -3px) scale(1.25); } to { transform: translate(-50%, 0); } }
+.tech-flyers { position: absolute; inset: 0; pointer-events: none; }
+.tech-flyer { position: absolute; left: 0; top: 0; white-space: nowrap; transform-origin: 50% 50%; }
+/* Tossed word hits its line, squashes and settles. */
+.tech-place { animation: tech-place .4s var(--d) both, tech-landed .7s ease-out var(--d) both; }
+@keyframes tech-place { 0% { transform: scale(1.16, .78); } 45% { transform: translateY(-4px) scale(.98, 1.05); } 100% { transform: none; } }
 .robot-body { width: 100%; height: 100%; transform-origin: 50% 100%; }
 .robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .static-tech { display: none; }
