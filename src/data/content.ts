@@ -9,7 +9,7 @@ export const content = {
   // These sections are intentionally inactive until their implementation is approved.
   navigation: [
     { label: 'Projetos', href: '#projetos', enabled: true },
-    { label: 'Sobre', href: '#sobre', enabled: false },
+    { label: 'Sobre', href: '#sobre', enabled: true },
     { label: 'Contato', href: '#contato', enabled: true },
   ],
   hero: {
@@ -27,6 +27,28 @@ export const content = {
     ],
     section: '01 — Apresentação',
     location: 'Foz do Iguaçu, PR',
+  },
+  // Texts in [brackets] are placeholders waiting for the real story.
+  about: {
+    section: '03 — Sobre',
+    title: 'Sobre mim.',
+    footerNote: 'Engenharia de Software · UniAmérica',
+    paragraphs: [
+      '[Como você começou a programar — 2 ou 3 frases contando a sua história.]',
+      '[O que você gosta de construir e como gosta de trabalhar.]',
+    ],
+    lookingFor: { label: 'O que eu busco', text: '[Tipo de vaga (backend, full-stack…) e formato: remoto ou presencial em Foz do Iguaçu.]' },
+    timelineLabel: 'Trajetória',
+    timeline: [
+      { year: '20XX', text: '[Entrada em Engenharia de Software na UniAmérica]' },
+      { year: '20XX', text: '[Primeiro projeto]' },
+      { year: '20XX', text: '[Escola Imaculada passa a ser usada por escolas]' },
+      { year: '20XX', text: '[MyRank no ar]' },
+    ],
+    // Save the photo in public/ (e.g. /about/foto.webp) and set the path here.
+    photo: null as string | null,
+    photoAlt: 'Foto de Guilherme Gabriel Gocks',
+    photoPlaceholder: 'Foto em breve',
   },
   projects: {
     section: '02 — Projetos',

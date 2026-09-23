@@ -120,6 +120,26 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .painter { position: absolute; left: 0; top: 0; opacity: 0; pointer-events: none; z-index: 3; }
 .painter > svg:first-child { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .painter-roller { position: absolute; overflow: visible; shape-rendering: crispEdges; }
+/* About: photo on the left, story, what I'm looking for and a short timeline on the right. */
+.about-section { padding: 90px 0 0; }
+.about-section .section-footer { margin-top: 90px; }
+.about-grid { display: grid; grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); gap: clamp(32px, 5vw, 72px); align-items: start; }
+.about-photo { position: relative; aspect-ratio: 4 / 5; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #11151b; }
+.about-image { object-fit: cover; }
+.photo-placeholder { position: absolute; inset: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; border: 1px dashed var(--border); border-radius: 6px; color: var(--muted); font-size: 12px; }
+.photo-robot { width: 44px; height: 48px; }
+.photo-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.about-text > p { color: var(--muted); font-size: 16px; line-height: 1.75; max-width: 62ch; }
+.about-text > p + p { margin-top: 14px; }
+.about-label { color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.about-looking { margin-top: 28px; border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); padding-left: 14px; }
+.about-looking p + p { margin-top: 6px; color: var(--muted); font-size: 15px; line-height: 1.7; }
+.timeline-label { margin-top: 32px; }
+.timeline { margin-top: 12px; max-width: 62ch; }
+.timeline li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; padding: 12px 0; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; line-height: 1.6; }
+.timeline li:last-child { border-bottom: 1px solid var(--border); }
+.timeline-year { color: var(--accent); font-size: 13px; }
+@media (max-width: 900px) { .about-grid { grid-template-columns: minmax(0, 1fr); } .about-photo { max-width: 260px; } }
 /* Mail robot: pops up next to the email with an envelope over its head and a "copied" bubble, then drops back down. */
 .email-wrap { position: relative; display: inline-block; }
 .mailman { position: absolute; left: calc(100% + 12px); bottom: -2px; width: 22px; height: 24px; pointer-events: none; animation: mailman 2.2s ease-out both; }
@@ -194,7 +214,7 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .static-tech { display: none; }
 .projects-section { padding: 90px 0 0; }
 .projects-section .section-footer { margin-top: 90px; }
-.projects-section h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 600; letter-spacing: -.045em; line-height: 1.15; margin-bottom: 44px; }
+.projects-section h2, .about-section h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 600; letter-spacing: -.045em; line-height: 1.15; margin-bottom: 44px; }
 .project-list { display: grid; gap: 28px; }
 .project-card { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
 .project-card:hover, .project-card:focus-within { border-color: var(--accent); }
@@ -265,7 +285,9 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 @media (max-width: 600px) {
   .projects-section { padding-top: 60px; }
   .projects-section .section-footer { margin-top: 60px; }
-  .projects-section h2 { margin-bottom: 30px; }
+  .projects-section h2, .about-section h2 { margin-bottom: 30px; }
+  .about-section { padding-top: 60px; }
+  .about-section .section-footer { margin-top: 60px; }
   .project-details { padding: 24px 20px; }
   .placeholder-number { font-size: 48px; }
   .social-links { gap: 9px; }
