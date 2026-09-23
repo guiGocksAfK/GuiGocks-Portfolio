@@ -123,13 +123,13 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* About: the site ID badge on the left; the story and the career building (same width) on the right. */
 .about-section { padding: 90px 0 0; }
 .about-section .section-footer { margin-top: 90px; }
-.about-grid { display: grid; grid-template-columns: minmax(230px, 280px) minmax(0, 1fr); gap: clamp(32px, 6vw, 96px); align-items: start; }
-.about-main { max-width: 640px; }
+.about-grid { display: grid; grid-template-columns: minmax(300px, 340px) minmax(0, 1fr); gap: clamp(40px, 5vw, 80px); align-items: start; }
+.about-main { min-width: 0; }
 .about-story > p { color: var(--muted); font-size: 16px; line-height: 1.75; }
 .about-story > p + p { margin-top: 14px; }
 .about-label { margin-top: 36px; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 /* Badge hanging from a nail. While waiting it is off-site; the drone flies it in, leaves, and the badge swings to rest. */
-.badge-rig { position: relative; max-width: 260px; padding-top: 4px; }
+.badge-rig { position: relative; width: 100%; max-width: 320px; padding-top: 4px; }
 .badge-nail { position: absolute; left: calc(50% - 5px); top: -1px; width: 10px; height: 10px; border-radius: 50%; background: #8f9bb3; box-shadow: inset -2px -2px 0 #5d6678; z-index: 3; }
 .badge-flight { position: relative; }
 .badge-hang { transform-origin: 50% 0; }

@@ -141,7 +141,6 @@ export const content = {
     links: [
       { label: 'GitHub', href: 'https://github.com/guiGocksAfK', style: 'primary' },
       { label: 'LinkedIn', href: 'https://www.linkedin.com/in/guilherme-gabriel-gocks-023846352', style: 'outline' },
-      { label: 'Ver projetos', href: '#projetos', style: 'text' },
     ],
   },
 } as const;
