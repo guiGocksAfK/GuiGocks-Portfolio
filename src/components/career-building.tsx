@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { RobotSprite } from '@/components/robot-sprite';
 
 type Step = { year: string; text: string };
 type Phase = 'done' | 'waiting' | 'building';
@@ -23,9 +24,14 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
   useEffect(() => {
     const site = siteRef.current;
     const cable = cableRef.current;
-    if (!site || !cable || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!site || !cable) return;
     const crane: HTMLSpanElement = cable;
     const area: HTMLDivElement = site;
+    const floors = [...area.querySelectorAll<HTMLElement>('.floor-step')];
+    const runner = area.querySelector<HTMLElement>('.timeline-runner');
+    const placeRunner = (floor: HTMLElement) => { if (runner) runner.style.top = `${floor.offsetTop + floor.offsetHeight / 2 - 12}px`; };
+    if (floors.length) placeRunner(floors[floors.length - 1]);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     let cancelled = false;
     const timers = new Set<ReturnType<typeof setTimeout>>();
     // Floors stay off the site until the crane brings them.
@@ -40,7 +46,12 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
 
     async function build() {
       setCable(CABLE_SHORT);
-      const floors = [...area.querySelectorAll<HTMLElement>('.floor-step')];
+      if (floors.length && runner) {
+        runner.style.transition = 'none';
+        placeRunner(floors[0]);
+        void runner.offsetHeight;
+        runner.style.removeProperty('transition');
+      }
       for (let index = 0; index < floors.length; index++) {
         const floor = floors[index];
         const hookY = CABLE_TOP + CABLE_SHORT;
@@ -52,6 +63,7 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
         await play(floor, [{ transform: `translateY(${-drop}px)` }, { transform: 'none' }], { duration, easing: 'cubic-bezier(.45, 0, .35, 1)' });
         floor.classList.remove('floor-hanging');
         setPlaced(index + 1);
+        placeRunner(floor);
         // Released: the cable reels back up while the floor settles.
         await play(crane, [{ height: `${CABLE_SHORT + drop}px` }, { height: `${CABLE_SHORT}px` }], { duration: 380, easing: 'ease-in-out' });
         await wait(120);
@@ -78,8 +90,9 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
   }, [steps]);
 
   const floorClass = (index: number) => {
-    if (phase === 'done') return 'floor floor-step';
-    return `floor floor-step ${index < placed ? 'floor-landed' : 'floor-pending'}`;
+    const current = index === steps.length - 1 ? ' floor-current' : '';
+    if (phase === 'done') return `floor floor-step${current}`;
+    return `floor floor-step${current} ${index < placed ? 'floor-landed' : 'floor-pending'}`;
   };
 
   return (
@@ -100,6 +113,7 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
           <a href={next.href}><span className="font-mono">{next.label}:</span> <strong>{next.text}</strong> <span aria-hidden="true">→</span></a>
         </li>
       </ol>
+      <span className="timeline-runner" aria-hidden="true"><RobotSprite pose="idle" mood="happy" /></span>
       <span className="building-ground" aria-hidden="true" />
     </div>
   );

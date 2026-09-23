@@ -121,13 +121,20 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .painter > svg:first-child { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .painter-roller { position: absolute; overflow: visible; shape-rendering: crispEdges; }
 /* About: the site ID badge on the left; the story and the career building (same width) on the right. */
-.about-section { padding: 90px 0 0; }
+.about-section { position: relative; isolation: isolate; padding: 90px 0 0; }
+.about-section::before { content: ''; position: absolute; z-index: -1; inset: 120px 0 40px; pointer-events: none; background: radial-gradient(ellipse at 18% 52%, #6994ff10, transparent 45%), radial-gradient(ellipse at 78% 72%, #6994ff12, transparent 52%); }
 .about-section .section-footer { margin-top: 90px; }
 .about-grid { display: grid; grid-template-columns: minmax(300px, 340px) minmax(0, 1fr); gap: clamp(40px, 5vw, 80px); align-items: start; }
 .about-main { min-width: 0; }
+.about-section h2::after { content: ''; display: block; width: 68px; height: 4px; margin-top: 16px; border-radius: 2px; background: var(--accent); }
+.about-story { position: relative; padding: 26px 32px; border: 1px solid #35476b; border-left: 3px solid var(--accent); border-radius: 8px; background: linear-gradient(110deg, #1a2741 0%, #151b29 58%, #141820 100%); }
 .about-story > p { color: var(--muted); font-size: 16px; line-height: 1.75; }
 .about-story > p + p { margin-top: 14px; }
-.about-label { margin-top: 36px; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.about-story-robot { position: absolute; top: -24px; right: 24px; display: block; width: 34px; height: 38px; filter: drop-shadow(0 4px 3px #0d0f12); transform: rotate(7deg); }
+.about-story-robot svg, .about-timeline-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.about-timeline-heading { display: flex; align-items: end; justify-content: space-between; margin-top: 26px; padding-right: 48px; border-bottom: 1px solid #35476b; }
+.about-label { padding-bottom: 10px; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.about-timeline-robot { display: block; width: 34px; height: 38px; margin-bottom: -1px; }
 /* Badge hanging from a nail. While waiting it is off-site; the drone flies it in, leaves, and the badge swings to rest. */
 .badge-rig { position: relative; width: 100%; max-width: 320px; padding-top: 4px; }
 .badge-nail { position: absolute; left: calc(50% - 5px); top: -1px; width: 10px; height: 10px; border-radius: 50%; background: #8f9bb3; box-shadow: inset -2px -2px 0 #5d6678; z-index: 3; }
@@ -136,7 +143,7 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .badge-rig:hover .badge-hang { animation: badge-nudge 1s ease-out; }
 .badge-lanyard { display: block; width: 70px; height: 60px; margin: 0 auto; overflow: visible; }
 .badge-lanyard path { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
-.badge-card { position: relative; margin-top: -4px; padding: 26px 18px 18px; border: 1px solid var(--border); border-radius: 10px; background: #141820; text-align: center; box-shadow: 0 14px 30px -18px #000; }
+.badge-card { position: relative; margin-top: -4px; padding: 26px 18px 18px; border: 1px solid var(--border); border-radius: 10px; background: #141820; text-align: center; box-shadow: 0 14px 30px -18px #000, 0 0 45px -30px #6994ff; }
 .badge-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 8px; border-radius: 9px 9px 0 0; background: repeating-linear-gradient(-45deg, #ffb347 0 6px, #151a24 6px 12px); opacity: .85; }
 .badge-clip { position: absolute; left: calc(50% - 30px); top: -5px; width: 60px; height: 11px; border-radius: 3px; background: #8f9bb3; box-shadow: inset 0 -2px 0 #5d6678; z-index: 2; }
 .badge-photo { position: relative; width: 124px; aspect-ratio: 1; margin: 0 auto 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #0f1218; }
@@ -174,7 +181,14 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .building-ground { display: block; height: 3px; border-radius: 2px; background: #3a404c; }
 .building { position: static; display: flex; flex-direction: column-reverse; margin-right: 44px; }
 .floor { position: relative; z-index: 2; margin-top: -1px; border: 1px solid var(--border); background: #141820; }
-.floor-step { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 14px; padding: 13px 16px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.floor-step { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 14px; padding: 13px 16px 13px 22px; border-left: 3px solid #5274ba; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.floor-step::after { content: ""; position: absolute; left: -7px; top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: #8aaaff; box-shadow: 0 0 0 3px #141820; }
+.floor-current { border-left-color: var(--accent); background: linear-gradient(90deg, #1c2943, #181c25 65%); }
+.floor-current .floor-year, .floor-current .floor-text { color: var(--foreground); }
+.floor-current .floor-year { font-weight: 700; color: var(--accent); }
+.timeline-runner { position: absolute; z-index: 4; left: -12px; top: 124px; width: 24px; height: 24px; pointer-events: none; transition: top .55s cubic-bezier(.2, .8, .25, 1); filter: drop-shadow(0 0 6px #6994ff); }
+.timeline-runner svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.building-waiting .timeline-runner { opacity: 0; }
 .floor-step::before { content: ''; position: absolute; right: 10px; top: 10px; width: 6px; height: 6px; background: color-mix(in srgb, var(--accent) 35%, transparent); box-shadow: 0 10px 0 color-mix(in srgb, var(--accent) 20%, transparent); }
 .floor-step:first-child { background: #181c25; border-bottom-width: 3px; }
 .floor-step .floor-text { padding-right: 16px; }
@@ -198,7 +212,7 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
   .about-main { max-width: none; }
 }
 @media (max-width: 480px) {
-  .floor-step { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 12px; font-size: 13px; }
+  .floor-step { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 12px 12px 12px 18px; font-size: 13px; }
   .building { margin-right: 38px; }
   .crane-cable { left: calc(50% - 19px - 1px); }
   .crane-jib { left: calc(50% - 19px - 40px); }
@@ -352,6 +366,8 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
   .projects-section h2, .about-section h2 { margin-bottom: 30px; }
   .about-section { padding-top: 60px; }
   .about-section .section-footer { margin-top: 60px; }
+  .about-story { padding: 24px 20px; }
+  .about-story-robot { right: 12px; }
   .project-details { padding: 24px 20px; }
   .placeholder-number { font-size: 48px; }
   .social-links { gap: 9px; }

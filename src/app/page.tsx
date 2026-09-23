@@ -111,8 +111,14 @@ export default function Home() {
             photo={about.photo} photoAlt={about.photoAlt} avatarLabel={about.avatarLabel}
           />
           <div className="about-main">
-            <div className="about-story">{about.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div>
-            <p className="about-label font-mono">{about.timelineLabel}</p>
+            <div className="about-story">
+              <span className="about-story-robot" aria-hidden="true"><RobotSprite pose="idle" mood="happy" /></span>
+              {about.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+            </div>
+            <div className="about-timeline-heading">
+              <p className="about-label font-mono">{about.timelineLabel}</p>
+              <span className="about-timeline-robot" aria-hidden="true"><RobotSprite pose="carry" mood="normal" /></span>
+            </div>
             <CareerBuilding steps={about.timeline} next={about.nextFloor} />
           </div>
         </div>
