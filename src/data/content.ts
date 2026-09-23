@@ -36,7 +36,10 @@ export const content = {
     siteLabel: 'Ver site',
     repositoryLabel: 'Repositório',
     missingLinkLabel: 'Link ainda não informado',
-    highlightsLabel: 'Decisões e destaques',
+    codeLabel: 'Código:',
+    missingCodeLabel: 'não informado',
+    drawerOpenLabel: 'Ver decisões técnicas',
+    drawerCloseLabel: 'Esconder decisões técnicas',
     items: [
       {
         name: 'MyRank',

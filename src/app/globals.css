@@ -198,30 +198,48 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .project-list { display: grid; gap: 28px; }
 .project-card { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
 .project-card:hover, .project-card:focus-within { border-color: var(--accent); }
-.project-visual { position: relative; background: #11151b; min-height: 300px; border-right: 1px solid var(--border); }
+.project-visual { position: relative; background: #11151b; min-height: 260px; border-right: 1px solid var(--border); }
 /* Screenshots fill the frame; both current prints keep their key content in the centre.
    Filling the height makes a wide print render ~1200px wide, which is why page.tsx asks next/image for that size. */
 .project-image { object-fit: cover; object-position: center; }
 /* Screenshots sit below a dark strip that holds the inspector's stamp. */
 .project-shot { position: absolute; inset: 64px 0 0; border-top: 1px solid var(--border); }
-.screenshot-placeholder { height: 100%; min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; color: var(--muted); font-size: 12px; }
+.screenshot-placeholder { height: 100%; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; color: var(--muted); font-size: 12px; }
 .placeholder-number { font-size: 72px; line-height: 1; letter-spacing: -.08em; color: #424d60; }
-.project-details { padding: clamp(24px, 3vw, 44px); min-width: 0; }
-.project-eyebrow { display: flex; gap: 14px; align-items: baseline; color: var(--muted); font-size: 11px; margin-bottom: 18px; }
+/* Compact case study: name, one-line pitch, stack and links up front; technical decisions live in a drawer. */
+.project-details { padding: clamp(22px, 2.4vw, 34px); min-width: 0; }
+.project-eyebrow { display: flex; gap: 14px; align-items: baseline; color: var(--muted); font-size: 11px; margin-bottom: 12px; }
 .project-eyebrow > span { color: var(--accent); }
-.project-details h3 { font-size: clamp(25px, 2.5vw, 34px); line-height: 1.2; font-weight: 600; letter-spacing: -.04em; }
-.project-description { color: var(--muted); line-height: 1.7; font-size: 15px; margin-top: 16px; }
-.highlights-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; margin: 26px 0 12px; }
+.project-details h3 { font-size: clamp(22px, 2vw, 28px); line-height: 1.2; font-weight: 600; letter-spacing: -.04em; }
+.project-description { color: var(--muted); line-height: 1.6; font-size: 14px; margin-top: 10px; }
 .project-highlights { list-style: disc; padding-left: 17px; color: var(--muted); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
 .project-highlights li + li { margin-top: 8px; }
 .project-highlights li::marker { color: var(--accent); }
-.project-stack { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 24px; }
+.project-stack { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
 .project-stack li { font-size: 10px; line-height: 1.5; border: 1px solid var(--border); border-radius: 3px; padding: 5px 8px; color: var(--muted); }
-.project-links { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 28px; font-size: 12px; }
-.project-links a, .project-links > span { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+.project-links { display: flex; flex-wrap: wrap; align-items: center; column-gap: 28px; margin-top: 14px; font-size: 12px; }
+.project-links a { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; }
 .project-links a:hover { color: var(--accent); }
-.project-links > span { color: var(--muted); opacity: .6; cursor: not-allowed; }
 .project-links .arrow { width: 15px; height: 15px; }
+.link-missing { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); opacity: .6; cursor: not-allowed; }
+.project-code { display: inline-flex; flex-wrap: wrap; align-items: center; column-gap: 8px; }
+.code-label { color: var(--muted); }
+.code-link { display: inline-flex; align-items: center; gap: 8px; }
+.code-separator { color: var(--border); }
+/* Drawer with the technical decisions: rows animate from 0fr to 1fr; a crew robot hangs from the bottom edge while it moves. */
+.drawer { margin-top: 6px; }
+.drawer-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0; border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; transition: color .18s; }
+.drawer-toggle:hover { color: var(--accent); }
+.drawer-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+.drawer-chevron { display: inline-block; transition: transform .3s; }
+.drawer-open .drawer-chevron { transform: rotate(180deg); }
+.drawer-body { position: relative; display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.3, .7, .2, 1); }
+.drawer-open .drawer-body { grid-template-rows: 1fr; }
+.drawer-panel { min-height: 0; overflow: hidden; }
+.drawer-panel .project-highlights { padding-top: 8px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.drawer-robot { position: absolute; right: 16px; bottom: -18px; width: 16px; height: 18px; pointer-events: none; animation: drawer-robot .9s ease-out both; }
+.drawer-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+@keyframes drawer-robot { from { opacity: 0; transform: translateX(10px); } 15% { opacity: 1; transform: none; } 70% { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(16px); } }
 @media (max-width: 1050px) { .hero-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 900px) {
   .project-card { grid-template-columns: minmax(0, 1fr); }

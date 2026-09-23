@@ -7,6 +7,7 @@ import { EmailCopy } from '@/components/email-copy';
 import { ProjectStamp } from '@/components/project-stamp';
 import { RobotSprite } from '@/components/robot-sprite';
 import { PatrolRobot } from '@/components/patrol-robot';
+import { ProjectDrawer } from '@/components/project-drawer';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -70,14 +71,25 @@ export default function Home() {
                   <p className="project-eyebrow font-mono"><span>{String(index + 1).padStart(2, '0')}</span>{project.category}</p>
                   <h3 id={`project-${index}`}>{project.name}</h3>
                   <p className="project-description">{project.description}</p>
-                  <h4 className="highlights-label font-mono">{projects.highlightsLabel}</h4>
-                  <ul className="project-highlights">{project.highlights.map(highlight => <li key={highlight}>{highlight}</li>)}</ul>
                   <ul className="project-stack font-mono" aria-label={project.stack.join(', ')}>{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul>
+                  {/* One compact row: the live site, then the repositories as short labels. */}
                   <div className="project-links font-mono">
-                    {[{ label: projects.siteLabel, href: project.site }, ...(project.repositories.length ? project.repositories.map(repo => ({ label: `${projects.repositoryLabel} · ${repo.label}`, href: repo.href })) : [{ label: projects.repositoryLabel, href: null }])].map(link => link.href
-                      ? <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" aria-label={`${link.label} — ${project.name}`}>{link.label}<Arrow /></a>
-                      : <span key={link.label} aria-disabled="true" title={projects.missingLinkLabel}>{link.label}<Arrow /></span>)}
+                    {project.site
+                      ? <a href={project.site} target="_blank" rel="noopener noreferrer" aria-label={`${projects.siteLabel} — ${project.name}`}>{projects.siteLabel}<Arrow /></a>
+                      : <span className="link-missing" aria-disabled="true" title={projects.missingLinkLabel}>{projects.siteLabel}<Arrow /></span>}
+                    <span className="project-code">
+                      <span className="code-label">{projects.codeLabel}</span>
+                      {project.repositories.length
+                        ? project.repositories.map((repo, repoIndex) => (
+                          <span key={repo.href} className="code-link">
+                            {repoIndex > 0 && <span className="code-separator" aria-hidden="true">·</span>}
+                            <a href={repo.href} target="_blank" rel="noopener noreferrer" aria-label={`${projects.repositoryLabel} ${repo.label} — ${project.name}`}>{repo.label.toLowerCase()}</a>
+                          </span>
+                        ))
+                        : <span className="link-missing" aria-disabled="true" title={projects.missingLinkLabel}>{projects.missingCodeLabel}</span>}
+                    </span>
                   </div>
+                  <ProjectDrawer items={project.highlights} openLabel={projects.drawerOpenLabel} closeLabel={projects.drawerCloseLabel} />
                 </div>
               </article>
             </Reveal>
