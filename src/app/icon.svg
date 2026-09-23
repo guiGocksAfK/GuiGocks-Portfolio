@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Gocks.dev</title>
+  <rect width="64" height="64" rx="13" fill="#0d0f12"/>
+  <path d="M32 10v8" stroke="#8f9bb3" stroke-width="4" stroke-linecap="square"/>
+  <rect x="28" y="6" width="8" height="8" fill="#6994ff"/>
+  <rect x="9" y="18" width="46" height="34" rx="5" fill="#dfe5f1"/>
+  <rect x="14" y="23" width="36" height="22" rx="3" fill="#151a24"/>
+  <rect x="20" y="29" width="8" height="8" fill="#6994ff"/>
+  <rect x="36" y="29" width="8" height="8" fill="#6994ff"/>
+  <rect x="13" y="51" width="38" height="5" fill="#8f9bb3"/>
+</svg>

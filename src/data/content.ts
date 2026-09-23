@@ -1,7 +1,7 @@
 // All visible copy and destinations live here. Future sections can be added here.
 export const content = {
   metadata: {
-    title: 'Guilherme Gabriel Gocks | Desenvolvedor full-stack',
+    title: 'Gocks.dev | Guilherme Gocks',
     description: 'Desenvolvedor full-stack com foco em Java, Spring Boot e React. Estudante de Engenharia de Software na UniAmérica, aberto a oportunidades na área.',
   },
   brand: { name: 'gocks', suffix: '.dev', label: 'Guilherme Gabriel Gocks — início' },
