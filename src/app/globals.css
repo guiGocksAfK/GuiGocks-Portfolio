@@ -177,6 +177,24 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .crane-cable { position: absolute; top: 14px; left: calc(50% - 22px - 1px); width: 2px; height: 30px; background: #8f9bb3; }
 .crane-hook { position: absolute; left: -4px; bottom: -2px; width: 10px; height: 8px; border: 2px solid #8f9bb3; border-top: 0; border-radius: 0 0 6px 6px; }
 .building-ground { display: block; height: 2px; background: var(--border); }
+/* Scaffolding while the building is under construction: two poles and planks sticking out past the floors (which sit
+   above it). The crew pulls the poles and everything falls away piece by piece. */
+.scaffold { position: absolute; z-index: 1; top: 60px; bottom: 2px; left: -8px; right: 36px; pointer-events: none; }
+.scaffold-pole, .scaffold-plank { position: absolute; background: #e8a33d; opacity: .85; }
+.scaffold-pole { top: 0; bottom: 0; left: 0; width: 4px; }
+.scaffold-pole-right { left: auto; right: 0; }
+.scaffold-plank { left: 0; right: 0; height: 3px; background: repeating-linear-gradient(90deg, #e8a33d 0 14px, #b97a26 14px 16px); }
+.building-dismantling .scaffold-pole, .building-dismantling .scaffold-plank { animation: scaffold-fall .75s cubic-bezier(.5, 0, .9, .6) forwards; }
+.building-dismantling .scaffold-pole { animation-delay: .1s; }
+.building-dismantling .scaffold-pole-right { animation-name: scaffold-fall-right; }
+@keyframes scaffold-fall { to { transform: translateY(70px) rotate(-14deg); opacity: 0; } }
+@keyframes scaffold-fall-right { to { transform: translateY(70px) rotate(14deg); opacity: 0; } }
+/* Crew on the building site; the painter carries a spray can that leaves a blue mist. */
+.site-crew { position: absolute; z-index: 4; left: 0; top: 0; width: 16px; height: 18px; pointer-events: none; }
+.site-crew svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.spray-can { position: absolute; right: -5px; top: 7px; width: 4px; height: 7px; border-radius: 1px; background: var(--accent); box-shadow: 0 -2px 0 -1px #dfe5f1; }
+.spray-mist { position: absolute; z-index: 3; width: 3px; height: 3px; border-radius: 50%; background: var(--accent); pointer-events: none; animation: spray-mist .4s ease-out forwards; }
+@keyframes spray-mist { from { opacity: .9; } to { opacity: 0; transform: translate(3px, 9px) scale(2.2); } }
 .building { display: flex; flex-direction: column-reverse; margin-right: 44px; }
 .floor { position: relative; z-index: 2; margin-top: -1px; border: 1px solid var(--border); background: #11151b; }
 .floor-step { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 14px; padding: 13px 16px; color: var(--muted); font-size: 14px; line-height: 1.6; }
@@ -202,6 +220,7 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 @media (max-width: 480px) {
   .floor-step { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 12px; font-size: 13px; }
   .building { margin-right: 38px; }
+  .scaffold { right: 30px; }
   .crane-cable { left: calc(50% - 19px - 1px); }
   .crane-jib { left: calc(50% - 19px - 40px); }
 }
