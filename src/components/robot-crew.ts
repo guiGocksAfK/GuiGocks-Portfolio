@@ -1,22 +1,11 @@
-// Coordination between the site's robots: the painter works on the name first, then the list robot starts.
-const EVENT = 'name-painted';
+// Shared state of the name painter: the boot script marks the name as unpainted before the first paint.
 
 // Runs before the page is painted (see layout.tsx) so the name already starts unpainted (blue) on every load.
 export const PAINT_BOOT_SCRIPT = `try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.dataset.paint='pending'}catch(e){}`;
 
 export const isNamePending = () => document.documentElement.dataset.paint === 'pending';
 
-// Resolves once the painter is done, immediately when there is nothing to paint, or after a safety timeout.
-export function whenNamePainted(timeout = 9000) {
-  if (!isNamePending()) return Promise.resolve();
-  return new Promise<void>(resolve => {
-    const done = () => { clearTimeout(timer); window.removeEventListener(EVENT, done); resolve(); };
-    const timer = setTimeout(done, timeout);
-    window.addEventListener(EVENT, done);
-  });
-}
-
+// Called when the painter is done (or gave up): the name goes back to its normal colours.
 export function announceNamePainted() {
   delete document.documentElement.dataset.paint;
-  window.dispatchEvent(new Event(EVENT));
 }

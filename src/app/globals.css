@@ -120,6 +120,10 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .painter { position: absolute; left: 0; top: 0; opacity: 0; pointer-events: none; z-index: 3; }
 .painter > svg:first-child { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .painter-roller { position: absolute; overflow: visible; shape-rendering: crispEdges; }
+/* Supervisor: same build as the painter but mirrored (it paints right to left) with a blue roller. */
+.supervisor-flip { position: absolute; inset: 0; transform: scaleX(-1); }
+.supervisor-flip > svg:first-child { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.supervisor-alert { position: absolute; left: 50%; bottom: calc(100% + 4px); margin-left: -6px; color: #ff6b6b; font-size: 22px; font-weight: 700; line-height: 1; animation: fight-pop .25s ease-out both; }
 /* About: the site ID badge on the left; the story and the career building (same width) on the right. */
 .about-section { position: relative; isolation: isolate; padding: 90px 0 0; }
 .about-section::before { content: ''; position: absolute; z-index: -1; inset: 120px 0 40px; pointer-events: none; background: radial-gradient(ellipse at 18% 52%, #6994ff10, transparent 45%), radial-gradient(ellipse at 78% 72%, #6994ff12, transparent 52%); }
@@ -289,21 +293,17 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* The robot moves inside the stage, which shares its coordinates with the list lines. */
 .tech-stage { position: relative; align-self: stretch; }
 .robot { position: absolute; left: 0; top: 0; width: 22px; height: 24px; opacity: 0; cursor: pointer; z-index: 2; will-change: transform; }
-/* Words the robot carries in, stacked on its head; the top one is tossed first. */
-.robot-cargo { position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; line-height: 1.15; color: var(--foreground); white-space: nowrap; pointer-events: none; }
-.robot-alert { position: absolute; bottom: calc(100% + 4px); left: 50%; color: #ff6b6b; font-size: 20px; font-weight: 700; line-height: 1; animation: alert-pop .3s ease-out both; pointer-events: none; }
-@keyframes alert-pop { from { transform: translate(-50%, 6px) scale(.3); opacity: 0; } 60% { transform: translate(-50%, -3px) scale(1.25); } to { transform: translate(-50%, 0); } }
-.tech-flyers { position: absolute; inset: 0; pointer-events: none; }
-/* Hard-hat crew that hauls words away and delivers the next group. */
+/* The boss's order: a little sign held over its head with the group the crew should bring. */
+.robot-sign { position: absolute; bottom: calc(100% - 1px); left: 50%; padding: 2px 7px; border: 2px solid #8f9bb3; border-radius: 3px; background: #dfe5f1; color: #151a24; font-size: 11px; font-weight: 700; line-height: 1.3; white-space: nowrap; pointer-events: none; transform: translateX(-50%); animation: sign-up .22s ease-out both; }
+@keyframes sign-up { from { transform: translate(-50%, 8px) scale(.6); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
+/* Hard-hat crew that hauls the old words away and brings the next group, one line each. */
 .crew-layer { position: absolute; inset: 0; pointer-events: none; }
 /* Robots that run off to the right vanish at the hero's edge instead of widening the page. */
 .hero-main { overflow-x: clip; }
 .crew { position: absolute; left: 0; top: 0; width: 16px; height: 18px; z-index: 1; }
 .crew-sprite svg { display: block; width: 16px; height: 18px; shape-rendering: crispEdges; }
 .crew-load { position: absolute; bottom: calc(100% + 1px); color: var(--foreground); white-space: nowrap; line-height: 1.15; }
-.crew-tower { display: flex; flex-direction: column; align-items: center; }
-.tech-flyer { position: absolute; left: 0; top: 0; white-space: nowrap; transform-origin: 50% 50%; }
-/* Tossed word hits its line, squashes and settles. */
+/* Word dropped by the crew hits its line, squashes and settles. */
 .tech-place { animation: tech-place .4s var(--d) both, tech-landed .7s ease-out var(--d) both; }
 @keyframes tech-place { 0% { transform: scale(1.16, .78); } 45% { transform: translateY(-4px) scale(.98, 1.05); } 100% { transform: none; } }
 .robot-body { width: 100%; height: 100%; transform-origin: 50% 100%; }

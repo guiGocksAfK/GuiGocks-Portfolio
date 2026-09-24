@@ -2,10 +2,8 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { CREW_HEIGHT, CREW_WIDTH, ROBOT_HEIGHT, ROBOT_WIDTH, RobotSprite, crewMarkup, type RobotMood, type RobotPose } from '@/components/robot-sprite';
-import { whenNamePainted } from '@/components/robot-crew';
 
 const HOP_DURATION = 520;
-const TOSS_DURATION = 460;
 const REST = 4000;
 // Distance from a line's top to the top of its letters, where the robot's feet land.
 const WORD_TOP = 15;
@@ -36,30 +34,27 @@ function SlotText({ slot }: { slot: Slot }) {
   return <>{slot.text}{slot.comma && <span className="tech-comma">,</span>}</>;
 }
 
-// A pixel robot (the boss) shows the technologies one group at a time: it carries the first group in and tosses each line into place.
-// Then it gets angry and stomps the group label; a hard-hat crew hauls the old words away and delivers the next group's stack,
-// which the boss tosses in, celebrates, rests and starts again.
+// The technologies, one group at a time, run by a boss robot that only gives orders: it hops holding up a sign with the
+// next group, and a hard-hat crew does the work, hauling the old words away and bringing the new ones one line each.
+// Then the boss celebrates, rests and starts again. Starts right away, alongside the painter.
 export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[] }) {
   const lineTotal = lineCount(groups);
   const [lines, setLines] = useState<(Line | undefined)[]>([]);
   const [pose, setPose] = useState<RobotPose>('idle');
   const [mood, setMood] = useState<RobotMood>('normal');
-  const [cargo, setCargo] = useState<Slot[]>([]);
-  const [alert, setAlert] = useState(false);
+  const [sign, setSign] = useState<string | null>(null);
   const markRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const flyersRef = useRef<HTMLDivElement>(null);
   const crewRef = useRef<HTMLDivElement>(null);
   const robotRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (!robotRef.current || !bodyRef.current || !stageRef.current || !flyersRef.current || !crewRef.current || groups.length === 0) return;
+    if (!robotRef.current || !bodyRef.current || !stageRef.current || !crewRef.current || groups.length === 0) return;
     const robot: HTMLDivElement = robotRef.current;
     const body: HTMLDivElement = bodyRef.current;
     const stage: HTMLDivElement = stageRef.current;
-    const flyers: HTMLDivElement = flyersRef.current;
     const crewLayer: HTMLDivElement = crewRef.current;
     const total = lineCount(groups);
 
@@ -91,10 +86,9 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
 
     const lineElement = (index: number) => stage.querySelectorAll<HTMLLIElement>('.tech-list li')[index];
     const wordWidth = (index: number) => lineElement(index)?.querySelector<HTMLElement>('.tech-word:last-child')?.offsetWidth ?? 40;
-    const home = (): Point => {
-      const last = lineElement(total - 1);
-      return { x: stage.clientWidth - ROBOT_WIDTH - 4, y: last.offsetTop + last.offsetHeight - ROBOT_HEIGHT };
-    };
+    // The boss stands below the list, level with the closing brace, so it and its sign stay out of the crew's lines.
+    const BOSS_DROP = 30;
+    const home = (): Point => ({ x: stage.clientWidth - ROBOT_WIDTH - 4, y: stage.clientHeight + BOSS_DROP - ROBOT_HEIGHT });
     const onWord = (index: number): Point => {
       const line = lineElement(index);
       return { x: line.offsetLeft + Math.max(0, wordWidth(index) / 2 - ROBOT_WIDTH / 2), y: line.offsetTop + WORD_TOP - ROBOT_HEIGHT };
@@ -150,87 +144,35 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
       }
     }
 
-    // Intro: walks in with the first group stacked on its head and tosses each line into place, top to bottom.
-    async function carryIn() {
-      const stack = slotsFor(groups[0], total).filter((slot): slot is Slot => slot !== null);
-      current = Array.from({ length: total }, () => undefined);
-      render();
-      setCargo(stack);
-      setPose('carry');
+    // The boss walks in from the right to its spot beside the list.
+    async function walkIn() {
       const target = home();
       const start = { x: stage.clientWidth + 30, y: target.y };
       place(target);
+      setPose('idle');
       await animate(robot, Array.from({ length: 13 }, (_, step) => {
         const t = step / 12;
         const bob = -Math.abs(Math.sin(t * Math.PI * 3)) * 5;
         return { transform: `translate(${start.x + (target.x - start.x) * t}px, ${target.y + bob}px)`, opacity: Math.min(1, t * 4) };
       }), { duration: 850, easing: 'linear' });
       robot.style.opacity = '1';
-      await pause(250);
-      await tossAll(stack);
-    }
-
-    // Tosses the carried lines into place one by one, top to bottom.
-    async function tossAll(stack: Slot[]) {
-      for (let index = 0; index < stack.length; index++) {
-        setPose('crouch');
-        await pause(70);
-        setPose('carry');
-        toss(stack[index], index);
-        setCargo(stack.slice(index + 1));
-        await pause(300);
-      }
-      setPose('idle');
-      await pause(TOSS_DURATION + 300);
-    }
-
-    // Launches a line from the top of the stack along an arc into its place; it lands with a squash.
-    function toss(slot: Slot, index: number) {
-      const cargoWord = robot.querySelector<HTMLElement>('.robot-cargo span');
-      const stageBox = stage.getBoundingClientRect();
-      const line = lineElement(index);
-      const flyer = document.createElement('span');
-      flyer.className = `tech-flyer${slot.comment ? ' tech-comment' : ''}`;
-      flyer.textContent = slot.text;
-      flyers.appendChild(flyer);
-      const from = cargoWord?.getBoundingClientRect();
-      const start = from
-        ? { x: from.left - stageBox.left, y: from.top - stageBox.top - (line.offsetHeight - from.height) / 2 }
-        : { x: position.x, y: position.y - 30 };
-      const target = { x: line.offsetLeft, y: line.offsetTop };
-      const flight = flyer.animate(arc(start, target, 40 + Math.abs(target.y - start.y) * 0.25, t => ` rotate(${(1 - t) * -12}deg)`), { duration: TOSS_DURATION, easing: 'linear', fill: 'forwards' });
-      flight.finished.then(() => {
-        flyer.remove();
-        if (cancelled) return;
-        current[index] = { id: nextId++, slot, squashed: null, kind: 'place' };
-        render();
-      }, () => flyer.remove());
-    }
-
-    async function getAngry() {
-      provoked = false;
-      setPose('idle');
-      setMood('angry');
-      setAlert(true);
-      await animate(body, [0, -2, 2, -2, 2, -1, 1, 0].map(x => ({ transform: `translateX(${x}px)` })), { duration: 420, easing: 'linear' });
-      await pause(380);
-      setAlert(false);
-    }
-
-    // The boss's order: a short hop in place and a hard stomp that makes the whole list shake.
-    async function stompFloor() {
-      setPose('crouch');
-      await pause(90);
-      setPose('jump');
-      lift(10, 220);
       await pause(200);
-      setPose('crouch');
-      squashBody();
-      stage.querySelector('.tech-list')?.animate([0, 3, -2, 1, 0].map(y => ({ transform: `translateY(${y}px)` })), { duration: 260, easing: 'ease-out' });
-      await pause(220);
-      setPose('idle');
     }
 
+    // The boss's order: it hops twice holding up a sign with the group the crew should bring.
+    async function raiseSign(label: string) {
+      setSign(`${label}!`);
+      setPose('carry');
+      for (let jump = 0; jump < 2; jump++) {
+        try { await lift(12, 320).finished; } catch { throw new Cancelled(); }
+      }
+      await pause(150);
+    }
+
+    function lowerSign() {
+      setSign(null);
+      setPose('idle');
+    }
     // Long hop onto a line that swaps its word. Not used by the current story; kept for an upcoming scene.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async function stomp(index: number, next: Slot | null) {
@@ -303,43 +245,45 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
       }
     }
 
-    // A crew member brings the next group's stack and hands it to the boss.
-    async function deliver(stack: Slot[]) {
-      const y = position.y + ROBOT_HEIGHT - CREW_HEIGHT;
+    // A crew member runs in carrying one line over its head and drops it into place.
+    async function placeWord(index: number, slot: Slot, delay: number) {
+      await pause(delay);
+      const line = lineElement(index);
+      const y = line.offsetTop + CREW_FEET - CREW_HEIGHT;
       const exitX = stage.clientWidth + 40;
-      // Stops on the boss's left (running past behind it) so the stack stays clear of the hero's right edge.
-      const standX = position.x - CREW_WIDTH - 2;
       const crew = spawnCrew({ x: exitX, y });
       try {
         crew.carry(true);
-        const tower = document.createElement('div');
-        tower.className = 'crew-load crew-tower';
-        stack.forEach(slot => {
-          const item = document.createElement('span');
-          item.textContent = slot.text;
-          if (slot.comment) item.className = 'tech-comment';
-          tower.appendChild(item);
-        });
-        crew.load(tower);
+        const load = document.createElement('span');
+        load.className = `crew-load${slot.comment ? ' tech-comment' : ''}`;
+        load.textContent = slot.text;
+        crew.load(load);
+        const standX = line.offsetLeft + load.offsetWidth + 4;
         crew.run(true);
-        await animate(crew.member, [{ transform: `translate(${exitX}px, ${y}px)` }, { transform: `translate(${standX}px, ${y}px)` }], { duration: 450, easing: 'ease-out', fill: 'forwards' });
+        await animate(crew.member, [{ transform: `translate(${exitX}px, ${y}px)` }, { transform: `translate(${standX}px, ${y}px)` }], { duration: 380, easing: 'ease-out', fill: 'forwards' });
         crew.run(false);
-        // Hand-off: the tower slides over onto the boss's head.
-        setPose('carry');
-        const shift = position.x + ROBOT_WIDTH / 2 - (standX + CREW_WIDTH / 2);
-        await animate(tower, [{ transform: 'none' }, { transform: `translate(${shift}px, ${-(ROBOT_HEIGHT - CREW_HEIGHT)}px)` }], { duration: 220, easing: 'ease-in-out', fill: 'forwards' });
-        tower.remove();
-        setCargo(stack);
-        squashBody();
+        const stageBox = stage.getBoundingClientRect();
+        const loadBox = load.getBoundingClientRect();
+        const dx = line.offsetLeft - (loadBox.left - stageBox.left);
+        const dy = line.offsetTop + (line.offsetHeight - loadBox.height) / 2 - (loadBox.top - stageBox.top);
+        await animate(load, [{ transform: 'none' }, { transform: `translate(${dx}px, ${dy}px)` }], { duration: 200, easing: 'ease-in', fill: 'forwards' });
+        load.remove();
+        current[index] = { id: nextId++, slot, squashed: null, kind: 'place' };
+        render();
         crew.carry(false);
         crew.run(true);
-        await animate(crew.member, [{ transform: `translate(${standX}px, ${y}px)` }, { transform: `translate(${exitX + 40}px, ${y}px)` }], { duration: 380, easing: 'ease-in', fill: 'forwards' });
+        await animate(crew.member, [{ transform: `translate(${standX}px, ${y}px)` }, { transform: `translate(${exitX + 40}px, ${y}px)` }], { duration: 400, easing: 'ease-in', fill: 'forwards' });
       } finally {
         crew.remove();
       }
-      await pause(200);
     }
 
+    // The crew fills a whole group, one member per line, top to bottom.
+    async function fillGroup(index: number) {
+      const jobs: Promise<void>[] = [];
+      slotsFor(groups[index], total).forEach((slot, line) => { if (slot) jobs.push(placeWord(line, slot, jobs.length * 170)); });
+      await Promise.all(jobs);
+    }
     async function celebrate() {
       setMood('happy');
       setPose('jump');
@@ -353,29 +297,29 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
     }
 
     async function run() {
-      // The painter robot works on the name first.
-      await whenNamePainted();
-      await pause(200);
-      await carryIn();
+      await pause(150);
+      current = Array.from({ length: total }, () => undefined);
+      render();
+      await walkIn();
+      await raiseSign(groups[0].label);
+      await fillGroup(0);
+      lowerSign();
       await rest(1400);
       for (;;) {
-        // The boss stomps the group label, the crew hauls the old words away and brings the next group, and the boss tosses it in.
-        await getAngry();
-        await stompFloor();
+        // The boss holds up the next group's sign; the crew hauls the old words away and brings the new ones.
+        groupIndex = (groupIndex + 1) % groups.length;
+        await raiseSign(groups[groupIndex].label);
         const haul: Promise<void>[] = [];
         for (let index = 0; index < total; index++) {
           if (current[index]?.slot) haul.push(fetchWord(index, haul.length * 150));
         }
         await Promise.all(haul);
-        groupIndex = (groupIndex + 1) % groups.length;
-        const stack = slotsFor(groups[groupIndex], total).filter((slot): slot is Slot => slot !== null);
-        await deliver(stack);
-        await tossAll(stack);
+        await fillGroup(groupIndex);
+        lowerSign();
         await celebrate();
         await rest(REST);
       }
     }
-
     const resume = () => { if (canRun()) { const ready = waiters; waiters = []; ready.forEach(resolve => resolve()); } };
     const provoke = () => { provoked = true; };
     const observer = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; resume(); });
@@ -389,8 +333,7 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
       cancelled = true;
       timers.forEach(clearTimeout);
       waiters.forEach(resolve => resolve());
-      [robot, body, ...flyers.children, ...crewLayer.querySelectorAll<HTMLElement>('*')].forEach(element => element.getAnimations().forEach(animation => animation.cancel()));
-      flyers.replaceChildren();
+      [robot, body, ...crewLayer.querySelectorAll<HTMLElement>('*')].forEach(element => element.getAnimations().forEach(animation => animation.cancel()));
       intervals.forEach(clearInterval);
       crewLayer.replaceChildren();
       observer.disconnect();
@@ -420,11 +363,9 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
               );
             })}
           </ul>
-          <div className="tech-flyers" ref={flyersRef} />
           <div className="crew-layer" ref={crewRef} />
           <div className="robot" ref={robotRef}>
-            {cargo.length > 0 && <div className="robot-cargo">{cargo.map(slot => <span key={slot.text} className={slot.comment ? 'tech-comment' : undefined}>{slot.text}</span>)}</div>}
-            {alert && <span className="robot-alert">!</span>}
+            {sign && <span className="robot-sign font-mono">{sign}</span>}
             <div className="robot-body" ref={bodyRef}><RobotSprite pose={pose} mood={mood} /></div>
           </div>
         </div>
