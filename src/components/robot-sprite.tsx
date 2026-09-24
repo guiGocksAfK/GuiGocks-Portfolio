@@ -93,14 +93,6 @@ export function StampToolSprite() {
   );
 }
 
-// Wooden crate carried by the archivist crew; plain markup because crew members are created outside React.
-const CRATE = ['SSSSSS', 'SOOOOS', 'SOSSOS', 'SOSSOS', 'SOOOOS', 'SSSSSS'];
-
-export function crateMarkup() {
-  const rects = CRATE.flatMap((row, y) => [...row].map((pixel, x) => `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${COLORS[pixel]}"/>`)).join('');
-  return `<svg viewBox="0 0 6 6" aria-hidden="true">${rects}</svg>`;
-}
-
 // Crew: smaller robots with hard hats that carry words in and out. They are created outside React, so they render to markup.
 export const CREW_WIDTH = 16;
 export const CREW_HEIGHT = 18;

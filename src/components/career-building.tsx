@@ -36,7 +36,9 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
     let cancelled = false;
     let patrolAnimation: Animation | undefined;
     const timers = new Set<ReturnType<typeof setTimeout>>();
-    // Floors stay off the site until the crane brings them.
+    // Floors stay off the site until the crane brings them. This has to happen after mount, because the server
+    // cannot know whether the visitor allows motion.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPhase('waiting');
 
     const wait = (ms: number) => new Promise<void>(resolve => { const timer = setTimeout(resolve, ms); timers.add(timer); }).then(() => { if (cancelled) throw new Cancelled(); });
