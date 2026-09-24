@@ -10,6 +10,7 @@ import { PatrolRobot } from '@/components/patrol-robot';
 import { ProjectDrawer } from '@/components/project-drawer';
 import { AboutBadge } from '@/components/about-badge';
 import { CareerBuilding } from '@/components/career-building';
+import { StoryPrinter } from '@/components/story-printer';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -111,7 +112,7 @@ export default function Home() {
             photo={about.photo} photoAlt={about.photoAlt} avatarLabel={about.avatarLabel}
           />
           <div className="about-main">
-            <div className="about-story">{about.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div>
+            <StoryPrinter paragraphs={about.paragraphs} />
             <p className="about-label font-mono">{about.timelineLabel}</p>
             <CareerBuilding steps={about.timeline} next={about.nextFloor} />
           </div>

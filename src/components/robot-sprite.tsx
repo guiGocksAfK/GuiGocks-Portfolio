@@ -32,6 +32,13 @@ export function DroneSprite() {
   );
 }
 
+// Printer-head robot that inks the About text: a little carriage with a visor and an ink nozzle underneath.
+const PRINTER = ['.SSSSSSSS.', 'SBBBBBBBBS', 'SBDADDADBS', 'SBBBBBBBBS', '.SSSSSSSS.', '....AA....'];
+
+export function PrinterSprite() {
+  return <svg viewBox="0 0 10 6" aria-hidden="true">{pixelRects(PRINTER)}</svg>;
+}
+
 // Stand-in portrait for the badge until a real photo exists: a person in a hard hat.
 const AVATAR = ['...OOOOOO...', '..OOOOOOOO..', '.OOOOOOOOOO.', '..KKKKKKKK..', '..KFFFFFFK..', '..FDFFFFDF..', '..FFFFFFFF..', '..FFFMMFFF..', '...FFFFFF...', '....FFFF....', '.AAAAAAAAAA.', 'AAAAAAAAAAAA'];
 

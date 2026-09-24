@@ -130,8 +130,20 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .about-section .section-footer { margin-top: 90px; }
 .about-grid { display: grid; grid-template-columns: minmax(280px, 320px) minmax(0, 1fr); gap: clamp(40px, 5vw, 80px); align-items: start; }
 .about-main { min-width: 0; }
-.about-story > p { max-width: 68ch; color: var(--muted); font-size: 16px; line-height: 1.75; }
-.about-story > p + p { margin-top: 14px; }
+.about-story p { max-width: 68ch; color: var(--muted); font-size: 16px; line-height: 1.75; }
+.about-story p + p { margin-top: 14px; }
+/* Printer: the faint draft and the inked text share one grid cell; the ink is revealed line by line (clip-path set in
+   story-printer.tsx) as the printer head rides a rail above each line. */
+.about-story { position: relative; display: grid; }
+.story-draft, .story-ink { grid-area: 1 / 1; }
+.story-draft { opacity: .35; pointer-events: none; user-select: none; }
+.story-waiting .story-ink { clip-path: inset(0 0 100% 0); }
+.printer-rail { position: absolute; left: 0; right: 0; top: 0; border-top: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent); pointer-events: none; }
+.printer-head { position: absolute; z-index: 2; left: 0; top: 0; width: 20px; height: 12px; pointer-events: none; }
+.printer-head svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.story-waiting .printer-head, .story-waiting .printer-rail { opacity: 0; }
+.printer-ding { position: absolute; color: #ffd76a; font-size: 12px; line-height: 1; pointer-events: none; animation: printer-ding .5s ease-out forwards; }
+@keyframes printer-ding { from { transform: scale(.2); opacity: 1; } 45% { transform: scale(1.4) rotate(30deg); opacity: 1; } to { transform: scale(.4) rotate(60deg) translateY(-6px); opacity: 0; } }
 .about-label { margin-top: 44px; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 /* Badge hanging from a nail. While waiting it is off-site; the drone flies it in, leaves, and the badge swings to rest. */
 .badge-rig { position: sticky; top: 32px; width: 100%; max-width: 320px; padding-top: 4px; }
