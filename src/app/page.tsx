@@ -12,13 +12,14 @@ import { AboutBadge } from '@/components/about-badge';
 import { CareerBuilding } from '@/components/career-building';
 import { StoryDebug } from '@/components/story-debug';
 import { SceneTrigger } from '@/components/scene-trigger';
+import { CapabilitiesYard } from '@/components/capabilities-yard';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 export default function Home() {
-  const { hero, contact, projects, about } = content;
+  const { hero, contact, projects, about, capabilities } = content;
   return (
     <div className="site-shell">
       <a className="skip-link" href="#main">{content.accessibility.skip}</a>
@@ -121,6 +122,15 @@ export default function Home() {
           </div>
         </div>
         <div className="section-footer font-mono"><span>{about.section}</span><span>{about.footerNote}</span><PatrolRobot /></div>
+      </section>
+      <section id="capacidades" aria-labelledby="capabilities-title" className="capabilities-section">
+        <h2 id="capabilities-title">{capabilities.title}</h2>
+        <CapabilitiesYard shelves={capabilities.shelves} languages={capabilities.languages} legend={capabilities.legend} />
+        <div className="section-footer font-mono">
+          <span>{capabilities.section}</span>
+          <span>{capabilities.shelves.reduce((total, shelf) => total + shelf.items.length, 0)} {capabilities.countLabel}</span>
+          <PatrolRobot />
+        </div>
       </section>
       </main>
     </div>

@@ -245,6 +245,35 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
   .crane-cable { left: calc(50% - 19px - 1px); }
   .crane-jib { left: calc(50% - 19px - 40px); }
 }
+/* Capabilities: the tool store. One card per shelf (area) with its tools as crates marked by where they have been used,
+   plus a languages shelf with two robots greeting each other. A stock-taker robot walks along the top of one shelf at a time. */
+.capabilities-section { padding: 90px 0 0; }
+.capabilities-section .section-footer { margin-top: 90px; }
+.yard-legend { display: flex; flex-wrap: wrap; gap: 18px; margin: -24px 0 22px; color: var(--muted); font-size: 11px; }
+.legend-item { display: inline-flex; align-items: center; gap: 8px; }
+.shelves { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px 20px; }
+.shelf { position: relative; padding: 18px 20px 20px; border: 1px solid var(--border); border-bottom: 4px solid #3a404c; border-radius: 8px 8px 3px 3px; background: #11151b; }
+.shelf-label { margin-bottom: 14px; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.shelf-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.crate { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid var(--border); border-radius: 4px; background: #151a24; color: var(--foreground); font-size: 12px; }
+.crate-project { color: var(--muted); }
+.crate-mark { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.crate-mark-production { background: var(--accent); }
+.crate-mark-project { border: 1.5px solid var(--muted); }
+.crate-checked::after { content: '✓'; position: absolute; right: -6px; top: -8px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); color: var(--background); font-size: 9px; line-height: 14px; text-align: center; animation: crate-check 1.4s ease-out forwards; }
+@keyframes crate-check { 0% { transform: scale(0); opacity: 1; } 15% { transform: scale(1.25); } 25% { transform: none; } 80% { opacity: 1; } 100% { transform: none; opacity: 0; } }
+.stock-robot { position: absolute; z-index: 2; left: 0; top: 0; width: 16px; height: 18px; opacity: 0; pointer-events: none; }
+.stock-sprite, .stock-sprite svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.stock-clipboard { position: absolute; right: -6px; top: 7px; width: 6px; height: 8px; border-radius: 1px; background: #f1f2f4; box-shadow: inset 0 2px 0 #b97a26, 0 0 0 1px #b97a26; }
+.languages { display: grid; gap: 10px; }
+.languages li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); font-size: 15px; }
+.languages li:last-child { border-bottom: 0; }
+.language-level { color: var(--muted); font-size: 12px; }
+.lang-robots { display: flex; justify-content: space-between; margin-top: 18px; padding: 0 20%; }
+.lang-robot { position: relative; display: block; width: 22px; height: 24px; }
+.lang-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.lang-bubble { position: absolute; bottom: calc(100% + 6px); left: 50%; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; opacity: 0; transform: translate(-50%, 4px) scale(.6); transition: opacity .2s, transform .2s ease-out; }
+.lang-bubble-on { opacity: 1; transform: translate(-50%, 0); }
 /* Mail robot: pops up next to the email with an envelope over its head and a "copied" bubble, then drops back down. */
 .email-wrap { position: relative; display: inline-block; }
 .mailman { position: absolute; left: calc(100% + 12px); bottom: -2px; width: 22px; height: 24px; pointer-events: none; animation: mailman 2.2s ease-out both; }
@@ -333,7 +362,7 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .static-tech { display: none; }
 .projects-section { padding: 90px 0 0; }
 .projects-section .section-footer { margin-top: 90px; }
-.projects-section h2, .about-section h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 600; letter-spacing: -.045em; line-height: 1.15; margin-bottom: 44px; }
+.projects-section h2, .about-section h2, .capabilities-section h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 600; letter-spacing: -.045em; line-height: 1.15; margin-bottom: 44px; }
 .project-list { display: grid; gap: 28px; }
 .project-card { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
 .project-card:hover, .project-card:focus-within { border-color: var(--accent); }
@@ -407,7 +436,9 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 @media (max-width: 600px) {
   .projects-section { padding-top: 60px; }
   .projects-section .section-footer { margin-top: 60px; }
-  .projects-section h2, .about-section h2 { margin-bottom: 30px; }
+  .projects-section h2, .about-section h2, .capabilities-section h2 { margin-bottom: 30px; }
+  .capabilities-section { padding-top: 60px; }
+  .capabilities-section .section-footer { margin-top: 60px; }
   .about-section { padding-top: 60px; }
   .about-section .section-footer { margin-top: 60px; }
   .about-story { padding: 24px 20px; }
