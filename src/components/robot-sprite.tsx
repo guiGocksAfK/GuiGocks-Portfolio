@@ -32,6 +32,15 @@ export function DroneSprite() {
   );
 }
 
+// Forklift for the tool store, facing right: roof cage with a hard-hat driver, orange body, mast and forks in front.
+// Plain markup because it is created outside React.
+const FORKLIFT = ['.SSSSS.....S..', '.S.O.S.....S..', '.S.B.S.....S..', '.SOOOOOO....S.', 'OOOOOOOOO...S.', 'OOOOOOOOO...S.', 'OOOOOOOOOSSSSS', '.OOOOOOOO.....', '.DD....DD.....', '.DD....DD.....'];
+
+export function forkliftMarkup() {
+  const rects = FORKLIFT.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] ? `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${COLORS[pixel]}"/>` : '')).join('');
+  return `<svg viewBox="0 0 14 10" aria-hidden="true">${rects}</svg>`;
+}
+
 // Stand-in portrait for the badge until a real photo exists: a person in a hard hat.
 const AVATAR = ['...OOOOOO...', '..OOOOOOOO..', '.OOOOOOOOOO.', '..KKKKKKKK..', '..KFFFFFFK..', '..FDFFFFDF..', '..FFFFFFFF..', '..FFFMMFFF..', '...FFFFFF...', '....FFFF....', '.AAAAAAAAAA.', 'AAAAAAAAAAAA'];
 

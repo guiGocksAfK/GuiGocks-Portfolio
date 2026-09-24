@@ -245,35 +245,60 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
   .crane-cable { left: calc(50% - 19px - 1px); }
   .crane-jib { left: calc(50% - 19px - 40px); }
 }
-/* Capabilities: the tool store. One card per shelf (area) with its tools as crates marked by where they have been used,
-   plus a languages shelf with two robots greeting each other. A stock-taker robot walks along the top of one shelf at a time. */
+/* Capabilities: the tool store. A single shelving unit (a shelf per area, crates standing on metal planks, uprights on
+   both sides, a floor strip for the forklift and a rolling ladder parked on the right) next to the storekeeper's office
+   with the languages. Solid crates were used in production; dashed ones in projects. */
 .capabilities-section { padding: 90px 0 0; }
 .capabilities-section .section-footer { margin-top: 90px; }
 .yard-legend { display: flex; flex-wrap: wrap; gap: 18px; margin: -24px 0 22px; color: var(--muted); font-size: 11px; }
 .legend-item { display: inline-flex; align-items: center; gap: 8px; }
-.shelves { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px 20px; }
-.shelf { position: relative; padding: 18px 20px 20px; border: 1px solid var(--border); border-bottom: 4px solid #3a404c; border-radius: 8px 8px 3px 3px; background: #11151b; }
-.shelf-label { margin-bottom: 14px; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
-.shelf-tools { display: flex; flex-wrap: wrap; gap: 8px; }
-.crate { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid var(--border); border-radius: 4px; background: #151a24; color: var(--foreground); font-size: 12px; }
-.crate-project { color: var(--muted); }
+.yard-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: 20px; align-items: stretch; }
+.rack { position: relative; overflow-x: clip; padding: 6px 60px 0 22px; border: 1px solid var(--border); border-radius: 8px; background: #11151b; }
+.rack-post { position: absolute; top: 0; bottom: 0; width: 6px; background: repeating-linear-gradient(to bottom, #3a404c 0 10px, #2c313b 10px 12px); }
+.rack-post-left { left: 8px; }
+.rack-post-right { right: 8px; }
+.rack-shelf { display: grid; grid-template-columns: 140px minmax(0, 1fr); align-items: end; gap: 16px; padding: 22px 0 0; border-bottom: 4px solid #3a404c; box-shadow: 0 5px 0 -1px #0b0d11; }
+.rack-shelf + .rack-shelf { margin-top: 6px; }
+.rack-tag { align-self: center; justify-self: start; padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: #151a24; color: var(--accent); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.rack-crates { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+/* A crate: a box with a lid line, standing on the plank. */
+.crate { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px 8px; border: 1px solid #3a4a6b; border-top-width: 3px; border-radius: 3px 3px 0 0; background: #151a24; color: var(--foreground); font-size: 12px; }
+.crate-project { border-style: dashed; border-color: #4a5160; color: var(--muted); }
 .crate-mark { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .crate-mark-production { background: var(--accent); }
 .crate-mark-project { border: 1.5px solid var(--muted); }
-.crate-checked::after { content: '✓'; position: absolute; right: -6px; top: -8px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); color: var(--background); font-size: 9px; line-height: 14px; text-align: center; animation: crate-check 1.4s ease-out forwards; }
+.crate-checked::after { content: '✓'; position: absolute; right: -6px; top: -9px; width: 15px; height: 15px; border-radius: 50%; background: var(--accent); color: var(--background); font-size: 9px; line-height: 15px; text-align: center; animation: crate-check 1.6s ease-out forwards; }
 @keyframes crate-check { 0% { transform: scale(0); opacity: 1; } 15% { transform: scale(1.25); } 25% { transform: none; } 80% { opacity: 1; } 100% { transform: none; opacity: 0; } }
-.stock-robot { position: absolute; z-index: 2; left: 0; top: 0; width: 16px; height: 18px; opacity: 0; pointer-events: none; }
-.stock-sprite, .stock-sprite svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-.stock-clipboard { position: absolute; right: -6px; top: 7px; width: 6px; height: 8px; border-radius: 1px; background: #f1f2f4; box-shadow: inset 0 2px 0 #b97a26, 0 0 0 1px #b97a26; }
+.rack-floor { position: relative; height: 40px; margin: 0 -60px 0 -22px; border-top: 1px solid var(--border); background: repeating-linear-gradient(90deg, transparent 0 38px, #161b24 38px 40px); }
+/* Rolling library ladder: two rails with rungs, full height, riding on the floor. */
+.rack-ladder { position: absolute; z-index: 2; left: 0; top: 0; bottom: 6px; width: 22px; border-inline: 3px solid #8f9bb3; background: repeating-linear-gradient(to bottom, transparent 0 14px, #8f9bb3 14px 17px); pointer-events: none; }
+.rack-ladder::after { content: ''; position: absolute; left: -6px; right: -6px; bottom: -6px; height: 6px; background: radial-gradient(circle at 4px 3px, #5d6678 3px, transparent 3.5px) left / 8px 6px no-repeat, radial-gradient(circle at 4px 3px, #5d6678 3px, transparent 3.5px) right / 8px 6px no-repeat; }
+.ladder-clerk { position: absolute; left: 0; top: 0; width: 24px; height: 27px; opacity: 0; }
+.ladder-clerk svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.ladder-clerk::after { content: ''; position: absolute; right: -6px; top: 11px; width: 8px; height: 10px; border-radius: 1px; background: #f1f2f4; box-shadow: inset 0 3px 0 #b97a26, 0 0 0 1px #b97a26; }
+/* Forklift driving across the floor strip with a pallet and a crate on its forks. */
+.forklift { position: absolute; left: 0; bottom: 4px; width: 42px; height: 30px; pointer-events: none; }
+.forklift svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.forklift-load { position: absolute; right: -4px; bottom: 12px; width: 18px; height: 14px; border: 1px solid #b97a26; border-top-width: 3px; border-radius: 2px 2px 0 0; background: #151a24; box-shadow: 0 3px 0 #b97a26; }
+/* The storekeeper's office: languages on top, a small scene with a desk and two robots greeting each other. */
+.office { position: relative; display: flex; flex-direction: column; padding: 22px 20px 0; border: 1px solid var(--border); border-radius: 8px; background: #11151b; }
+.office .rack-tag { margin-bottom: 16px; }
 .languages { display: grid; gap: 10px; }
 .languages li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); font-size: 15px; }
 .languages li:last-child { border-bottom: 0; }
 .language-level { color: var(--muted); font-size: 12px; }
-.lang-robots { display: flex; justify-content: space-between; margin-top: 18px; padding: 0 20%; }
-.lang-robot { position: relative; display: block; width: 22px; height: 24px; }
-.lang-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-.lang-bubble { position: absolute; bottom: calc(100% + 6px); left: 50%; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; opacity: 0; transform: translate(-50%, 4px) scale(.6); transition: opacity .2s, transform .2s ease-out; }
-.lang-bubble-on { opacity: 1; transform: translate(-50%, 0); }
+.office-scene { position: relative; display: flex; align-items: flex-end; justify-content: space-around; min-height: 120px; margin: auto -20px 0; padding: 0 20px; border-top: 1px solid var(--border); background: repeating-linear-gradient(90deg, transparent 0 38px, #161b24 38px 40px); }
+.office-robot { position: relative; z-index: 1; display: block; width: 33px; height: 36px; margin-bottom: 14px; }
+.office-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.office-desk { position: absolute; left: 50%; bottom: 14px; width: 70px; height: 20px; margin-left: -35px; border: 2px solid #3a404c; border-radius: 2px; background: #151a24; }
+.office-desk::before { content: ''; position: absolute; left: 10px; top: -8px; width: 14px; height: 7px; border-radius: 3px 3px 0 0; background: #8f9bb3; }
+.office-bubble { position: absolute; bottom: calc(100% + 6px); left: 50%; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; opacity: 0; transform: translate(-50%, 4px) scale(.6); transition: opacity .2s, transform .2s ease-out; }
+.office-bubble-on { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 900px) {
+  .yard-grid { grid-template-columns: minmax(0, 1fr); }
+  .rack-shelf { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .rack-tag { align-self: start; }
+}
 /* Mail robot: pops up next to the email with an envelope over its head and a "copied" bubble, then drops back down. */
 .email-wrap { position: relative; display: inline-block; }
 .mailman { position: absolute; left: calc(100% + 12px); bottom: -2px; width: 22px; height: 24px; pointer-events: none; animation: mailman 2.2s ease-out both; }
