@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { AvatarSprite, DroneSprite } from '@/components/robot-sprite';
+import { registerStep } from '@/components/scene';
 
 type Phase = 'done' | 'waiting' | 'delivering';
 
@@ -25,14 +26,12 @@ export function AboutBadge({ name, role, location, lookingLabel, lookingText, ph
     let timer: ReturnType<typeof setTimeout> | undefined;
     // Keep the badge off the nail until the drone brings it.
     setPhase('waiting');
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      observer.disconnect();
+    // Step 2 of the About scene: the drone delivers the badge; the step ends when the badge has stopped swinging.
+    const unregister = registerStep('about', 2, () => new Promise<void>(resolve => {
       setPhase('delivering');
-      timer = setTimeout(() => setPhase('done'), SCENE);
-    }, { threshold: .35 });
-    observer.observe(rig);
-    return () => { observer.disconnect(); clearTimeout(timer); };
+      timer = setTimeout(() => { setPhase('done'); resolve(); }, SCENE);
+    }));
+    return () => { unregister(); clearTimeout(timer); };
   }, []);
 
   return (

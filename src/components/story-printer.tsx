@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { PrinterSprite } from '@/components/robot-sprite';
+import { registerStep } from '@/components/scene';
 
 type Phase = 'done' | 'waiting' | 'printing';
 type Line = { top: number; bottom: number; left: number; right: number };
@@ -11,9 +12,9 @@ const HEAD_HEIGHT = 12;
 
 class Cancelled extends Error {}
 
-// The About story. It starts as a faint draft that can already be read; the first time it scrolls into view a
-// printer-head robot rides along each line like a typewriter carriage, inking it into the final colour, with a "ding"
-// at the end of every line before it returns to the start of the next. Without motion the text is simply final.
+// The About story. It starts as a faint draft that can already be read; as step 1 of the About scene a printer-head
+// robot rides along each line like a typewriter carriage, inking it into the final colour, with a "ding" at the end
+// of every line before it returns to the start of the next. Without motion the text is simply final.
 export function StoryPrinter({ paragraphs }: { paragraphs: readonly string[] }) {
   const [phase, setPhase] = useState<Phase>('done');
   const boxRef = useRef<HTMLDivElement>(null);
@@ -104,16 +105,12 @@ export function StoryPrinter({ paragraphs }: { paragraphs: readonly string[] }) 
       setPhase('done');
     }
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      observer.disconnect();
-      print().catch(error => { if (!(error instanceof Cancelled)) throw error; });
-    }, { threshold: .3 });
-    observer.observe(area);
+    // Step 1 of the About scene: the story is printed first, before anything else moves.
+    const unregister = registerStep('about', 1, print);
 
     return () => {
       cancelled = true;
-      observer.disconnect();
+      unregister();
       layer.style.removeProperty('clip-path');
       area.querySelectorAll('.printer-ding').forEach(element => element.remove());
     };

@@ -120,10 +120,6 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .painter { position: absolute; left: 0; top: 0; opacity: 0; pointer-events: none; z-index: 3; }
 .painter > svg:first-child { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .painter-roller { position: absolute; overflow: visible; shape-rendering: crispEdges; }
-/* Supervisor: same build as the painter but mirrored (it paints right to left) with a blue roller. */
-.supervisor-flip { position: absolute; inset: 0; transform: scaleX(-1); }
-.supervisor-flip > svg:first-child { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-.supervisor-alert { position: absolute; left: 50%; bottom: calc(100% + 4px); margin-left: -6px; color: #ff6b6b; font-size: 22px; font-weight: 700; line-height: 1; animation: fight-pop .25s ease-out both; }
 /* About: same language as the rest of the site. Plain story text and the career building on the right; the ID badge
    on the left stays in view (sticky) while the right column scrolls. Orange appears only on construction pieces. */
 .about-section { padding: 90px 0 0; }

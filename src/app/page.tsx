@@ -11,6 +11,7 @@ import { ProjectDrawer } from '@/components/project-drawer';
 import { AboutBadge } from '@/components/about-badge';
 import { CareerBuilding } from '@/components/career-building';
 import { StoryPrinter } from '@/components/story-printer';
+import { SceneTrigger } from '@/components/scene-trigger';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -104,6 +105,8 @@ export default function Home() {
         <div className="section-footer font-mono"><span>{projects.section}</span><span>{projects.items.length} {projects.countLabel}</span><PatrolRobot /></div>
       </section>
       <section id="sobre" aria-labelledby="about-title" className="about-section">
+        {/* Plays the About robots one at a time: printer, drone, crane, spray, scaffolding. */}
+        <SceneTrigger name="about" />
         <h2 id="about-title">{about.title}</h2>
         <div className="about-grid">
           <AboutBadge

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { CREW_HEIGHT, CREW_WIDTH, crewMarkup } from '@/components/robot-sprite';
+import { registerStep } from '@/components/scene';
 
 type Step = { year: string; text: string };
 type Phase = 'done' | 'waiting' | 'building' | 'spraying' | 'dismantling';
@@ -14,8 +15,8 @@ const STEP_INTERVAL = 100;
 class Cancelled extends Error {}
 
 // The career timeline as a building, one floor per milestone, oldest at the bottom, topped by a dashed "next floor"
-// that invites the reader to get in touch. It arrives as a site under construction, wrapped in scaffolding. The first
-// time it scrolls into view the tower crane lowers each floor on its hook from the bottom up, a crew robot spray-paints
+// that invites the reader to get in touch. It arrives as a site under construction, wrapped in scaffolding. In its turn
+// in the About scene the tower crane lowers each floor on its hook from the bottom up, a crew robot spray-paints
 // the outline and then the text of the next floor, and two more pull the scaffolding down. Afterwards the hook waits
 // above the empty next floor. Without motion the building is simply there, finished.
 export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: { label: string; text: string; href: string } }) {
@@ -171,24 +172,16 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       }
     }
 
-    async function build() {
-      await raiseFloors();
-      await sprayNextFloor();
-      await dismantle();
-      setPhase('done');
-    }
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      observer.disconnect();
-      setPhase('building');
-      build().catch(error => { if (!(error instanceof Cancelled)) throw error; });
-    }, { threshold: .35 });
-    observer.observe(area);
+    // Steps 3 to 5 of the About scene: floors, the sprayed next floor, then the scaffolding comes down.
+    const unregister = [
+      registerStep('about', 3, async () => { setPhase('building'); await raiseFloors(); }),
+      registerStep('about', 4, sprayNextFloor),
+      registerStep('about', 5, async () => { await dismantle(); setPhase('done'); }),
+    ];
 
     return () => {
       cancelled = true;
-      observer.disconnect();
+      unregister.forEach(remove => remove());
       timers.forEach(clearTimeout);
       intervals.forEach(clearInterval);
       area.getAnimations({ subtree: true }).forEach(animation => animation.cancel());

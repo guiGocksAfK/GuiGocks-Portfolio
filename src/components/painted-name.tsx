@@ -22,29 +22,21 @@ function Roller({ pixel, height, color }: { pixel: number; height: number; color
 }
 
 // The hero name. It starts blue and a pixel robot walks over the first name with a paint roller, painting it white
-// line by line. On every load it then gets carried away and paints the last name white too; an angry supervisor turns
-// up, the painter slinks off, and the supervisor repaints the last name blue.
+// line by line, then celebrates and leaves. The last name stays blue. When it is done the list robots start (robot-crew.ts).
 export function PaintedName({ firstName, lastName }: { firstName: string; lastName: string }) {
   const [pose, setPose] = useState<RobotPose>('idle');
   const [mood, setMood] = useState<RobotMood>('normal');
   const [pixel, setPixel] = useState(4);
   const [rollerHeight, setRollerHeight] = useState(0);
-  const [supervisor, setSupervisor] = useState(false);
-  const [supervisorMood, setSupervisorMood] = useState<RobotMood>('angry');
-  const [supervisorPose, setSupervisorPose] = useState<RobotPose>('idle');
-  const [scolding, setScolding] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const firstRef = useRef<HTMLSpanElement>(null);
   const painterRef = useRef<HTMLSpanElement>(null);
-  const lastRef = useRef<HTMLSpanElement>(null);
-  const supervisorRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!isNamePending() || !titleRef.current || !firstRef.current || !painterRef.current) return;
     const title: HTMLHeadingElement = titleRef.current;
     const first: HTMLSpanElement = firstRef.current;
     const painter: HTMLSpanElement = painterRef.current;
-    const lastWord = lastRef.current;
     let cancelled = false;
     let frame = 0;
     let position: Point = { x: 0, y: 0 };
@@ -116,83 +108,15 @@ export function PaintedName({ firstName, lastName }: { firstName: string; lastNa
       }
       first.style.setProperty('--paint', `${total + 10}px`);
 
-      // Carried away: it hops down to the last name and paints that white too.
-      const last = lastRef.current;
-      const word = last?.firstChild;
-      if (!last || !word) return;
-      const range = document.createRange();
-      range.selectNodeContents(word);
-      const wordBox = range.getBoundingClientRect();
-      const lastLine: Line = { left: wordBox.left - box.left, top: wordBox.top - box.top, width: wordBox.width };
-      // White left of x, blue right of it: the same edge serves the mistake (moving right) and the fix (moving left).
-      const paintLast = (x: number) => {
-        last.style.color = 'transparent';
-        last.style.setProperty('-webkit-background-clip', 'text');
-        last.style.backgroundClip = 'text';
-        last.style.backgroundImage = `linear-gradient(90deg, #f1f2f4 ${x}px, var(--accent) ${x}px)`;
-      };
+      // Done: a happy double hop, then off to the right.
       setMood('happy');
-      setPose('idle');
-      // Walks back along the top of the letters it just painted until it is above the last name, then drops down onto it.
-      const from = position;
-      const to = at(lastLine, 0);
-      await tween(Math.max(300, Math.abs(from.x - to.x) / 0.6), (t, elapsed) => place({ x: from.x + (to.x - from.x) * t, y: from.y }, Math.abs(Math.sin(elapsed / 60)) * size));
-      setPose('crouch');
-      await wait(100);
       setPose('jump');
-      const above = position;
-      await tween(420, t => place({ x: above.x, y: above.y + (to.y - above.y) * t - 18 * 4 * t * (1 - t) }));
-      setPose('crouch');
-      await wait(120);
+      for (let hop = 0; hop < 2; hop++) await tween(300, t => place(position, Math.sin(t * Math.PI) * 10 * size / 2));
       setPose('idle');
-      await tween(lastLine.width / speed, (t, elapsed) => {
-        paintLast(lastLine.width * t);
-        place(at(lastLine, lastLine.width * t), Math.abs(Math.sin(elapsed / 70)) * size);
-      });
-      paintLast(lastLine.width + 10);
       await wait(300);
-
-      // The supervisor storms in from the right, angry. It faces left, so its roller (and paint edge) is on its left side.
-      setSupervisor(true);
-      setSupervisorMood('angry');
-      setSupervisorPose('idle');
-      await wait(40);
-      const boss = supervisorRef.current;
-      if (!boss) return;
-      const bossAt = (edgeX: number): Point => ({ x: lastLine.left + edgeX + 3 * size, y: lastLine.top + capTop - robot.height });
-      const placeBoss = (point: Point, lift = 0) => { boss.style.transform = `translate(${point.x}px, ${point.y - lift}px)`; };
-      const bossSpot = bossAt(lastLine.width + 24);
-      await tween(450, t => { boss.style.opacity = String(Math.min(1, t * 3)); placeBoss({ x: bossSpot.x + 90 * (1 - t), y: bossSpot.y }, Math.abs(Math.sin(t * Math.PI * 3)) * size * 1.5); });
-      // Scolding: "!" and an angry stomp; the painter cowers, then slinks off to the left.
-      setScolding(true);
-      setMood('normal');
-      setPose('crouch');
-      await tween(320, t => placeBoss(bossSpot, Math.sin(t * Math.PI) * 4 * size));
-      await wait(450);
-      const slink = position;
-      await tween(500, t => { painter.style.opacity = String(1 - t); place({ x: slink.x - 70 * t, y: slink.y }); });
-      setScolding(false);
-
-      // Repaints the last name blue, right to left.
-      await tween(250, t => placeBoss({ x: bossSpot.x + (bossAt(lastLine.width).x - bossSpot.x) * t, y: bossSpot.y }));
-      await tween(lastLine.width / speed, (t, elapsed) => {
-        const edgeX = lastLine.width * (1 - t);
-        paintLast(edgeX);
-        placeBoss(bossAt(edgeX), Math.abs(Math.sin(elapsed / 70)) * size);
-      });
-      for (const property of ['color', 'background-image', 'background-clip', '-webkit-background-clip']) last.style.removeProperty(property);
-
-      // Satisfied: a happy double hop, then off to the right.
-      setSupervisorMood('happy');
-      setSupervisorPose('jump');
-      const done = bossAt(0);
-      for (let hop = 0; hop < 2; hop++) await tween(300, t => placeBoss(done, Math.sin(t * Math.PI) * 5 * size));
-      setSupervisorPose('idle');
-      await wait(250);
-      await tween(700, t => { boss.style.opacity = String(1 - Math.max(0, t - .6) / .4); placeBoss({ x: done.x + (lastLine.width + 120) * t, y: done.y }, Math.abs(Math.sin(t * Math.PI * 5)) * size * 1.5); });
-      setSupervisor(false);
+      const leave = position;
+      await tween(450, t => { painter.style.opacity = String(1 - t); place({ x: leave.x + 70 * t, y: leave.y }, Math.abs(Math.sin(t * Math.PI * 3)) * size * 1.5); });
     }
-
     // Starts once the name is on screen; whatever happens, the name ends up painted and the list robot is released.
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) return;
@@ -205,8 +129,6 @@ export function PaintedName({ firstName, lastName }: { firstName: string; lastNa
       cancelled = true;
       cancelAnimationFrame(frame);
       observer.disconnect();
-      // Never leave the last name half white if the scene is interrupted.
-      if (lastWord) for (const property of ['color', 'background-image', 'background-clip', '-webkit-background-clip']) lastWord.style.removeProperty(property);
     };
   }, [firstName]);
 
@@ -214,20 +136,11 @@ export function PaintedName({ firstName, lastName }: { firstName: string; lastNa
   return (
     <h1 id="hero-title" ref={titleRef} className="painted-name">
       <span ref={firstRef} className="name-first">{firstName}</span><br />
-      <span ref={lastRef} className="text-accent">{lastName}<span className="name-period">.</span></span>
+      <span className="text-accent">{lastName}<span className="name-period">.</span></span>
       <span ref={painterRef} className="painter" aria-hidden="true" style={robotSize}>
         <RobotSprite pose={pose} mood={mood} />
         {rollerHeight > 0 && <Roller pixel={pixel} height={rollerHeight} color="#f1f2f4" />}
       </span>
-      {supervisor && (
-        <span ref={supervisorRef} className="painter supervisor" aria-hidden="true" style={robotSize}>
-          {scolding && <span className="supervisor-alert font-mono">!</span>}
-          <span className="supervisor-flip">
-            <RobotSprite pose={supervisorPose} mood={supervisorMood} />
-            {rollerHeight > 0 && <Roller pixel={pixel} height={rollerHeight} color="#6994ff" />}
-          </span>
-        </span>
-      )}
     </h1>
   );
 }

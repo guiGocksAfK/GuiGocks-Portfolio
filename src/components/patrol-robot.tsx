@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { CREW_WIDTH, crewMarkup } from '@/components/robot-sprite';
+import { anySceneRunning } from '@/components/scene';
 
 const SPEED = 110; // px per second
 const STEP_INTERVAL = 140;
@@ -186,7 +187,8 @@ export function PatrolRobot() {
         await pause(6000 + Math.random() * 6000);
         const width = line.clientWidth;
         const [start, end] = rightward ? [-CREW_WIDTH - 10, width + 10] : [width + 10, -CREW_WIDTH - 10];
-        if (Math.random() < FIGHT_CHANCE) await fight(guard, start, end, width);
+        // No brawls while a section is being built: one thing at a time.
+        if (Math.random() < FIGHT_CHANCE && !anySceneRunning()) await fight(guard, start, end, width);
         else await patrol(guard, start, end);
       }
     }

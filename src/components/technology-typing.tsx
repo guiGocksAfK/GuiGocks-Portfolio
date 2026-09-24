@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { CREW_HEIGHT, CREW_WIDTH, ROBOT_HEIGHT, ROBOT_WIDTH, RobotSprite, crewMarkup, type RobotMood, type RobotPose } from '@/components/robot-sprite';
+import { whenNamePainted } from '@/components/robot-crew';
 
 const HOP_DURATION = 520;
 const REST = 4000;
@@ -36,7 +37,7 @@ function SlotText({ slot }: { slot: Slot }) {
 
 // The technologies, one group at a time, run by a boss robot that only gives orders: it hops holding up a sign with the
 // next group, and a hard-hat crew does the work, hauling the old words away and bringing the new ones one line each.
-// Then the boss celebrates, rests and starts again. Starts right away, alongside the painter.
+// Then the boss celebrates, rests and starts again. Waits for the name painter to finish first.
 export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[] }) {
   const lineTotal = lineCount(groups);
   const [lines, setLines] = useState<(Line | undefined)[]>([]);
@@ -297,6 +298,8 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
     }
 
     async function run() {
+      // One at a time: the painter finishes the name before the boss walks in.
+      await whenNamePainted();
       await pause(150);
       current = Array.from({ length: total }, () => undefined);
       render();
