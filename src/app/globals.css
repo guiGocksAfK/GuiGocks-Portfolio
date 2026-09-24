@@ -371,6 +371,9 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .drawer-robot { position: absolute; left: calc(50% - 8px); top: 3px; width: 16px; height: 18px; pointer-events: none; }
 .drawer-robot-sprite { display: block; width: 100%; height: 100%; transform-origin: 50% 0; }
 .drawer-robot-sprite svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+/* Sweat drop while the drawer robot catches its breath between tugs. */
+.drawer-sweat { position: absolute; right: -3px; top: 5px; width: 4px; height: 5px; border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%; background: #8aaaff; animation: drawer-sweat .9s ease-in both; }
+@keyframes drawer-sweat { from { opacity: 0; transform: translateY(-3px); } 20% { opacity: 1; } to { opacity: 0; transform: translateY(8px); } }
 .drawer-dust { position: absolute; left: calc(50% - 2px); bottom: -2px; width: 4px; height: 4px; background: #8f9bb3; opacity: .8; animation: drawer-dust .45s ease-out forwards; }
 @keyframes drawer-dust { to { transform: translate(calc(var(--side) * 11px), -7px) scale(.3); opacity: 0; } }
 @media (max-width: 1050px) { .hero-grid { grid-template-columns: minmax(0, 1fr); } }

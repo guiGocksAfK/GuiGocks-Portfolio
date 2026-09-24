@@ -99,14 +99,16 @@ export const CREW_HEIGHT = 18;
 
 const CREW_LEGS = [['..B..B..', '.SS..SS.'], ['.B....B.', 'SS....SS']];
 
-// hat: 'O' is the crew's orange hard hat, 'A' the patrol guard's blue cap. angry turns the eyes red.
-export function crewMarkup(carrying: boolean, step: number, hat: 'O' | 'A' = 'O', angry = false) {
+export type CrewFace = 'normal' | 'angry' | 'tired';
+
+// hat: 'O' is the crew's orange hard hat, 'A' the patrol guard's blue cap. face: red eyes when angry, shut grey slits when tired.
+export function crewMarkup(carrying: boolean, step: number, hat: 'O' | 'A' = 'O', face: CrewFace = 'normal') {
   const top = carrying
     ? ['..OOOO..', 'SOOOOOOS', 'SBDDDDBS', 'SBADDABS', '..BBBB..', '..BABB..', '..BBBB..']
     : ['..OOOO..', '.OOOOOO.', '.BDDDDB.', '.BADDAB.', '..BBBB..', '.SBABBS.', '..BBBB..'];
   const pixels = [...top, ...CREW_LEGS[step % 2]].map((row, index) => {
     if (index < 2) return row.replaceAll('O', hat);
-    if (index === 3 && angry) return row.replaceAll('A', 'R');
+    if (index === 3 && face !== 'normal') return row.replaceAll('A', face === 'angry' ? 'R' : 'S');
     return row;
   });
   const rects = pixels.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] ? `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${COLORS[pixel]}"/>` : '')).join('');

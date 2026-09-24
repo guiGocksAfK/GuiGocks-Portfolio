@@ -60,7 +60,7 @@ export function PatrolRobot() {
       let step = 0;
       let isAngry = false;
       let legs: ReturnType<typeof setInterval> | undefined;
-      const draw = (moving: boolean) => { el.innerHTML = crewMarkup(false, moving ? ++step : 0, hat, isAngry); };
+      const draw = (moving: boolean) => { el.innerHTML = crewMarkup(false, moving ? ++step : 0, hat, isAngry ? 'angry' : 'normal'); };
       draw(false);
       return {
         el,
