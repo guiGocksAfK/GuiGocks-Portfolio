@@ -124,31 +124,25 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .supervisor-flip { position: absolute; inset: 0; transform: scaleX(-1); }
 .supervisor-flip > svg:first-child { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .supervisor-alert { position: absolute; left: 50%; bottom: calc(100% + 4px); margin-left: -6px; color: #ff6b6b; font-size: 22px; font-weight: 700; line-height: 1; animation: fight-pop .25s ease-out both; }
-/* About: the site ID badge on the left; the story and the career building (same width) on the right. */
-.about-section { position: relative; isolation: isolate; padding: 90px 0 0; }
-.about-section::before { content: ''; position: absolute; z-index: -1; inset: 120px 0 40px; pointer-events: none; background: radial-gradient(ellipse at 18% 52%, #6994ff10, transparent 45%), radial-gradient(ellipse at 78% 72%, #6994ff12, transparent 52%); }
+/* About: same language as the rest of the site. Plain story text and the career building on the right; the ID badge
+   on the left stays in view (sticky) while the right column scrolls. Orange appears only on construction pieces. */
+.about-section { padding: 90px 0 0; }
 .about-section .section-footer { margin-top: 90px; }
-.about-grid { display: grid; grid-template-columns: minmax(300px, 340px) minmax(0, 1fr); gap: clamp(40px, 5vw, 80px); align-items: start; }
+.about-grid { display: grid; grid-template-columns: minmax(280px, 320px) minmax(0, 1fr); gap: clamp(40px, 5vw, 80px); align-items: start; }
 .about-main { min-width: 0; }
-.about-section h2::after { content: ''; display: block; width: 68px; height: 4px; margin-top: 16px; border-radius: 2px; background: var(--accent); }
-.about-story { position: relative; padding: 26px 32px; border: 1px solid #35476b; border-left: 3px solid var(--accent); border-radius: 8px; background: linear-gradient(110deg, #1a2741 0%, #151b29 58%, #141820 100%); }
-.about-story > p { color: var(--muted); font-size: 16px; line-height: 1.75; }
+.about-story > p { max-width: 68ch; color: var(--muted); font-size: 16px; line-height: 1.75; }
 .about-story > p + p { margin-top: 14px; }
-.about-story-robot { position: absolute; top: -24px; right: 24px; display: block; width: 34px; height: 38px; filter: drop-shadow(0 4px 3px #0d0f12); transform: rotate(7deg); }
-.about-story-robot svg, .about-timeline-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-.about-timeline-heading { display: flex; align-items: end; justify-content: space-between; margin-top: 26px; padding-right: 48px; border-bottom: 1px solid #35476b; }
-.about-label { padding-bottom: 10px; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
-.about-timeline-robot { display: block; width: 34px; height: 38px; margin-bottom: -1px; }
+.about-label { margin-top: 44px; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 /* Badge hanging from a nail. While waiting it is off-site; the drone flies it in, leaves, and the badge swings to rest. */
-.badge-rig { position: relative; width: 100%; max-width: 320px; padding-top: 4px; }
+.badge-rig { position: sticky; top: 32px; width: 100%; max-width: 320px; padding-top: 4px; }
 .badge-nail { position: absolute; left: calc(50% - 5px); top: -1px; width: 10px; height: 10px; border-radius: 50%; background: #8f9bb3; box-shadow: inset -2px -2px 0 #5d6678; z-index: 3; }
 .badge-flight { position: relative; }
 .badge-hang { transform-origin: 50% 0; }
 .badge-rig:hover .badge-hang { animation: badge-nudge 1s ease-out; }
 .badge-lanyard { display: block; width: 70px; height: 60px; margin: 0 auto; overflow: visible; }
 .badge-lanyard path { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
-.badge-card { position: relative; margin-top: -4px; padding: 26px 18px 18px; border: 1px solid var(--border); border-radius: 10px; background: #141820; text-align: center; box-shadow: 0 14px 30px -18px #000, 0 0 45px -30px #6994ff; }
-.badge-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 8px; border-radius: 9px 9px 0 0; background: repeating-linear-gradient(-45deg, #ffb347 0 6px, #151a24 6px 12px); opacity: .85; }
+.badge-card { position: relative; margin-top: -4px; padding: 26px 18px 18px; border: 1px solid var(--border); border-radius: 8px; background: #11151b; text-align: center; overflow: hidden; }
+.badge-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: repeating-linear-gradient(-45deg, #ffb347 0 6px, #11151b 6px 12px); opacity: .8; }
 .badge-clip { position: absolute; left: calc(50% - 30px); top: -5px; width: 60px; height: 11px; border-radius: 3px; background: #8f9bb3; box-shadow: inset 0 -2px 0 #5d6678; z-index: 2; }
 .badge-photo { position: relative; width: 124px; aspect-ratio: 1; margin: 0 auto 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #0f1218; }
 .badge-image { object-fit: cover; }
@@ -173,8 +167,8 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 @keyframes drone-leave { to { opacity: 0; transform: translate(-150px, -170px) rotate(-8deg); } }
 @keyframes drone-release { to { opacity: 0; } }
 @keyframes rotor-frame { 0% { opacity: 1; } 50% { opacity: 0; } }
-/* Career building: one floor per milestone, drawn bottom-up, with a robot tower crane on the right. The cable hangs
-   from the jib at 14px (CABLE_TOP in career-building.tsx) above the middle of the building. */
+/* Career building: one floor per milestone, drawn bottom-up, styled like the project cards, with a robot tower crane
+   on the right. The cable hangs from the jib at 14px (CABLE_TOP in career-building.tsx) above the middle of the building. */
 .building-site { position: relative; margin-top: 14px; padding-top: 60px; }
 .crane { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 .crane-mast { position: absolute; right: 8px; top: 6px; bottom: 0; width: 14px; border-inline: 2px solid #e8a33d; background: repeating-linear-gradient(45deg, transparent 0 8px, #e8a33d 8px 10px); }
@@ -182,24 +176,12 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .crane-jib { position: absolute; top: 6px; right: 0; left: calc(50% - 22px - 48px); height: 8px; border-block: 2px solid #e8a33d; background: repeating-linear-gradient(-45deg, transparent 0 5px, #e8a33d 5px 7px); }
 .crane-cable { position: absolute; top: 14px; left: calc(50% - 22px - 1px); width: 2px; height: 30px; background: #8f9bb3; }
 .crane-hook { position: absolute; left: -4px; bottom: -2px; width: 10px; height: 8px; border: 2px solid #8f9bb3; border-top: 0; border-radius: 0 0 6px 6px; }
-.building-ground { display: block; height: 3px; border-radius: 2px; background: #3a404c; }
-.building { position: static; display: flex; flex-direction: column-reverse; margin-right: 44px; }
-.floor { position: relative; z-index: 2; margin-top: -1px; border: 1px solid var(--border); background: #141820; }
-.floor-step { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 14px; padding: 13px 16px 13px 22px; border-left: 3px solid #5274ba; color: var(--muted); font-size: 14px; line-height: 1.6; }
-.floor-step::after { content: ""; position: absolute; left: -7px; top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: #8aaaff; box-shadow: 0 0 0 3px #141820; }
-.floor-current { border-left-color: var(--accent); background: linear-gradient(90deg, #1c2943, #181c25 65%); }
-.floor-current .floor-year, .floor-current .floor-text { color: var(--foreground); }
-.floor-current .floor-year { font-weight: 700; color: var(--accent); }
-.timeline-runner { position: absolute; z-index: 4; left: -12px; top: 124px; width: 24px; height: 24px; pointer-events: none; transition: top .55s cubic-bezier(.2, .8, .25, 1); filter: drop-shadow(0 0 6px #6994ff); }
-.timeline-runner svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-.building-patrol .timeline-runner svg { animation: runner-step .4s ease-in-out infinite alternate; }
-@keyframes runner-step { to { transform: translateY(-2px); } }
-.building-waiting .timeline-runner { opacity: 0; }
-.floor-step::before { content: ''; position: absolute; right: 10px; top: 10px; width: 6px; height: 6px; background: color-mix(in srgb, var(--accent) 35%, transparent); box-shadow: 0 10px 0 color-mix(in srgb, var(--accent) 20%, transparent); }
-.floor-step:first-child { background: #181c25; border-bottom-width: 3px; }
-.floor-step .floor-text { padding-right: 16px; }
+.building-ground { display: block; height: 2px; background: var(--border); }
+.building { display: flex; flex-direction: column-reverse; margin-right: 44px; }
+.floor { position: relative; z-index: 2; margin-top: -1px; border: 1px solid var(--border); background: #11151b; }
+.floor-step { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 14px; padding: 13px 16px; color: var(--muted); font-size: 14px; line-height: 1.6; }
 .floor-year { color: var(--accent); font-size: 13px; }
-.floor-next { border: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent); background: repeating-linear-gradient(-45deg, transparent 0 10px, color-mix(in srgb, var(--accent) 6%, transparent) 10px 20px); transition: opacity .5s; }
+.floor-next { border: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent); border-radius: 8px 8px 0 0; background: transparent; transition: opacity .5s; }
 .floor-next a { display: block; padding: 13px 16px; color: var(--muted); font-size: 14px; transition: color .18s; }
 .floor-next a:hover { color: var(--foreground); }
 .floor-next a:hover strong, .floor-next a:hover span:last-child { color: var(--accent); }
@@ -214,11 +196,11 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 @keyframes crane-blink { 0%, 94% { background-size: auto; } 95%, 97% { background: #151a24; } }
 @media (max-width: 900px) {
   .about-grid { grid-template-columns: minmax(0, 1fr); }
-  .badge-rig { margin: 0 auto 12px; width: 100%; }
-  .about-main { max-width: none; }
+  .badge-rig { position: relative; top: 0; margin: 0 auto 12px; }
+  .about-label { margin-top: 36px; }
 }
 @media (max-width: 480px) {
-  .floor-step { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 12px 12px 12px 18px; font-size: 13px; }
+  .floor-step { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 12px; font-size: 13px; }
   .building { margin-right: 38px; }
   .crane-cable { left: calc(50% - 19px - 1px); }
   .crane-jib { left: calc(50% - 19px - 40px); }
