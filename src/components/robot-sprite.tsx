@@ -1,6 +1,6 @@
 // Pixel-art robot drawn from character maps: each character is one pixel, "." is transparent.
 export type RobotPose = 'idle' | 'blink' | 'crouch' | 'jump' | 'carry';
-export type RobotMood = 'normal' | 'angry' | 'happy';
+export type RobotMood = 'normal' | 'angry' | 'happy' | 'sad';
 
 const COLORS: Record<string, string> = {
   B: '#dfe5f1', // body
@@ -52,6 +52,8 @@ const HEADS: Record<RobotMood | 'blink', string[]> = {
   blink: ['..BBBBBBB..', '.BDDDDDDDB.', '.BDDDDDDDB.', '.BDSSDSSDB.', '..BBBBBBB..'],
   angry: ['..BBBBBBB..', '.BRDDDDDRB.', '.BDRDDDRDB.', '.BDDDDDDDB.', '..BBBBBBB..'],
   happy: ['..BBBBBBB..', '.BDADDDADB.', '.BADADADAB.', '.BDDDDDDDB.', '..BBBBBBB..'],
+  // Droopy eyes low and wide apart.
+  sad: ['..BBBBBBB..', '.BDDDDDDDB.', '.BDDDDDDDB.', '.BADDDDDAB.', '..BBBBBBB..'],
 };
 
 function rows(pose: RobotPose, mood: RobotMood) {

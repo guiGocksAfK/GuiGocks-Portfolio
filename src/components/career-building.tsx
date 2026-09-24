@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { CREW_HEIGHT, CREW_WIDTH, crewMarkup } from '@/components/robot-sprite';
+import { CREW_HEIGHT, CREW_WIDTH, RobotSprite, crewMarkup, type RobotMood } from '@/components/robot-sprite';
 import { registerStep } from '@/components/scene';
 
 type Step = { year: string; text: string };
@@ -11,17 +11,23 @@ type Phase = 'done' | 'waiting' | 'building' | 'spraying' | 'dismantling';
 const CABLE_TOP = 14;
 const CABLE_SHORT = 6;
 const STEP_INTERVAL = 100;
+// The crane breaks down while lowering this floor (the second one), so the first shows the crane working normally.
+const BREAK_AT = 1;
 
 class Cancelled extends Error {}
 
 // The career timeline as a building, one floor per milestone, oldest at the bottom, topped by a dashed "next floor"
 // that invites the reader to get in touch. It arrives as a site under construction, wrapped in scaffolding. In its turn
 // in the About scene the tower crane lowers each floor on its hook from the bottom up, a crew robot spray-paints
-// the outline and then the text of the next floor, and two more pull the scaffolding down. Afterwards the hook waits
+// the outline and then the text of the next floor, and two more pull the scaffolding down. Halfway through the second
+// floor the crane breaks down: the floor dangles, the cabin smokes, the operator pokes its head out looking miserable,
+// and a mechanic hammers the mast until it runs again. Afterwards the hook waits
 // above the empty next floor. Without motion the building is simply there, finished.
 export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: { label: string; text: string; href: string } }) {
   const [phase, setPhase] = useState<Phase>('done');
   const [placed, setPlaced] = useState(0);
+  const [operatorOut, setOperatorOut] = useState(false);
+  const [operatorMood, setOperatorMood] = useState<RobotMood>('normal');
   const siteRef = useRef<HTMLDivElement>(null);
   const cableRef = useRef<HTMLSpanElement>(null);
 
@@ -74,6 +80,78 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       };
     }
 
+    // The crane jams with a floor dangling: smoke from the cabin, the operator sticks its head out, sad, and a mechanic
+    // runs to the foot of the mast and gives it three hammer blows until it starts again.
+    async function breakdown(floor: HTMLElement, y: number) {
+      const craneBox = area.querySelector<HTMLElement>('.crane');
+      const sway = floor.animate([0, 2.5, -2.5, 0].map(angle => ({ transform: `translateY(${y}px) rotate(${angle}deg)` })), { duration: 900, iterations: Infinity, easing: 'ease-in-out' });
+      const cabinX = area.clientWidth - 40;
+      const smoke = setInterval(() => {
+        const puff = document.createElement('span');
+        puff.className = 'crane-smoke';
+        puff.style.left = `${cabinX + Math.random() * 8}px`;
+        puff.style.top = '8px';
+        area.appendChild(puff);
+        setTimeout(() => puff.remove(), 900);
+      }, 220);
+      intervals.add(smoke);
+      craneBox?.animate([0, -3, 3, -2, 0].map(x => ({ transform: `translateX(${x}px)` })), { duration: 280 });
+      try {
+        await wait(350);
+        setOperatorMood('sad');
+        setOperatorOut(true);
+        await wait(900);
+
+        const groundY = area.clientHeight - CREW_HEIGHT - 2;
+        const mastX = area.clientWidth - 22 - CREW_WIDTH - 4;
+        const mechanic = worker(area.clientWidth + 20, groundY);
+        const hammer = document.createElement('span');
+        hammer.className = 'mechanic-hammer';
+        mechanic.el.appendChild(hammer);
+        try {
+          mechanic.run(true);
+          await play(mechanic.el, [{ transform: `translate(${area.clientWidth + 20}px, ${groundY}px)` }, { transform: `translate(${mastX}px, ${groundY}px)` }], { duration: 550, easing: 'ease-out', fill: 'forwards' });
+          mechanic.run(false);
+          for (let blow = 0; blow < 3; blow++) {
+            await play(hammer, [{ transform: 'rotate(-70deg)' }, { transform: 'rotate(25deg)' }], { duration: 170, easing: 'cubic-bezier(.6, 0, .9, .4)' });
+            // Impact: "PAM!", sparks and the whole crane shaking.
+            const pam = document.createElement('span');
+            pam.className = 'hammer-pam font-mono';
+            pam.textContent = 'PAM!';
+            pam.style.left = `${mastX + 6 - blow * 4}px`;
+            pam.style.top = `${groundY - 20 - blow * 6}px`;
+            area.appendChild(pam);
+            setTimeout(() => pam.remove(), 500);
+            const spark = document.createElement('span');
+            spark.className = 'hammer-spark';
+            spark.textContent = '✦';
+            spark.style.left = `${mastX + CREW_WIDTH + 4}px`;
+            spark.style.top = `${groundY + 2}px`;
+            area.appendChild(spark);
+            setTimeout(() => spark.remove(), 400);
+            craneBox?.animate([0, 3, -3, 2, 0].map(x => ({ transform: `translateX(${x}px)` })), { duration: 220 });
+            await wait(260);
+          }
+          // Running again: the smoke stops and the operator cheers up and ducks back in.
+          clearInterval(smoke);
+          setOperatorMood('happy');
+          await play(mechanic.el, [{ transform: `translate(${mastX}px, ${groundY}px)` }, { transform: `translate(${mastX}px, ${groundY - 6}px)`, offset: .4 }, { transform: `translate(${mastX}px, ${groundY}px)` }], { duration: 280, easing: 'ease-out' });
+          mechanic.run(true);
+          const leave = play(mechanic.el, [{ transform: `translate(${mastX}px, ${groundY}px)` }, { transform: `translate(${area.clientWidth + 20}px, ${groundY}px)`, opacity: 0 }], { duration: 500, easing: 'ease-in', fill: 'forwards' });
+          await wait(450);
+          setOperatorOut(false);
+          await leave;
+        } finally {
+          mechanic.remove();
+        }
+      } finally {
+        clearInterval(smoke);
+        sway.cancel();
+        setOperatorOut(false);
+        setOperatorMood('normal');
+      }
+    }
+
     async function raiseFloors() {
       crane.style.height = `${CABLE_SHORT}px`;
       for (let index = 0; index < floors.length; index++) {
@@ -82,8 +160,20 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
         const duration = Math.min(800, 380 + drop * 1.6);
         // The floor hangs from the hook and both come down together.
         floor.classList.add('floor-hanging');
-        crane.animate([{ height: `${CABLE_SHORT}px` }, { height: `${CABLE_SHORT + drop}px` }], { duration, easing: 'cubic-bezier(.45, 0, .35, 1)' });
-        await play(floor, [{ transform: `translateY(${-drop}px)` }, { transform: 'none' }], { duration, easing: 'cubic-bezier(.45, 0, .35, 1)' });
+        if (index === BREAK_AT) {
+          // Halfway down, the crane breaks: it only goes on once the mechanic has fixed it.
+          const half = Math.round(drop / 2);
+          crane.animate([{ height: `${CABLE_SHORT}px` }, { height: `${CABLE_SHORT + half}px` }], { duration: duration / 2, easing: 'ease-in' });
+          await play(floor, [{ transform: `translateY(${-drop}px)` }, { transform: `translateY(${half - drop}px)` }], { duration: duration / 2, easing: 'ease-in', fill: 'forwards' });
+          crane.style.height = `${CABLE_SHORT + half}px`;
+          await breakdown(floor, half - drop);
+          crane.animate([{ height: `${CABLE_SHORT + half}px` }, { height: `${CABLE_SHORT + drop}px` }], { duration: duration / 2, easing: 'ease-out' });
+          await play(floor, [{ transform: `translateY(${half - drop}px)` }, { transform: 'none' }], { duration: duration / 2, easing: 'ease-out' });
+          floor.getAnimations().forEach(animation => animation.cancel());
+        } else {
+          crane.animate([{ height: `${CABLE_SHORT}px` }, { height: `${CABLE_SHORT + drop}px` }], { duration, easing: 'cubic-bezier(.45, 0, .35, 1)' });
+          await play(floor, [{ transform: `translateY(${-drop}px)` }, { transform: 'none' }], { duration, easing: 'cubic-bezier(.45, 0, .35, 1)' });
+        }
         floor.classList.remove('floor-hanging');
         setPlaced(index + 1);
         // Released: the cable reels back up while the floor settles.
@@ -198,6 +288,12 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
     <div ref={siteRef} className={`building-site building-${phase}`}>
       <div className="crane" aria-hidden="true">
         <span className="crane-mast" />
+        {/* Operator's cabin; the operator only shows when it leans out of the window. */}
+        <span className={`crane-operator${operatorOut ? ' crane-operator-out' : ''}`}>
+          <RobotSprite pose="idle" mood={operatorMood} />
+          {operatorOut && operatorMood === 'sad' && <span className="operator-tear" />}
+        </span>
+        <span className="crane-cabin" />
         <span className="crane-jib" />
         <span ref={cableRef} className="crane-cable"><span className="crane-hook" /></span>
       </div>

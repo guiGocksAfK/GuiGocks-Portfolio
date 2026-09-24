@@ -180,10 +180,26 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .building-site { position: relative; margin-top: 14px; padding-top: 60px; }
 .crane { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 .crane-mast { position: absolute; right: 8px; top: 6px; bottom: 0; width: 14px; border-inline: 2px solid #e8a33d; background: repeating-linear-gradient(45deg, transparent 0 8px, #e8a33d 8px 10px); }
-.crane-mast::after { content: ''; position: absolute; left: -7px; top: 10px; width: 24px; height: 16px; border: 3px solid #dfe5f1; border-radius: 3px; background: radial-gradient(circle at 32% 50%, var(--accent) 1.6px, transparent 2.2px), radial-gradient(circle at 68% 50%, var(--accent) 1.6px, transparent 2.2px), #151a24; animation: crane-blink 4s steps(1) infinite; }
 .crane-jib { position: absolute; top: 6px; right: 0; left: calc(50% - 22px - 48px); height: 8px; border-block: 2px solid #e8a33d; background: repeating-linear-gradient(-45deg, transparent 0 5px, #e8a33d 5px 7px); }
 .crane-cable { position: absolute; top: 14px; left: calc(50% - 22px - 1px); width: 2px; height: 30px; background: #8f9bb3; }
 .crane-hook { position: absolute; left: -4px; bottom: -2px; width: 10px; height: 8px; border: 2px solid #8f9bb3; border-top: 0; border-radius: 0 0 6px 6px; }
+/* Operator's cabin on the crane. The operator hides behind it and slides out through the side when the crane breaks. */
+.crane-cabin { position: absolute; z-index: 2; right: 20px; top: 16px; width: 28px; height: 22px; border: 2px solid #dfe5f1; border-radius: 3px; background: #151a24; box-shadow: inset 0 -5px 0 #e8a33d; }
+.crane-cabin::after { content: ''; position: absolute; inset: 3px 3px 8px; border-radius: 1px; background: color-mix(in srgb, var(--accent) 30%, #151a24); }
+.crane-operator { position: absolute; z-index: 1; right: 23px; top: 15px; width: 22px; height: 14px; overflow: hidden; transition: transform .25s ease-out; }
+.crane-operator svg { display: block; width: 22px; height: 24px; shape-rendering: crispEdges; }
+.crane-operator-out { transform: translateX(-20px); }
+.operator-tear { position: absolute; left: 4px; top: 9px; width: 3px; height: 4px; border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%; background: #8aaaff; animation: drawer-sweat 1s ease-in infinite; }
+.crane-smoke { position: absolute; z-index: 3; width: 8px; height: 8px; border-radius: 50%; background: #737d91; opacity: .8; pointer-events: none; animation: crane-smoke .9s ease-out forwards; }
+@keyframes crane-smoke { to { transform: translate(-6px, -22px) scale(2.2); opacity: 0; } }
+/* Mechanic's hammer (handle + head) and the blows' "PAM!" and sparks. */
+.mechanic-hammer { position: absolute; right: -9px; top: 1px; width: 10px; height: 13px; transform-origin: 1px 12px; transform: rotate(-70deg); }
+.mechanic-hammer::before { content: ''; position: absolute; left: 0; bottom: 0; width: 2px; height: 11px; background: #b97a26; }
+.mechanic-hammer::after { content: ''; position: absolute; left: -3px; top: 0; width: 8px; height: 4px; border-radius: 1px; background: #8f9bb3; }
+.hammer-pam { position: absolute; z-index: 5; color: #ffd76a; font-size: 11px; font-weight: 700; line-height: 1; pointer-events: none; animation: hammer-pam .5s ease-out forwards; }
+@keyframes hammer-pam { from { transform: scale(.4); opacity: 1; } 40% { transform: scale(1.3); opacity: 1; } to { transform: translateY(-10px); opacity: 0; } }
+.hammer-spark { position: absolute; z-index: 5; color: #ffd76a; font-size: 10px; line-height: 1; pointer-events: none; animation: fight-bit .4s ease-out forwards; --dx: 10px; --dy: -8px; }
+.floor-hanging { transform-origin: 50% 0; }
 .building-ground { display: block; height: 2px; background: var(--border); }
 /* Scaffolding while the building is under construction: two poles and planks sticking out past the floors (which sit
    above it). The crew pulls the poles and everything falls away piece by piece. */
@@ -219,7 +235,6 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .floor-landed::after { content: ''; position: absolute; left: -8px; right: -8px; bottom: -4px; height: 6px; background: radial-gradient(circle at 4px 3px, #8f9bb3 2px, transparent 3px) left / 12px 6px no-repeat, radial-gradient(circle at 8px 3px, #8f9bb3 2px, transparent 3px) right / 12px 6px no-repeat; animation: floor-dust .5s ease-out forwards; pointer-events: none; }
 @keyframes floor-land { 0% { transform: scale(1.02, .9); } 55% { transform: scale(.995, 1.03); } 100% { transform: none; } }
 @keyframes floor-dust { from { opacity: .9; } to { opacity: 0; transform: translateY(-8px) scaleX(1.25); } }
-@keyframes crane-blink { 0%, 94% { background-size: auto; } 95%, 97% { background: #151a24; } }
 @media (max-width: 900px) {
   .about-grid { grid-template-columns: minmax(0, 1fr); }
   .badge-rig { position: relative; top: 0; margin: 0 auto 12px; }
