@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { RobotSprite } from '@/components/robot-sprite';
 
 type Step = { year: string; text: string };
-type Phase = 'done' | 'waiting' | 'building';
+type Phase = 'done' | 'waiting' | 'building' | 'patrol';
 
 // Where the cable starts (bottom of the jib) and how far it hangs when retracted.
 const CABLE_TOP = 14;
@@ -18,6 +18,7 @@ class Cancelled extends Error {}
 export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: { label: string; text: string; href: string } }) {
   const [phase, setPhase] = useState<Phase>('done');
   const [placed, setPlaced] = useState(0);
+  const [blinking, setBlinking] = useState(false);
   const siteRef = useRef<HTMLDivElement>(null);
   const cableRef = useRef<HTMLSpanElement>(null);
 
@@ -33,6 +34,7 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
     if (floors.length) placeRunner(floors[floors.length - 1]);
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     let cancelled = false;
+    let patrolAnimation: Animation | undefined;
     const timers = new Set<ReturnType<typeof setTimeout>>();
     // Floors stay off the site until the crane brings them.
     setPhase('waiting');
@@ -43,6 +45,28 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       if (cancelled) throw new Cancelled();
     };
     const setCable = (height: number) => { crane.style.height = `${height}px`; };
+    const startPatrol = () => {
+      if (!runner || floors.length < 2) return;
+      patrolAnimation?.cancel();
+      const stops = [...floors].reverse().concat(floors.slice(1));
+      const topAt = (floor: HTMLElement) => `${floor.offsetTop + floor.offsetHeight / 2 - 12}px`;
+      const frames: Keyframe[] = [{ top: topAt(stops[0]), offset: 0 }];
+      const segment = .9 / (stops.length - 1);
+      const pause = Math.min(.045, segment * .3);
+      stops.slice(1).forEach((floor, index) => {
+        const arrival = (index + 1) * segment - pause;
+        frames.push({ top: topAt(floor), offset: arrival });
+        frames.push({ top: topAt(floor), offset: arrival + pause });
+      });
+      frames.push({ top: topAt(stops[stops.length - 1]), offset: 1 });
+      patrolAnimation = runner.animate(frames, { duration: 12000, iterations: Infinity, easing: 'linear' });
+    };
+    const handleResize = () => {
+      if (!patrolAnimation) return;
+      if (floors.length) placeRunner(floors[floors.length - 1]);
+      startPatrol();
+    };
+    window.addEventListener('resize', handleResize);
 
     async function build() {
       setCable(CABLE_SHORT);
@@ -70,7 +94,8 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       }
       // Back to the stylesheet's resting height: the hook waits above the next floor.
       crane.style.removeProperty('height');
-      setPhase('done');
+      setPhase('patrol');
+      startPatrol();
     }
 
     const observer = new IntersectionObserver(([entry]) => {
@@ -86,12 +111,24 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       observer.disconnect();
       timers.forEach(clearTimeout);
       crane.getAnimations().forEach(animation => animation.cancel());
+      patrolAnimation?.cancel();
+      window.removeEventListener('resize', handleResize);
     };
   }, [steps]);
 
+  useEffect(() => {
+    if (phase !== 'patrol') return;
+    let blinkTimeout: ReturnType<typeof setTimeout>;
+    const blinkInterval = setInterval(() => {
+      setBlinking(true);
+      blinkTimeout = setTimeout(() => setBlinking(false), 150);
+    }, 3200);
+    return () => { clearInterval(blinkInterval); clearTimeout(blinkTimeout); };
+  }, [phase]);
+
   const floorClass = (index: number) => {
     const current = index === steps.length - 1 ? ' floor-current' : '';
-    if (phase === 'done') return `floor floor-step${current}`;
+    if (phase === 'done' || phase === 'patrol') return `floor floor-step${current}`;
     return `floor floor-step${current} ${index < placed ? 'floor-landed' : 'floor-pending'}`;
   };
 
@@ -113,7 +150,7 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
           <a href={next.href}><span className="font-mono">{next.label}:</span> <strong>{next.text}</strong> <span aria-hidden="true">→</span></a>
         </li>
       </ol>
-      <span className="timeline-runner" aria-hidden="true"><RobotSprite pose="idle" mood="happy" /></span>
+      <span className="timeline-runner" aria-hidden="true"><RobotSprite pose={blinking ? "blink" : "idle"} mood="normal" /></span>
       <span className="building-ground" aria-hidden="true" />
     </div>
   );
