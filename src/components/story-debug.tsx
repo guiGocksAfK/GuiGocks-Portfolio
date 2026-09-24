@@ -4,6 +4,9 @@ import { useEffect, useRef } from 'react';
 import { CREW_HEIGHT, CREW_WIDTH, crewMarkup } from '@/components/robot-sprite';
 import { registerStep } from '@/components/scene';
 
+// Pause between the end of the construction and the letter falling off.
+const FALL_DELAY = 5000;
+
 class Cancelled extends Error {}
 
 // The About story, final and readable from the start. As the last step of the About scene, the last letter of one word
@@ -59,6 +62,8 @@ export function StoryDebug({ paragraphs, bugWord }: { paragraphs: readonly strin
       robot.className = 'debug-robot';
       robot.innerHTML = crewMarkup(false, 0);
       const placeRobot = (x: number, y: number) => { robot.style.transform = `translate(${x}px, ${y}px)`; };
+      // A quiet moment after the building is finished, so the fall reads as its own little joke.
+      await wait(FALL_DELAY);
       try {
         // It comes loose and falls with gravity, bounces once and lies on its side.
         await play(letter, [{ transform: 'none' }, { transform: `translate(6px, ${floorDy}px) rotate(80deg)` }], { duration: 480, easing: 'cubic-bezier(.55, 0, 1, .45)' });

@@ -197,7 +197,7 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 @keyframes hammer-pam { from { transform: scale(.4); opacity: 1; } 40% { transform: scale(1.3); opacity: 1; } to { transform: translateY(-10px); opacity: 0; } }
 .hammer-spark { position: absolute; z-index: 5; color: #ffd76a; font-size: 10px; line-height: 1; pointer-events: none; animation: fight-bit .4s ease-out forwards; --dx: 10px; --dy: -8px; }
 .floor-hanging { transform-origin: 50% 0; }
-.building-ground { display: block; height: 2px; background: var(--border); }
+.building-ground { display: block; height: 2px; margin-right: 44px; background: var(--border); }
 /* Scaffolding while the building is under construction: two poles and planks sticking out past the floors (which sit
    above it). The crew pulls the poles and everything falls away piece by piece. */
 .scaffold { position: absolute; z-index: 1; top: 60px; bottom: 2px; left: -8px; right: 36px; pointer-events: none; }
@@ -228,9 +228,10 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .building-waiting .floor-next, .building-building .floor-next { opacity: 0; }
 .floor-pending { visibility: hidden; }
 .floor-pending.floor-hanging { visibility: visible; z-index: 3; box-shadow: 0 10px 18px -12px #000; }
-.floor-landed { animation: floor-land .4s ease-out; }
+.floor-landed { transform-origin: 50% 100%; animation: floor-land .4s ease-out; }
 .floor-landed::after { content: ''; position: absolute; left: -8px; right: -8px; bottom: -4px; height: 6px; background: radial-gradient(circle at 4px 3px, #8f9bb3 2px, transparent 3px) left / 12px 6px no-repeat, radial-gradient(circle at 8px 3px, #8f9bb3 2px, transparent 3px) right / 12px 6px no-repeat; animation: floor-dust .5s ease-out forwards; pointer-events: none; }
-@keyframes floor-land { 0% { transform: scale(1.02, .9); } 55% { transform: scale(.995, 1.03); } 100% { transform: none; } }
+/* Vertical-only squash on landing, so every floor keeps exactly the width of the base. */
+@keyframes floor-land { 0% { transform: scaleY(.9); } 55% { transform: scaleY(1.03); } 100% { transform: none; } }
 @keyframes floor-dust { from { opacity: .9; } to { opacity: 0; transform: translateY(-8px) scaleX(1.25); } }
 @media (max-width: 900px) {
   .about-grid { grid-template-columns: minmax(0, 1fr); }
@@ -239,7 +240,7 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 }
 @media (max-width: 480px) {
   .floor-step { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 12px; font-size: 13px; }
-  .building { margin-right: 38px; }
+  .building, .building-ground { margin-right: 38px; }
   .scaffold { right: 30px; }
   .crane-cable { left: calc(50% - 19px - 1px); }
   .crane-jib { left: calc(50% - 19px - 40px); }

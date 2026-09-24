@@ -19,13 +19,15 @@ class Cancelled extends Error {}
 // The career timeline as a building, one floor per milestone, oldest at the bottom, topped by a dashed "next floor"
 // that invites the reader to get in touch. It arrives as a site under construction, wrapped in scaffolding. In its turn
 // in the About scene the tower crane lowers each floor on its hook from the bottom up, a crew robot spray-paints
-// the outline and then the text of the next floor, and two more pull the scaffolding down. Halfway through the second
+// the next floor (outline and text in one calm pass), and two more pull the scaffolding down. Halfway through the second
 // floor the crane breaks down: the floor dangles, the cabin smokes, the operator pokes its head out looking miserable,
 // and a mechanic hammers the mast until it runs again. Afterwards the hook waits
 // above the empty next floor. Without motion the building is simply there, finished.
 export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: { label: string; text: string; href: string } }) {
   const [phase, setPhase] = useState<Phase>('done');
   const [placed, setPlaced] = useState(0);
+  // Plank heights (px from the top of the scaffolding): one at every floor joint, so the planks line up with the slabs.
+  const [planks, setPlanks] = useState<number[]>([]);
   const [operatorOut, setOperatorOut] = useState(false);
   const [operatorMood, setOperatorMood] = useState<RobotMood>('normal');
   const siteRef = useRef<HTMLDivElement>(null);
@@ -184,19 +186,19 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       crane.style.removeProperty('height');
     }
 
-    // A crew member with a spray can runs along the top of the building drawing the next floor's dashed outline,
-    // then goes back and writes the text. Each pass reveals its part from left to right, in step with the robot.
+    // A crew member with a spray can appears at the left end of the next floor and, in one calm pass, sprays its dashed
+    // outline and text together from left to right, then hops away. The frame and text are revealed in step with it.
     async function sprayNextFloor() {
       const frame = area.querySelector<HTMLElement>('.floor-next');
       const text = frame?.querySelector<HTMLElement>('a');
       if (!frame || !text) return;
       frame.style.clipPath = 'inset(-2px 100% -2px -2px)';
-      text.style.clipPath = 'inset(0 100% 0 0)';
       setPhase('spraying');
       const left = frame.offsetLeft;
       const width = frame.offsetWidth;
       const y = frame.offsetTop - CREW_HEIGHT;
-      const painter = worker(area.clientWidth, y);
+      const startX = left - CREW_WIDTH / 2;
+      const painter = worker(startX, y);
       const can = document.createElement('span');
       can.className = 'spray-can';
       painter.el.appendChild(can);
@@ -208,33 +210,30 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
         area.appendChild(puff);
         setTimeout(() => puff.remove(), 400);
       };
+      // Smooth start and stop instead of a constant rush.
+      const ease = (t: number) => t * t * (3 - 2 * t);
       try {
+        await play(painter.el, [{ transform: `translate(${startX}px, ${y - 10}px)`, opacity: 0 }, { transform: `translate(${startX}px, ${y}px)`, opacity: 1 }], { duration: 300, easing: 'ease-out' });
+        painter.place(startX, y);
+        await wait(150);
         painter.run(true);
-        await play(painter.el, [{ transform: `translate(${area.clientWidth}px, ${y}px)` }, { transform: `translate(${left - CREW_WIDTH}px, ${y}px)` }], { duration: 650, easing: 'ease-out' });
-        painter.place(left - CREW_WIDTH, y);
-        const pass = (duration: number, reveal: (t: number) => void) => {
-          let lastPuff = 0;
-          return tween(duration, t => {
-            const x = left - CREW_WIDTH + width * t;
-            painter.place(x, y);
-            reveal(t);
-            if (t - lastPuff > .03) { lastPuff = t; mist(x); }
-          });
-        };
-        await pass(1100, t => { frame.style.clipPath = `inset(-2px ${(1 - t) * 100}% -2px -2px)`; });
+        let lastPuff = 0;
+        await tween(2000, t => {
+          const progress = ease(t);
+          const x = startX + width * progress;
+          painter.place(x, y);
+          frame.style.clipPath = `inset(-2px ${(1 - progress) * 100}% -2px -2px)`;
+          if (progress - lastPuff > .06) { lastPuff = progress; mist(x); }
+        });
+        painter.run(false);
         frame.style.removeProperty('clip-path');
-        // Back to the start for the lettering: a quick hop, then the second pass.
-        await tween(260, t => painter.place(left - CREW_WIDTH + width * (1 - t), y - Math.sin(Math.PI * t) * 10));
-        await pass(900, t => { text.style.clipPath = `inset(0 ${(1 - t) * 100}% 0 0)`; });
-        text.style.removeProperty('clip-path');
-        await play(painter.el, [{ transform: `translate(${left - CREW_WIDTH + width}px, ${y}px)` }, { transform: `translate(${area.clientWidth + 20}px, ${y}px)`, opacity: 0 }], { duration: 450, easing: 'ease-in', fill: 'forwards' });
+        const endX = startX + width;
+        await play(painter.el, [{ transform: `translate(${endX}px, ${y}px)`, opacity: 1 }, { transform: `translate(${endX}px, ${y - 10}px)`, opacity: 1, offset: .4 }, { transform: `translate(${endX}px, ${y - 4}px)`, opacity: 0 }], { duration: 350, easing: 'ease-out', fill: 'forwards' });
       } finally {
         frame.style.removeProperty('clip-path');
-        text.style.removeProperty('clip-path');
         painter.remove();
       }
     }
-
     // Two crew members run in to the scaffold poles, give them a yank, and the scaffolding falls apart.
     async function dismantle() {
       const scaffold = area.querySelector<HTMLElement>('.scaffold');
@@ -279,6 +278,27 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
     };
   }, [steps]);
 
+  // Measures the floor joints (the floors are laid out even before they are placed) and re-measures on resize, e.g.
+  // when text wraps differently on a phone.
+  const underConstruction = phase !== 'done';
+  useEffect(() => {
+    const area = siteRef.current;
+    if (!underConstruction || !area) return;
+    const measure = () => {
+      const scaffold = area.querySelector<HTMLElement>('.scaffold');
+      if (!scaffold) return;
+      const floors = [...area.querySelectorAll<HTMLElement>('.building > li')];
+      const joints = [Math.min(...floors.map(floor => floor.offsetTop)), ...floors.map(floor => floor.offsetTop + floor.offsetHeight)]
+        .map(y => Math.round(y - scaffold.offsetTop))
+        .sort((a, b) => a - b)
+        .filter((y, index, all) => index === 0 || y - all[index - 1] > 3);
+      setPlanks(joints);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(area);
+    return () => observer.disconnect();
+  }, [underConstruction]);
+
   const floorClass = (index: number) => {
     if (phase === 'done' || phase === 'spraying' || phase === 'dismantling') return 'floor floor-step';
     return `floor floor-step ${index < placed ? 'floor-landed' : 'floor-pending'}`;
@@ -302,8 +322,8 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
         <div className="scaffold" aria-hidden="true">
           <span className="scaffold-pole" />
           <span className="scaffold-pole scaffold-pole-right" />
-          {Array.from({ length: steps.length + 1 }, (_, index) => (
-            <span key={index} className="scaffold-plank" style={{ top: `${((index + 1) / (steps.length + 2)) * 100}%`, animationDelay: `${index * 70}ms` }} />
+          {planks.map((top, index) => (
+            <span key={top} className="scaffold-plank" style={{ top: `${top - 1}px`, animationDelay: `${index * 70}ms` }} />
           ))}
         </div>
       )}
