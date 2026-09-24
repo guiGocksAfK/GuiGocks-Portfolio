@@ -10,7 +10,7 @@ import { PatrolRobot } from '@/components/patrol-robot';
 import { ProjectDrawer } from '@/components/project-drawer';
 import { AboutBadge } from '@/components/about-badge';
 import { CareerBuilding } from '@/components/career-building';
-import { StoryPrinter } from '@/components/story-printer';
+import { StoryDebug } from '@/components/story-debug';
 import { SceneTrigger } from '@/components/scene-trigger';
 
 function Arrow() {
@@ -105,7 +105,7 @@ export default function Home() {
         <div className="section-footer font-mono"><span>{projects.section}</span><span>{projects.items.length} {projects.countLabel}</span><PatrolRobot /></div>
       </section>
       <section id="sobre" aria-labelledby="about-title" className="about-section">
-        {/* Plays the About robots one at a time: printer, drone, crane, spray, scaffolding. */}
+        {/* Plays the About robots one at a time: drone, crane, spray, scaffolding, then the loose letter. */}
         <SceneTrigger name="about" />
         <h2 id="about-title">{about.title}</h2>
         <div className="about-grid">
@@ -115,7 +115,7 @@ export default function Home() {
             photo={about.photo} photoAlt={about.photoAlt} avatarLabel={about.avatarLabel}
           />
           <div className="about-main">
-            <StoryPrinter paragraphs={about.paragraphs} />
+            <StoryDebug paragraphs={about.paragraphs} bugWord={about.bugWord} />
             <p className="about-label font-mono">{about.timelineLabel}</p>
             <CareerBuilding steps={about.timeline} next={about.nextFloor} />
           </div>

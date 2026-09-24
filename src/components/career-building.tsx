@@ -262,11 +262,11 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       }
     }
 
-    // Steps 3 to 5 of the About scene: floors, the sprayed next floor, then the scaffolding comes down.
+    // Steps 2 to 4 of the About scene: floors, the sprayed next floor, then the scaffolding comes down.
     const unregister = [
-      registerStep('about', 3, async () => { setPhase('building'); await raiseFloors(); }),
-      registerStep('about', 4, sprayNextFloor),
-      registerStep('about', 5, async () => { await dismantle(); setPhase('done'); }),
+      registerStep('about', 2, async () => { setPhase('building'); await raiseFloors(); }),
+      registerStep('about', 3, sprayNextFloor),
+      registerStep('about', 4, async () => { await dismantle(); setPhase('done'); }),
     ];
 
     return () => {

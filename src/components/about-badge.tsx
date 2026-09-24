@@ -26,8 +26,8 @@ export function AboutBadge({ name, role, location, lookingLabel, lookingText, ph
     let timer: ReturnType<typeof setTimeout> | undefined;
     // Keep the badge off the nail until the drone brings it.
     setPhase('waiting');
-    // Step 2 of the About scene: the drone delivers the badge; the step ends when the badge has stopped swinging.
-    const unregister = registerStep('about', 2, () => new Promise<void>(resolve => {
+    // Step 1 of the About scene: the drone delivers the badge; the step ends when the badge has stopped swinging.
+    const unregister = registerStep('about', 1, () => new Promise<void>(resolve => {
       setPhase('delivering');
       timer = setTimeout(() => { setPhase('done'); resolve(); }, SCENE);
     }));

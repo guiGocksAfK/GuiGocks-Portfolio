@@ -36,6 +36,8 @@ export const content = {
       'Comecei a programar em C++, no Code::Blocks. De lá para cá, troquei os primeiros exercícios por sistemas de verdade: hoje construo aplicações completas, do banco de dados à interface.',
       'Gosto de projetos grandes e bem testados, daqueles em que o usuário descobre um detalhe novo a cada uso. Trabalho melhor com organização: escopo bem definido, tarefas claras e uma equipe alinhada.',
     ],
+    // Word in the story whose last letter falls off and gets fixed at the end of the About scene (must appear in a paragraph).
+    bugWord: 'testados',
     // Construction-site ID badge delivered by the drone.
     badge: {
       role: 'Full-stack developer',

@@ -128,18 +128,15 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .about-main { min-width: 0; }
 .about-story p { max-width: 68ch; color: var(--muted); font-size: 16px; line-height: 1.75; }
 .about-story p + p { margin-top: 14px; }
-/* Printer: the faint draft and the inked text share one grid cell; the ink is revealed line by line (clip-path set in
-   story-printer.tsx) as the printer head rides a rail above each line. */
-.about-story { position: relative; display: grid; }
-.story-draft, .story-ink { grid-area: 1 / 1; }
-.story-draft { opacity: .35; pointer-events: none; user-select: none; }
-.story-waiting .story-ink { clip-path: inset(0 0 100% 0); }
-.printer-rail { position: absolute; left: 0; right: 0; top: 0; border-top: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent); pointer-events: none; }
-.printer-head { position: absolute; z-index: 2; left: 0; top: 0; width: 20px; height: 12px; pointer-events: none; }
-.printer-head svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-.story-waiting .printer-head, .story-waiting .printer-rail { opacity: 0; }
-.printer-ding { position: absolute; color: #ffd76a; font-size: 12px; line-height: 1; pointer-events: none; animation: printer-ding .5s ease-out forwards; }
-@keyframes printer-ding { from { transform: scale(.2); opacity: 1; } 45% { transform: scale(1.4) rotate(30deg); opacity: 1; } to { transform: scale(.4) rotate(60deg) translateY(-6px); opacity: 0; } }
+/* Loose letter: at the end of the About scene one letter falls off its word and a crew robot puts it back. */
+.about-story { position: relative; }
+.loose-letter { position: relative; z-index: 2; display: inline-block; transform-origin: 50% 80%; }
+.debug-robot { position: absolute; z-index: 3; left: 0; top: 0; width: 16px; height: 18px; pointer-events: none; }
+.debug-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.debug-wrench { position: absolute; right: -8px; top: 5px; width: 9px; height: 4px; border-radius: 1px; background: #8f9bb3; transform-origin: 0 50%; transform: rotate(-35deg); }
+.debug-wrench::after { content: ''; position: absolute; right: -3px; top: -2px; width: 5px; height: 8px; border: 2px solid #8f9bb3; border-right-color: transparent; border-radius: 2px; box-sizing: border-box; }
+.debug-tec { position: absolute; z-index: 4; color: #8f9bb3; font-size: 10px; line-height: 1; pointer-events: none; animation: hammer-pam .45s ease-out forwards; }
+.debug-sparkle { position: absolute; z-index: 4; color: #ffd76a; font-size: 12px; line-height: 1; pointer-events: none; animation: fight-twinkle .6s ease-out forwards; }
 .about-label { margin-top: 44px; color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 /* Badge hanging from a nail. While waiting it is off-site; the drone flies it in, leaves, and the badge swings to rest. */
 .badge-rig { position: sticky; top: 32px; width: 100%; max-width: 320px; padding-top: 4px; }
