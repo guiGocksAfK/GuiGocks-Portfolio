@@ -1,3 +1,9 @@
+// Project names as they appear on the project cards, so the tool crates can link to them.
+const MYRANK = 'MyRank';
+const AJT = 'AJT Viagens e Turismo';
+const ESCOLA = 'Escola Imaculada';
+const PORTFOLIO = 'Este portfólio';
+
 // All visible copy and destinations live here. Future sections can be added here.
 export const content = {
   metadata: {
@@ -65,15 +71,40 @@ export const content = {
     section: '04 — Capacidades',
     title: 'Capacidades.',
     countLabel: 'ferramentas',
+    // Each crate: the projects that use the tool (names matching a project card become links to it) and, when it
+    // helps, what of it was used.
     shelves: [
-      { label: 'Linguagens', items: ['Java', 'TypeScript', 'JavaScript', 'Python'] },
+      { label: 'Linguagens', items: [
+        { name: 'Java', projects: [AJT, MYRANK] },
+        { name: 'TypeScript', projects: [ESCOLA, PORTFOLIO, AJT] },
+        { name: 'JavaScript', projects: [MYRANK] },
+        { name: 'Python', projects: [`${MYRANK} (bot do Discord)`] },
+      ] },
       { label: 'Backend', items: [
-        // Test data for the crate opening; the real contents come later.
-        { name: 'Spring Boot', projects: ['MyRank', 'Projeto exemplo'], used: ['Módulo exemplo 1', 'Módulo exemplo 2'] },
-        'Node.js', 'Prisma', 'Flyway'] },
-      { label: 'Frontend', items: ['React', 'Angular', 'Tailwind CSS', 'Vite', 'Next.js'] },
-      { label: 'Banco de dados', items: ['SQL', 'PostgreSQL'] },
-      { label: 'Infra e DevOps', items: ['Docker', 'Caddy', 'Oracle Cloud', 'Neon', 'Vercel', 'Git e GitHub'] },
+        { name: 'Spring Boot', projects: [MYRANK, AJT], used: ['Web', 'Data JPA', 'Security (JWT)', 'Validation', 'WebSocket', 'Cache + Caffeine', 'OpenFeign'] },
+        { name: 'Node.js', projects: [ESCOLA], used: ['NestJS'] },
+        { name: 'Prisma', projects: [ESCOLA] },
+        { name: 'Flyway', projects: [MYRANK, AJT] },
+      ] },
+      { label: 'Frontend', items: [
+        { name: 'React', projects: [PORTFOLIO, MYRANK] },
+        { name: 'Angular', projects: [ESCOLA, AJT], used: ['Angular Material'] },
+        { name: 'Tailwind CSS', projects: [AJT] },
+        { name: 'Vite', projects: [MYRANK] },
+        { name: 'Next.js', projects: [PORTFOLIO] },
+      ] },
+      { label: 'Banco de dados', items: [
+        { name: 'SQL', projects: [MYRANK, AJT, ESCOLA], used: ['Migrações em SQL (Flyway)'] },
+        { name: 'PostgreSQL', projects: [AJT, ESCOLA, MYRANK] },
+      ] },
+      { label: 'Infra e DevOps', items: [
+        { name: 'Docker', projects: [ESCOLA, AJT, MYRANK], used: ['Docker Compose'] },
+        { name: 'Caddy', projects: [MYRANK, ESCOLA] },
+        { name: 'Oracle Cloud', projects: [ESCOLA, MYRANK] },
+        { name: 'Neon', projects: [ESCOLA, MYRANK] },
+        { name: 'Vercel', projects: [ESCOLA, MYRANK, PORTFOLIO] },
+        { name: 'Git e GitHub', projects: [AJT, ESCOLA, MYRANK, PORTFOLIO] },
+      ] },
     ],
     // Clicking a crate sends it to the office counter, where a robot takes out what is inside.
     counter: { hint: 'clique num caixote para ver o que tem dentro', projects: 'Projetos', used: 'Usei' },
@@ -103,7 +134,7 @@ export const content = {
     drawerCloseLabel: 'Esconder decisões técnicas',
     items: [
       {
-        name: 'MyRank',
+        name: MYRANK,
         category: 'Plataforma social',
         description: 'Uma plataforma para organizar e compartilhar rankings de filmes, séries, jogos, livros e animes.',
         highlights: [
@@ -124,7 +155,7 @@ export const content = {
         screenshotAlt: 'Página inicial do MyRank com capas de filmes e o slogan “Seu gosto. Seu ranking. Sua identidade.”',
       },
       {
-        name: 'Escola Imaculada',
+        name: ESCOLA,
         category: 'Sistema em uso por escolas',
         description: 'Registro de classe e chamada usado por escolas em Curitiba e Cascavel, reunindo a rotina pedagógica e o histórico dos alunos.',
         highlights: [
@@ -140,7 +171,7 @@ export const content = {
         screenshotAlt: 'Tela de login do Registro de Classe da Escola Imaculada',
       },
       {
-        name: 'AJT Viagens e Turismo',
+        name: AJT,
         category: 'Projeto acadêmico em grupo',
         description: 'Sistema de gestão de turismo desenvolvido em equipe, com frontend Angular e backend Java/Spring Boot.',
         highlights: [

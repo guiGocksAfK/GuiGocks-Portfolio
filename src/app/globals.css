@@ -278,7 +278,8 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
    greeting each other, and the languages at the bottom. */
 .office { position: relative; display: flex; flex-direction: column; padding: 0 20px 22px; border: 1px solid var(--border); border-radius: 8px; background: #11151b; }
 .office-room { display: flex; flex: 1; flex-direction: column; margin: 0 -20px; padding: 0 20px; border-bottom: 1px solid var(--border); border-radius: 8px 8px 0 0; background: repeating-linear-gradient(90deg, transparent 0 38px, #161b24 38px 40px); }
-.office-space { position: relative; flex: 1; min-height: 90px; }
+/* The counter stands at the bottom of the free space; only a crate too full for it makes the office taller. */
+.office-space { display: flex; flex: 1; flex-direction: column; justify-content: flex-end; min-height: 90px; }
 .office-languages { padding-top: 22px; }
 .office .rack-tag { width: fit-content; margin-bottom: 16px; }
 .languages { display: grid; gap: 10px; }
@@ -336,13 +337,15 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .pipe-bulge { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #5d6678; box-shadow: 0 0 0 2px #3a404c; }
 .crate-ghost { position: absolute; left: 0; top: 0; margin: 0; transform-origin: 50% 50%; pointer-events: none; }
 /* The counter in the office, and what came out of the crate. */
-/* Laid over the free space, anchored above the desk, so opening a crate never resizes the office. */
-.office-counter { position: absolute; left: 0; right: 0; bottom: 0; padding-bottom: 14px; animation: counter-in .3s ease-out both; }
+.office-counter { padding: 16px 0 14px; animation: counter-in .3s ease-out both; }
 .crate-inline { display: none; }
 .crate-details-label { margin-bottom: 6px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
 .crate-details-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .crate-details-list:last-child { margin-bottom: 0; }
 .crate-details-list li { padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: #151a24; font-size: 13px; animation: detail-in .35s ease-out both; animation-delay: calc(var(--i) * 350ms); }
+.crate-details-used { color: var(--foreground); font-size: 12px; line-height: 1.7; }
+.crate-details-used > span { display: inline-block; animation: detail-in .35s ease-out both; animation-delay: calc(var(--i) * 350ms); }
+.crate-details-dot { margin: 0 7px; color: var(--accent); }
 .crate-details-list a { color: var(--foreground); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
 @keyframes detail-in { from { opacity: 0; transform: translateY(8px) scale(.9); } }
 @keyframes counter-in { from { opacity: 0; } }

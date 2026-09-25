@@ -16,13 +16,16 @@ type Controller = { toggle: (button: HTMLButtonElement, opened: Opened) => void 
 const CLERK_HEIGHT = 27;
 const RUNG_SPACING = 17;
 const FORKLIFT_SPEED = 120;
-const HOSE_SPEED = 300; // px per second, the suction hose reaching down to a crate
-const SUCK_SPEED = 420;
-const PIPE_SPEED = 380; // the crate's bulge travelling inside the pipe
+// Transport moves start slow and speed up the farther they go: [starting speed in px/s, acceleration in px/s²].
+type Motion = readonly [number, number];
+const HOSE: Motion = [120, 500]; // the suction hose reaching down to a crate and pulling back
+const SUCK: Motion = [150, 600]; // the crate sucked up the hose
+const PIPE: Motion = [200, 300]; // the crate's bulge travelling inside the pipe
+const LIFT: Motion = [100, 600]; // the crate sucked back up from the desk into the nozzle
 const LID_TIME = 380; // matches the lid transition in CSS
 const HAND_OUT = 350; // ms per thing taken out of the crate; matches the stagger of .crate-details-list items
 const RETURN_FACTOR = 1.6; // putting a crate back is quicker than fetching it
-const FALL_GRAVITY = 900; // px/s², the crate dropping from the nozzle onto the desk
+const FALL_GRAVITY = 1110; // px/s², the crate dropping from the nozzle onto the desk
 
 class Cancelled extends Error {}
 const ignoreCancelled = (error: unknown) => { if (!(error instanceof Cancelled)) throw error; };
@@ -47,16 +50,18 @@ function CrateDetails({ opened, labels, projectLinks }: { opened: Opened; labels
       <p className="crate-details-label font-mono">{labels.projects}</p>
       <ul className="crate-details-list">
         {opened.projects.map((project, index) => {
-          const link = projectLinks.find(item => item.name === project);
+          // "MyRank (bot do Discord)" still points to the MyRank card.
+          const link = projectLinks.find(item => project === item.name || project.startsWith(`${item.name} (`));
           return <li key={project} style={order(index)}>{link ? <a href={link.href} onClick={() => flashCard(link.href)}>{project}</a> : project}</li>;
         })}
       </ul>
       {used.length > 0 && (
         <>
           <p className="crate-details-label font-mono">{labels.used}</p>
-          <ul className="crate-details-list">
-            {used.map((item, index) => <li key={item} style={order(opened.projects.length + index)}>{item}</li>)}
-          </ul>
+          {/* Plain words rather than tags, so even a full crate fits over the office's free space. */}
+          <p className="crate-details-used font-mono">
+            {used.map((item, index) => <span key={item} style={order(opened.projects.length + index)}>{index > 0 && <span className="crate-details-dot" aria-hidden="true">·</span>}{item}</span>)}
+          </p>
         </>
       )}
     </div>
@@ -189,8 +194,15 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       puff.addEventListener('animationend', () => puff.remove());
       pump.appendChild(puff);
     }
-    const stretch = (hose: HTMLElement, from: number, to: number, speed: number) =>
-      tween(hose.offsetHeight * Math.abs(to - from) / speed * 1000, t => { hose.style.transform = `scaleY(${from + (to - from) * smooth(t)})`; });
+    // Covers a distance starting at v0 and accelerating, reporting the fraction covered.
+    const accelerate = (distance: number, [v0, acceleration]: Motion, onFrame: (covered: number) => void) => {
+      const length = Math.max(Math.abs(distance), 1);
+      const time = (Math.sqrt(v0 * v0 + 2 * acceleration * length) - v0) / acceleration;
+      return tween(time * 1000, t => { const elapsed = time * t; onFrame(Math.min(1, (v0 * elapsed + acceleration * elapsed * elapsed / 2) / length)); });
+    };
+    const faster = ([v0, acceleration]: Motion): Motion => [v0 * RETURN_FACTOR, acceleration * RETURN_FACTOR];
+    const stretch = (hose: HTMLElement, from: number, to: number, motion: Motion) =>
+      accelerate(hose.offsetHeight * Math.abs(to - from), motion, f => { hose.style.transform = `scaleY(${from + (to - from) * f})`; });
 
     // Copy of the crate that travels; the real one leaves an empty dashed slot behind.
     function makeGhost(button: HTMLButtonElement) {
@@ -212,15 +224,15 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
     };
 
     // The crate's bulge running inside the pipe along a polyline.
-    async function travel(points: [number, number][], speed: number) {
+    async function travel(points: [number, number][], motion: Motion) {
       const bulge = document.createElement('span');
       bulge.className = 'pipe-bulge';
       fx.appendChild(bulge);
       const lengths = points.slice(1).map((point, index) => Math.hypot(point[0] - points[index][0], point[1] - points[index][1]));
       const total = lengths.reduce((sum, length) => sum + length, 0);
       try {
-        await tween(total / speed * 1000, t => {
-          let distance = smooth(t) * total;
+        await accelerate(total, motion, covered => {
+          let distance = covered * total;
           let index = 0;
           while (index < lengths.length - 1 && distance > lengths[index]) { distance -= lengths[index]; index += 1; }
           const f = lengths[index] ? Math.min(1, distance / lengths[index]) : 1;
@@ -267,18 +279,18 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       ghost.style.visibility = 'hidden';
       job.ghost = ghost;
       try {
-        await stretch(hose, 0, 1, HOSE_SPEED);
+        await stretch(hose, 0, 1, HOSE);
         placeGhost(ghost, crateX, crateY, 1);
         ghost.style.visibility = 'visible';
         button.classList.add('crate-away');
-        await tween((crateY - pipeY) / SUCK_SPEED * 1000, t => { const e = t * t; placeGhost(ghost, crateX, crateY + (pipeY - crateY) * e, 1 - .8 * e); });
+        await accelerate(crateY - pipeY, SUCK, f => placeGhost(ghost, crateX, crateY + (pipeY - crateY) * f, 1 - .8 * f));
         ghost.style.visibility = 'hidden';
-        await stretch(hose, 1, 0, HOSE_SPEED);
+        await stretch(hose, 1, 0, HOSE);
       } finally {
         dropHose(hose);
       }
       // Through the pipe and out of the nozzle, falling from the top of the office onto the desk with a small bounce.
-      await travel(pipePath(crateX), PIPE_SPEED);
+      await travel(pipePath(crateX), PIPE);
       const { deskX, mouthY } = pipeRoute();
       const land = deskLanding(ghost);
       ghost.style.visibility = 'visible';
@@ -309,20 +321,20 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       startPump();
       const { mouthY } = pipeRoute();
       const land = deskLanding(ghost);
-      await tween(650, t => { const e = smooth(t); placeGhost(ghost, land.x, land.y + (mouthY - land.y) * e, land.scale + (.2 - land.scale) * e); });
+      await accelerate(land.y - mouthY, LIFT, f => placeGhost(ghost, land.x, land.y + (mouthY - land.y) * f, land.scale + (.2 - land.scale) * f));
       ghost.style.visibility = 'hidden';
       const crate = boxIn(button);
       const crateX = crate.x + crate.w / 2;
       const crateY = crate.y + crate.h / 2;
-      await travel(pipePath(crateX).reverse(), PIPE_SPEED * RETURN_FACTOR);
+      await travel(pipePath(crateX).reverse(), faster(PIPE));
       const hose = makeHose(crateX, crate.y);
       try {
-        await stretch(hose, 0, 1, HOSE_SPEED * RETURN_FACTOR);
+        await stretch(hose, 0, 1, faster(HOSE));
         ghost.style.visibility = 'visible';
-        await tween((crateY - pipeY) / (SUCK_SPEED * RETURN_FACTOR) * 1000, t => { const e = smooth(t); placeGhost(ghost, crateX, pipeY + (crateY - pipeY) * e, .2 + .8 * e); });
+        await accelerate(crateY - pipeY, faster(SUCK), f => placeGhost(ghost, crateX, pipeY + (crateY - pipeY) * f, .2 + .8 * f));
         ghost.remove();
         button.classList.remove('crate-away');
-        await stretch(hose, 1, 0, HOSE_SPEED * RETURN_FACTOR);
+        await stretch(hose, 1, 0, faster(HOSE));
       } finally {
         dropHose(hose);
         pump.classList.remove('pump-on');
