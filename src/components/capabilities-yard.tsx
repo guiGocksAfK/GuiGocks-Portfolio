@@ -7,7 +7,7 @@ import { RobotSprite, crewMarkup, forkliftMarkup } from '@/components/robot-spri
 type Crate = string | { name: string; projects: readonly string[]; used?: readonly string[] };
 type Shelf = { label: string; items: readonly Crate[] };
 type Languages = { label: string; items: readonly { name: string; level: string }[]; chat: readonly [string, string] };
-type CounterLabels = { hint: string; skip: string; projects: string; used: string };
+type CounterLabels = { hint: string; projects: string; used: string; pumpOff: string; pumpOn: string };
 type ProjectLink = { name: string; href: string };
 type Opened = { name: string; projects: readonly string[]; used?: readonly string[]; shelf: string };
 type Controller = { toggle: (button: HTMLButtonElement, opened: Opened) => void };
@@ -88,7 +88,9 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
   const pumpRef = useRef<HTMLSpanElement>(null);
   const controllerRef = useRef<Controller | null>(null);
   const [opened, setOpened] = useState<Opened | null>(null);
-  const [moving, setMoving] = useState(false);
+  const [animated, setAnimated] = useState(true);
+  const animatedRef = useRef(animated);
+  useEffect(() => { animatedRef.current = animated; }, [animated]);
 
   useEffect(() => {
     const refs = [yardRef.current, gridRef.current, rackRef.current, ladderRef.current, officeRef.current, deskRef.current, pipeRef.current, fxRef.current, pumpRef.current] as const;
@@ -103,7 +105,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
     let waiters: (() => void)[] = [];
     const timers = new Set<ReturnType<typeof setTimeout>>();
 
-    // Clicking again while a crate travels skips to the end: every wait and tween finishes at once.
+    // With the pump switched off a move is skipped: every wait and tween finishes at once.
     let skipping = false;
     const skip = () => { skipping = true; area.classList.add('yard-skip'); };
     const endSkip = () => { skipping = false; area.classList.remove('yard-skip'); };
@@ -372,12 +374,12 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       area.querySelectorAll('.office-bubble-on').forEach(element => element.classList.remove('office-bubble-on'));
       const job = { button, data, mode: !motion ? 'still' as const : narrow.matches ? 'inline' as const : 'desk' as const };
       current = job;
-      if (job.mode !== 'still') setMoving(true);
+      // With the pump switched off the move is skipped from the start.
+      if (!animatedRef.current) skip();
       if (job.mode === 'desk') await openAtDesk(job);
       else if (job.mode === 'inline') await openInPlace(job);
       else { button.classList.add('crate-opened'); setOpened(data); }
       phase = 'open';
-      setMoving(false);
       // A skipped opening shows everything taken out of the crate at once.
       if (skipping) area.querySelectorAll('.crate-details *').forEach(element => element.getAnimations().forEach(animation => animation.finish()));
       endSkip();
@@ -387,51 +389,30 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       if (phase !== 'open' || !current) return;
       phase = 'closing';
       const job = current;
-      if (job.mode !== 'still') setMoving(true);
+      if (!animatedRef.current) skip();
       if (job.mode === 'desk') await closeAtDesk(job);
       else if (job.mode === 'inline') await closeInPlace(job);
       else { job.button.classList.remove('crate-opened'); setOpened(null); }
       current = null;
       phase = 'idle';
-      setMoving(false);
       endSkip();
       resume();
     }
 
-    // Runs one move, then whatever was asked for meanwhile: a crate still open is put back at once, then the next one opens.
-    let queued: { button: HTMLButtonElement; data: Opened } | 'close' | null = null;
-    async function drive(first: () => Promise<void>) {
-      await first();
-      while (queued) {
-        const next = queued;
-        queued = null;
-        if (phase === 'open') { skip(); await close(); }
-        if (next !== 'close') await open(next.button, next.data);
-      }
-    }
-    // Esc, or a click outside, puts the crate back; during a move it skips to the end and then puts it back at once.
-    function putBack() {
-      if (phase === 'open') drive(close).catch(ignoreCancelled);
-      else if (phase === 'opening') { skip(); queued = 'close'; }
-      else if (phase === 'closing') skip();
-    }
+    // Esc, or a click outside, puts an open crate back.
+    const putBack = () => { if (phase === 'open') close().catch(ignoreCancelled); };
 
     controllerRef.current = {
       // Clicking the open crate puts it back; clicking another one puts the open one back first.
       toggle: (button, data) => {
-        // During a move a click skips it; a click on another crate also opens that one right after.
-        if (phase === 'opening' || phase === 'closing') {
-          skip();
-          if (current?.button !== button) queued = { button, data };
-          return;
-        }
+        if (phase === 'opening' || phase === 'closing') return;
         const same = current?.button === button;
-        drive(async () => { await close(); if (!same) await open(button, data); }).catch(ignoreCancelled);
+        (async () => { await close(); if (!same) await open(button, data); })().catch(ignoreCancelled);
       },
     };
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') putBack(); };
     const onClick = (event: MouseEvent) => {
-      if (phase === 'open' && !(event.target as Element).closest('.crate-button, .crate-details')) putBack();
+      if (phase === 'open' && !(event.target as Element).closest('.crate-button, .crate-details, .pump-switch')) putBack();
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('click', onClick);
@@ -535,7 +516,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
 
   return (
     <div ref={yardRef} className="yard">
-      <p className="yard-hint font-mono" aria-live="polite">{moving ? counter.skip : counter.hint}</p>
+      <p className="yard-hint font-mono">{counter.hint}</p>
       <div ref={gridRef} className="yard-grid">
         <div ref={rackRef} className="rack">
           <span className="rack-post rack-post-left" aria-hidden="true" />
@@ -600,11 +581,23 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
           <path className="pipe-nozzle" />
         </svg>
         {/* Suction pump driving the pipe: motor with its power cable, pressure gauge, light and exhaust stack. */}
-        <span ref={pumpRef} className="pump" aria-hidden="true">
-          <span className="pump-cable" />
-          <span className="pump-motor" />
-          <span className="pump-body"><span className="pump-gauge"><span className="pump-needle" /></span><span className="pump-light" /></span>
-          <span className="pump-stack" />
+        <span ref={pumpRef} className="pump" data-off={!animated}>
+          <span className="pump-cable" aria-hidden="true" />
+          <span className="pump-motor" aria-hidden="true" />
+          <span className="pump-body">
+            <span className="pump-gauge" aria-hidden="true"><span className="pump-needle" /></span>
+            {/* Power lever: switching the pump off stops the crate's trip for good (until the page is reloaded), and
+                crates then land straight on the desk. */}
+            <button
+              type="button" className="pump-switch" aria-pressed={!animated} aria-label={animated ? counter.pumpOff : counter.pumpOn}
+              onClick={() => setAnimated(value => !value)}
+            >
+              <span className="pump-lever" aria-hidden="true" />
+              <span className="pump-tip font-mono" aria-hidden="true">{animated ? counter.pumpOff : counter.pumpOn}</span>
+            </button>
+            <span className="pump-light" aria-hidden="true" />
+          </span>
+          <span className="pump-stack" aria-hidden="true" />
         </span>
         <div ref={fxRef} className="yard-fx" aria-hidden="true" />
       </div>
