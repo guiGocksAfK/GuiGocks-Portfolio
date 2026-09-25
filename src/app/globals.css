@@ -439,11 +439,6 @@ html[data-build='pending'] .skip-robot { position: absolute; top: 18px; right: c
 .actor { position: absolute; left: 0; top: 0; display: block; }
 .actor-body, .actor-body svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .boss-actor { width: 33px; height: 36px; }
-/* Thought bubble: a rounded cloud with a trail of dots down to the head. */
-.thought { position: absolute; left: 2px; bottom: calc(100% + 22px); display: block; padding: 10px 12px; border: 2px solid #8f9bb3; border-radius: 18px; background: #f7f8fb; transform-origin: 10% 100%; animation: bubble-pop .3s ease-out both; }
-.thought svg { display: block; width: 48px; height: 28px; shape-rendering: crispEdges; }
-.thought-trail { position: absolute; left: 14px; top: calc(100% + 4px); width: 8px; height: 8px; border: 2px solid #8f9bb3; border-radius: 50%; background: #f7f8fb; }
-.thought-trail::after { content: ''; position: absolute; left: -9px; top: 9px; width: 5px; height: 5px; border: 2px solid #8f9bb3; border-radius: 50%; background: #f7f8fb; }
 /* "?" and "!" over a head, and the boss's shout. */
 .stage-mark { position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); color: #3a5a9b; font: 700 20px/1 var(--font-geist-mono), monospace; text-align: center; animation: fight-pop .25s ease-out both; }
 .stage-mark-alert { color: #d64545; font-size: 24px; }
@@ -481,13 +476,10 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 /* The "nothing here" sign held over a head, and how it drops when the game is up. */
 .nothing-sign { font-size: 10px; }
 .robot-sign.nothing-sign-drop { animation: sign-drop .5s ease-in forwards; }
-/* The red sheet thrown over a patch: folds, a ragged hem, a short swing as it lands and then still, sliding off when the
-   game is up. */
+/* The red sheet thrown over a patch: folds and a ragged hem; it slides off when the game is up. */
 .red-sheet { position: absolute; left: 0; top: 0; z-index: 2; border-radius: 3px 3px 0 0; background: linear-gradient(90deg, #a51f18, #d23b30 18%, #a01d17 36%, #cf3a2e 56%, #9c1c16 76%, #c7352a); clip-path: polygon(0 0, 100% 0, 100% 88%, 88% 100%, 74% 90%, 58% 100%, 42% 91%, 26% 100%, 12% 90%, 0 100%); transform-origin: 50% 0; }
-.red-sheet-hung { animation: sheet-settle 1s ease-out forwards; }
-@keyframes sheet-settle { 0% { rotate: -4deg; } 30% { rotate: 3deg; } 55% { rotate: -1.5deg; } 80% { rotate: .5deg; } 100% { rotate: 0deg; } }
-.red-sheet-fall { animation: sheet-fall .8s ease-in forwards; }
-@keyframes sheet-fall { to { translate: 0 140px; rotate: 14deg; opacity: 0; } }
+.red-sheet-fall { animation: sheet-fall .6s cubic-bezier(.5, 0, .9, .6) forwards; }
+@keyframes sheet-fall { 0% { translate: 0 0; } 25% { translate: 0 4px; rotate: 2deg; } 100% { translate: 0 110px; rotate: 6deg; scale: 1 .7; opacity: 0; } }
 @keyframes sign-drop { to { transform: translate(-30%, 16px) rotate(70deg); opacity: 0; } }
 .hole-covered { display: none; }
 /* Whistled notes, paint buckets, thrown globs, splats that dry into the wall's colour, the puddle and the mop. */
@@ -532,7 +524,7 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .stage-sigh { right: auto; bottom: auto; }
 .hand-roller { position: absolute; left: -13px; bottom: 7px; width: 13px; height: 6px; border-radius: 2px; background: #1c2130; box-shadow: 0 0 0 1px #5d6678; }
 .hand-roller::after { content: ''; position: absolute; left: 11px; top: -5px; width: 2px; height: 8px; background: #8f9bb3; transform: rotate(-35deg); }
-/* The painter's grumble: small and grey, on the side it faces. */
+/* A small grey speech bubble on the side a robot faces (the boss's sigh). */
 .stage-grumble { position: absolute; right: calc(100% + 6px); bottom: calc(100% - 4px); padding: 2px 8px; border: 1px solid #8f9bb3; border-radius: 4px; background: #f7f8fb; color: #5d6678; font-size: 12px; white-space: nowrap; animation: bubble-pop .25s ease-out both; }
 /* Happy ending: a park at dusk standing on the footer's line. Sky fading into the page, a pale sun setting behind the
    hills and the lake, grass on the ground, and the pixel sprites placed along it. Calm idle loops only. */

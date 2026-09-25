@@ -4,27 +4,27 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { RobotSprite, crewMarkup, pixelMarkup, robotMarkup, type CrewFace, type RobotMood, type RobotPose } from '@/components/robot-sprite';
 
 type Stage = 'blank' | 'playing' | 'done';
-// What the robots say: the boss calling the crew, the boss stopping the fight, the one mopping up grumbling.
-type StageLines = { call: string; stop: string; grumble: string; typo: string; keep: string; sigh: string; nothing: string };
+// What the robots say or show: the boss calling the crew and stopping the fight, the title's typo, the boss's sigh, the sign.
+type StageLines = { call: string; stop: string; typo: string; keep: string; sigh: string; nothing: string };
 
 // Robots on this stage are drawn with 3px pixels (the big robot map is 11×12).
 const BOSS_WIDTH = 33;
 const BOSS_HEIGHT = 36;
-const WALK_SPEED = 80; // px per second: an unhurried stroll
+const WALK_SPEED = 110; // px per second: the boss's walk
 // The crew (8×9 map) with 3px pixels too.
 const CREW_W = 24;
 const CREW_H = 27;
 const CREW_WALK = 150; // called by the boss, the crew comes at a brisk walk
 const ANNOYED_WALK = 200; // the one who spilled the paint, hurrying to mop it up
 const RUN_SPEED = 220;
-const DASH_SPEED = 260; // the crew dashing off for paint and back
+const DASH_SPEED = 420;
+const COVER_GAP = 550; // ms between one disguise's trick and the next
+const ORDER_SINKS_IN = 400; // ms after the boss's shout before the crew react to it // the crew dashing off for paint and back
 const LINE_SPEED = 380; // a crew member running along a line, drawing it behind
 const WRITE_INTERVAL = 105; // ms per letter written with the giant pencil
 const ERASE_INTERVAL = 90;
 const PENCIL_TILT = 24; // degrees the giant pencil leans back from upright
 const STEP_INTERVAL = 130;
-const BENCH = ['WWWWWWWWWWWW', 'wwwwwwwwwwww', '.K........K.', 'WWWWWWWWWWWW', 'wwwwwwwwwwww', '.K........K.', '.K........K.'];
-const BENCH_COLORS = { W: '#7a5c46', w: '#5a4334', K: '#2c313b' };
 const BUCKET = ['.SSSS.', 'S....S', 'DDDDDD', 'SBBBBS', '.SBBS.', '.SSSS.'];
 // The damaged wall the crew must paint over, spread out and at different heights. Four patches the crew try to hide,
 // each in its own way (see COVER); the rest up high: a big peeled area with a strip of paint hanging, a long crack, a
@@ -248,14 +248,15 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         for (let index = 0; index < count; index++) {
           const note = spawn('whistle-note', member.element, index % 2 ? '♫' : '♪');
           note.addEventListener('animationend', () => note.remove());
-          await pause(380);
+          await pause(300);
         }
       })();
     }
 
     // Scene 1: the boss and the crew arrive together. The crew notice the patches first and try to hide them: each one
-    // stands in front of a patch, one leans, one whistles. The boss pictures its bench and looks around... then the one
-    // leaning slips aside and the patch behind it shows. The crew panic, the boss blows up and yells for them to fix it.
+    // hides one in its own way, the tricks one after the other; then, one of them whistling, the boss stands there
+    // confused. The sheet slides off its patch: the boss sees it and orders paint, and a moment later the crew react,
+    // the disguise falls apart and they leave their posts.
     async function arrive() {
       const boss = robot('boss-actor');
       const team = [0, 1, 2, 3, 4].map(() => crew());
@@ -268,34 +269,38 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
       // In they come, the crew a few steps ahead of the boss.
       boss.draw('idle', 'normal', 'right');
-      boss.place(-BOSS_WIDTH - 150, groundY() - BOSS_HEIGHT);
+      boss.place(-BOSS_WIDTH - 40, groundY() - BOSS_HEIGHT);
       team.forEach((member, index) => member.place(-CREW_W - 10 - (team.length - 1 - index) * 34));
       const crewStops = team.map((_, index) => bossTarget + 70 + index * 34);
       await Promise.all([boss.walk(bossTarget), ...team.map((member, index) => member.walk(crewStops[index], (crewStops[index] - member.x) / ((bossTarget - boss.x) / WALK_SPEED)))]);
       boss.draw('idle', 'normal');
 
-      // The crew see the patches: "!", a quick look at each other, then they rush to cover them.
+      // The crew see the patches ("!", a quick look at each other) and hide them, one disguise at a time.
       const marks = team.map(member => over(member.element, 'stage-mark stage-mark-alert', '!'));
-      await pause(500);
+      await pause(300);
       marks.forEach(mark => mark.remove());
-      for (const facing of [-1, 1]) { team.forEach((member, index) => member.pose({ facing: index % 2 ? -facing : facing })); await pause(220); }
-      // Each patch hidden its own way (see COVER).
+      team.forEach((member, index) => member.pose({ facing: index % 2 ? 1 : -1 }));
+      await pause(180);
+      // Each patch hidden its own way (see COVER). They all run off together; the tricks themselves come one after the
+      // other, each waiting for its turn once its robots get there.
+      const started = performance.now();
       await Promise.all(COVER.flatMap((cover, patch) => cover.members.map(async (index, slot) => {
         const member = team[index];
         const center = low[patch];
         const x = (center ? center.x - CREW_W / 2 : member.x) + (cover.how === 'sheet' ? (slot ? 20 : -20) : 0);
         await member.walk(x, RUN_SPEED);
+        await pause(Math.max(0, patch * COVER_GAP - (performance.now() - started)));
         if (cover.how === 'jump' && center) {
           // A big jump up to its patch, and it stays there, stuck to the wall with its arms spread over it.
           const lift = groundY() - center.y - CREW_H / 2;
           member.pose({ arms: true });
-          await tween(520, t => member.place(x, lift * (1 - (1 - t) * (1 - t)) + Math.sin(Math.PI * t) * 18));
+          await tween(420, t => member.place(x, lift * (1 - (1 - t) * (1 - t)) + Math.sin(Math.PI * t) * 18));
           member.place(x, lift);
           hanging = { member, lift };
         }
         if (cover.how === 'sheet' && slot === 0 && center) {
           // The two of them throw a red sheet up over their patch, as if that would help.
-          await pause(250);
+          await pause(100);
           const partner = team[cover.members[1]];
           sheet = await throwSheet(center, member, partner);
         }
@@ -305,80 +310,96 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
           member.pose({ arms: true, facing: 1 });
         }
       })));
-      const leaner = team[0];
-      leaner.pose({ facing: 1 });
-      const whistling = whistle(team[3], 6);
+      team[0].pose({ facing: 1 });
 
-      // The boss pictures its bench...
-      const thought = over(boss.element, 'thought', `<span class="thought-trail"></span>${pixelMarkup(BENCH, BENCH_COLORS)}`);
-      await pause(1100);
-      await fadeOut(thought);
-      // ...and looks around, suspicious; the crew smile back.
+      // With everyone in place trying to look normal, the boss stands there confused for a while: "?", looking one
+      // way and the other, a puzzled little hop, looking around again.
+      void whistle(team[3], 4).catch(() => {});
       const question = over(boss.element, 'stage-mark', '?');
-      for (const side of ['left', 'right'] as const) { boss.draw('idle', 'normal', side); await pause(450); }
+      for (const side of ['left', 'right', 'left'] as const) { boss.draw('idle', 'normal', side); await pause(420); }
+      boss.draw('idle', 'normal');
+      await boss.hop(4, 240);
+      await pause(300);
+      for (const side of ['right', 'left'] as const) { boss.draw('idle', 'normal', side); await pause(380); }
       boss.draw('idle', 'normal');
       question.remove();
+      await pause(200);
 
-      // The one hiding the small patch loses its balance and falls over to the left, and there the patch is.
-      await whistling;
-      const leanFrom = leaner.x;
-      await tween(260, t => leaner.pose({ tilt: -12 * Math.sin(Math.PI * t * 2) }));
-      await tween(420, t => { leaner.place(leanFrom - 16 * t); leaner.pose({ tilt: -90 * t * t }); });
-      await pause(500);
-
-      // Panic: the sign drops, the one stuck to the wall falls off, the sheet slides down; the crew's arms go up and they
-      // sweat; the boss sees it all and blows up.
-      (sign as HTMLElement | null)?.classList.add('nothing-sign-drop');
+      // The giveaway: the sheet slides off its patch all by itself.
       const fallen = sheet as HTMLElement | null;
-      if (fallen) { fallen.classList.remove('red-sheet-hung'); fallen.classList.add('red-sheet-fall'); fallen.addEventListener('animationend', () => fallen.remove()); }
-      const stuck = hanging as { member: Member; lift: number } | null;
-      if (stuck) void tween(380, t => stuck.member.place(stuck.member.x, stuck.lift * (1 - t * t))).catch(() => {});
-      leaner.pose({ tilt: 0 });
-      team.forEach(member => member.pose({ arms: true, face: 'angry' }));
-      const alarms = team.map(member => over(member.element, 'stage-mark stage-mark-alert', '!!'));
-      const sweat = setInterval(() => {
-        const member = team[Math.floor(Math.random() * team.length)];
-        const drop = spawn('sweat', member.element);
-        drop.style.left = `${Math.random() < .5 ? 1 : 19}px`;
-        drop.addEventListener('animationend', () => drop.remove());
-      }, 150);
-      intervals.add(sweat);
+      if (fallen) {
+        fallen.classList.add('red-sheet-fall');
+        fallen.addEventListener('animationend', () => fallen.remove());
+        await pause(450);
+      }
+      // The boss sees it: "!" and a start. The crew hold still in their disguises, hoping.
       const surprise = over(boss.element, 'stage-mark stage-mark-alert', '!');
       boss.draw('blink', 'normal');
-      await boss.hop(8, 260);
+      await boss.hop(8, 220);
+      boss.draw('idle', 'normal');
       await pause(300);
       surprise.remove();
-      alarms.forEach(alarm => alarm.remove());
+
+      // The boss blows up and gives the order.
       boss.draw('idle', 'angry');
-      for (let index = 0; index < 3; index++) { puff(boss.element, index % 2 ? 'right' : 'left'); await pause(240); }
+      for (let index = 0; index < 2; index++) { puff(boss.element, index % 2 ? 'right' : 'left'); await pause(180); }
       boss.draw('jump', 'angry');
       const call = over(boss.element, 'stage-shout font-mono', lines.call);
-      for (let jump = 0; jump < 2; jump++) await boss.hop(12, 300);
-      clearInterval(sweat);
-      intervals.delete(sweat);
-      boss.draw('idle', 'angry');
+      const stomping = (async () => {
+        for (let jump = 0; jump < 2; jump++) await boss.hop(12, 250);
+        boss.draw('idle', 'angry');
+      })();
+
+      // Right after the shout the order sinks in: "!!" over the crew one after the other, and the disguise falls apart
+      // as they leave their posts: the sign drops, the one stuck to the wall slides down, arms go up.
+      await pause(ORDER_SINKS_IN);
+      const alarms: HTMLElement[] = [];
+      for (const member of team) {
+        alarms.push(over(member.element, 'stage-mark stage-mark-alert', '!!'));
+        await pause(70);
+      }
+      (sign as HTMLElement | null)?.classList.add('nothing-sign-drop');
+      const stuck = hanging as { member: Member; lift: number } | null;
+      if (stuck) await tween(320, t => stuck.member.place(stuck.member.x, stuck.lift * (1 - t * t)));
+      team.forEach(member => member.pose({ arms: true, face: 'angry' }));
+      await pause(300);
+      alarms.forEach(alarm => alarm.remove());
+      await stomping;
       void fadeOut(call).catch(() => {});
       return { boss, team };
     }
 
-    // A red sheet thrown by two of the crew from over their heads up onto a patch, where it swings a little and hangs still.
+    // A red sheet thrown by two of the crew from over their heads up onto a patch, where it floats down and hangs still.
     async function throwSheet(center: { x: number; y: number; box: { w: number; h: number } }, first: Member, second: Member) {
       const cloth = spawn('red-sheet', actors);
       const width = center.box.w + 28;
       const height = center.box.h + 32;
       Object.assign(cloth.style, { width: `${width}px`, height: `${height}px` });
+      // It flies up bunched into a bundle high above the patch, opens out in the air and floats down onto it like a
+      // blanket, swaying and rippling less and less until it lands.
       const from = { x: (first.x + second.x) / 2 + CREW_W / 2, y: groundY() - CREW_H - 10 };
-      const to = { x: center.x, y: center.y - center.box.h / 2 - 10 + height / 2 };
+      const top = { x: center.x, y: center.y - center.box.h / 2 - 10 };
+      const high = top.y - 70;
+      const place = (x: number, y: number, extra = '') => { cloth.style.transform = `translate(${x - width / 2}px, ${y}px) ${extra}`; };
       first.pose({ arms: true });
       second.pose({ arms: true });
-      await tween(700, t => {
-        const x = from.x + (to.x - from.x) * t;
-        const y = from.y + (to.y - from.y) * t - Math.sin(Math.PI * t) * 40;
-        cloth.style.transform = `translate(${x - width / 2}px, ${y - height / 2}px) scale(${.3 + .7 * t}, ${.2 + .8 * t}) rotate(${(1 - t) * -20}deg)`;
+      await tween(380, t => {
+        const eased = 1 - (1 - t) * (1 - t);
+        place(from.x + (top.x - from.x) * eased, from.y + (high - from.y) * eased, `scale(.25, .15) rotate(${(1 - eased) * -40}deg)`);
       });
       first.pose({ arms: false });
       second.pose({ arms: false });
-      cloth.classList.add('red-sheet-hung');
+      await tween(220, t => {
+        const eased = 1 - (1 - t) ** 3;
+        place(top.x, high - 4 * eased, `scale(${.25 + .75 * eased}, ${.15 + .6 * eased})`);
+      });
+      await tween(650, t => {
+        const eased = 1 - (1 - t) * (1 - t);
+        const calm = 1 - t;
+        place(top.x + Math.sin(t * Math.PI * 2) * 12 * calm, high - 4 + (top.y - high + 4) * eased,
+          `rotate(${Math.sin(t * Math.PI * 2) * 6 * calm}deg) skewX(${Math.sin(t * Math.PI * 3) * 9 * calm}deg) scale(1, ${.75 + .25 * eased})`);
+      });
+      place(top.x, top.y);
       return cloth;
     }
 
@@ -397,7 +418,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const glob = spawn('paint-glob', actors);
       const peak = Math.min(from.y, target.y) - 50;
       const control = 2 * peak - (from.y + target.y) / 2;
-      await tween(520, t => {
+      await tween(420, t => {
         const x = from.x + (target.x - from.x) * t;
         const y = (1 - t) * (1 - t) * from.y + 2 * (1 - t) * t * control + t * t * target.y;
         glob.style.transform = `translate(${x}px, ${y}px)`;
@@ -424,31 +445,32 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     async function paintHoles(team: Member[]) {
       const width = stageEl.clientWidth;
       const sides = team.map(member => member.x < width / 2 ? -1 : 1);
+      // The one who drops its bucket is the one with the sign (far right): it overshoots into the open middle of the
+      // screen on the way back, and that is where the puddle ends up.
+      const dropper = 4;
       team.forEach(member => member.pose({ arms: false, face: 'normal' }));
       stageEl.querySelector('.nothing-sign')?.remove();
       await Promise.all(team.map(async (member, index) => {
-        await pause(index * 90);
+        await pause(index * 60);
         await member.walk(sides[index] < 0 ? -CREW_W - 30 : width + 30, DASH_SPEED);
       }));
-      await pause(400);
+      await pause(150);
 
       const low = [...stageEl.querySelectorAll<HTMLElement>('.stage-hole-low')];
       const high = [...stageEl.querySelectorAll<HTMLElement>('.stage-hole-high')];
       const buckets = team.map(member => bucket(member));
       let puddle: { element: HTMLElement; x: number } | null = null;
-      const dropper = 1;
 
       await Promise.all(team.map(async (member, index) => {
-        await pause(index * 120);
+        await pause(index * 60);
         // Each low patch is painted by the first of those who hid it; anyone else comes back to the middle.
         const patch = COVER.findIndex(cover => cover.members[0] === index);
         const hole = patch >= 0 ? low[patch] : undefined;
         const center = hole ? holeCenter(hole) : null;
         const spot = center ? center.x - sides[index] * 60 - CREW_W / 2 : width * .5;
         if (index === dropper) {
-          // Halfway back the bucket slips out of its hand, tips over and spills.
-          const halfway = member.x + (spot - member.x) * .45;
-          await member.walk(halfway, DASH_SPEED);
+          // On the way back, in the open middle of the screen, the bucket slips out of its hand, tips over and spills.
+          await member.walk(width * .62, DASH_SPEED);
           const pail = buckets[index];
           const start = boxOf(pail);
           pail.remove();
@@ -457,16 +479,16 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
           const direction = spot > member.x ? 1 : -1;
           const landX = start.x + direction * 34;
           const landY = groundY() - 12;
-          await tween(420, t => { falling.style.transform = `translate(${start.x + (landX - start.x) * t}px, ${start.y + (landY - start.y) * t * t - Math.sin(Math.PI * t) * 14}px) rotate(${direction * 90 * t}deg)`; });
+          await tween(340, t => { falling.style.transform = `translate(${start.x + (landX - start.x) * t}px, ${start.y + (landY - start.y) * t * t - Math.sin(Math.PI * t) * 14}px) rotate(${direction * 90 * t}deg)`; });
           const spill = spawn('puddle');
           spill.style.left = `${landX + direction * 8}px`;
           puddle = { element: spill, x: landX + direction * 8 };
-          await tween(500, t => { spill.style.width = `${70 * t}px`; if (direction < 0) spill.style.left = `${landX - 8 - 70 * t}px`; });
+          await tween(300, t => { spill.style.width = `${70 * t}px`; if (direction < 0) spill.style.left = `${landX - 8 - 70 * t}px`; });
           if (direction < 0) puddle.x = landX - 8 - 70;
           const oops = over(member.element, 'stage-mark', '…');
           member.pose({ face: 'tired' });
           await member.walk(landX - direction * 18, CREW_WALK);
-          await pause(250);
+          await pause(100);
           falling.remove();
           buckets[index] = bucket(member);
           oops.remove();
@@ -492,12 +514,20 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
     // Scene 3: one of the crew runs across and slips on the puddle, a second one trips over it; they get up furious and
     // brawl until the boss yells at them to stop (and its stomp lays down the ground line).
-    async function slipAndFight(team: Member[], boss: ReturnType<typeof robot>, puddleX: number) {
+    async function slipAndFight(team: Member[], boss: ReturnType<typeof robot>, puddle: { element: HTMLElement; x: number } | null) {
+      const width = stageEl.clientWidth;
       const slider = team[2];
       const tripper = team[3];
+      // First the stage is cleared: the rest step back to watch, near the boss and at the far right, and the two about
+      // to fall line up on the right, so the slip and the brawl happen alone in the middle.
+      const spots: [Member, number][] = [[team[0], .2], [team[1], .26], [team[4], .92], [slider, .8], [tripper, .86]];
+      await Promise.all(spots.map(([member, fraction]) => member.walk(width * fraction, DASH_SPEED)));
+      await pause(150);
+      const puddleX = puddle ? puddle.x : width * .5;
+      const puddleWidth = puddle ? puddle.element.offsetWidth : 0;
       const direction = puddleX < slider.x ? -1 : 1;
-      const slipAt = puddleX + 20 - CREW_W / 2;
-      const slideTo = slipAt + direction * stageEl.clientWidth * .08;
+      const slipAt = (direction < 0 ? puddleX + puddleWidth - 20 : puddleX + 20) - CREW_W / 2;
+      const slideTo = slipAt + direction * width * .08;
 
       const chase = (async () => { await pause(250); await tripper.walk(slideTo - direction * 34, RUN_SPEED); })();
       await slider.walk(slipAt, RUN_SPEED);
@@ -561,16 +591,14 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await spreading;
     }
 
-    // Scene 4: the one who spilled the paint mops the puddle up, grumbling.
+    // Scene 4: the one who spilled the paint mops the puddle up.
     async function mop(member: Member, puddle: { element: HTMLElement; x: number } | null) {
       if (!puddle) return;
       const width = puddle.element.offsetWidth;
       const start = puddle.x + width + 6;
-      member.pose({ face: 'angry' });
       const tool = spawn('stage-mop', member.element);
       await member.walk(start, ANNOYED_WALK);
       member.pose({ facing: -1 });
-      const grumble = over(member.element, 'stage-grumble font-mono', lines.grumble);
       member.legs(true);
       await tween(1600, t => {
         const reach = start - (width + 6) * t;
@@ -580,9 +608,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       member.legs(false);
       puddle.element.remove();
       await pause(250);
-      await fadeOut(grumble);
       tool.remove();
-      member.pose({ face: 'normal' });
     }
 
     // A line of the finished section drawn on stage (the real borders stay hidden until the end).
@@ -1135,15 +1161,16 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const { boss, team } = await arrive();
       await pause(200);
       const { puddle, dropper } = await paintHoles(team);
-      await pause(300);
+      await pause(200);
       const lining = runLines();
-      await slipAndFight(team, boss, puddle?.x ?? stageEl.clientWidth * .3);
+      await slipAndFight(team, boss, puddle);
       await lining;
       await pause(200);
-      await mop(dropper, puddle);
-      await pause(300);
+      // The title's writer (the leftmost of the others) sets off half a second after the one with the mop.
+      const mopping = mop(dropper, puddle);
+      await pause(500);
       const crew = team;
-      await writeTitle([...crew].sort((a, b) => a.x - b.x)[0]);
+      await Promise.all([mopping, writeTitle(crew.filter(member => member !== dropper).sort((a, b) => a.x - b.x)[0])]);
       await pause(300);
       await placeWords(crew);
       await pause(400);
