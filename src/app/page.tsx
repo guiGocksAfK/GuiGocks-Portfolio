@@ -13,13 +13,14 @@ import { CareerBuilding } from '@/components/career-building';
 import { StoryDebug } from '@/components/story-debug';
 import { SceneTrigger } from '@/components/scene-trigger';
 import { CapabilitiesYard } from '@/components/capabilities-yard';
+import { ContactList } from '@/components/contact-list';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 export default function Home() {
-  const { hero, contact, projects, about, capabilities } = content;
+  const { hero, contact, projects, about, capabilities, contactSection } = content;
   return (
     <div className="site-shell">
       <a className="skip-link" href="#main">{content.accessibility.skip}</a>
@@ -40,7 +41,7 @@ export default function Home() {
               <PaintedName firstName={hero.firstName} lastName={hero.lastName} />
               <p className="role font-mono"><span aria-hidden="true" className="text-accent">&gt; </span>{hero.role}<span aria-hidden="true" className="text-accent">_</span></p>
               <div className="intro"><p>{hero.introduction}</p><p>{hero.education}</p></div>
-              <div id="contato" className="contact">
+              <div className="contact">
                 <nav aria-label={content.accessibility.social} className="social-links">
                   {contact.links.map(link => {
                     const external = link.href.startsWith('https:');
@@ -134,6 +135,15 @@ export default function Home() {
           <span>{capabilities.shelves.reduce((total, shelf) => total + shelf.items.length, 0)} {capabilities.countLabel}</span>
           <PatrolRobot />
         </div>
+      </section>
+      <section id="contato" aria-labelledby="contact-title" className="contact-section">
+        <p className="status contact-status font-mono">
+          <span aria-hidden="true" />
+          {contactSection.status.map((item, index) => <em key={item}>{index > 0 && <i aria-hidden="true">·</i>}{item}</em>)}
+        </p>
+        <h2 id="contact-title" className="contact-title">{contactSection.title[0]}<br />{contactSection.title[1]}</h2>
+        <ContactList rows={contactSection.rows} copiedLabel={contactSection.copiedLabel} pendingLabel={contactSection.pendingLabel} />
+        <div className="section-footer font-mono"><span>{contactSection.section}</span><span>{contactSection.footerNote}</span><PatrolRobot /></div>
       </section>
       </main>
     </div>

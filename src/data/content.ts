@@ -197,6 +197,25 @@ export const content = {
       screenshot: string | null; screenshotAlt: string;
     }[],
   },
+  // Last section: an editorial list of the ways to get in touch. A null href shows the row as coming soon.
+  contactSection: {
+    section: '05 — Contato',
+    title: ['Vamos construir', 'algo juntos?'],
+    status: ['Disponível', 'Estágio e júnior', 'Presencial ou remoto', 'Foz do Iguaçu, PR'],
+    footerNote: 'Obrigado pela visita',
+    copiedLabel: 'copiado!',
+    pendingLabel: 'em breve',
+    rows: [
+      { label: 'E-mail', value: 'guigocks@gmail.com', action: 'copiar', kind: 'copy', href: 'guigocks@gmail.com' },
+      // WhatsApp: https://wa.me/55<DDD><número>, only digits.
+      { label: 'WhatsApp', value: 'Chamar no WhatsApp', action: 'abrir conversa', kind: 'external', href: null },
+      // Résumé: save the PDF in public/ and use its path, e.g. /curriculo-guilherme-gocks.pdf.
+      { label: 'Currículo', value: 'Baixar em PDF', action: 'baixar', kind: 'download', href: null },
+    ],
+  } as {
+    section: string; title: readonly [string, string]; status: readonly string[]; footerNote: string; copiedLabel: string; pendingLabel: string;
+    rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null }[];
+  },
   contact: {
     email: 'guigocks@gmail.com',
     copiedLabel: 'copiado!',
