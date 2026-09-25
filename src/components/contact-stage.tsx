@@ -26,25 +26,26 @@ const STEP_INTERVAL = 130;
 const BENCH = ['WWWWWWWWWWWW', 'wwwwwwwwwwww', '.K........K.', 'WWWWWWWWWWWW', 'wwwwwwwwwwww', '.K........K.', '.K........K.'];
 const BENCH_COLORS = { W: '#7a5c46', w: '#5a4334', K: '#2c313b' };
 const BUCKET = ['.SSSS.', 'S....S', 'DDDDDD', 'SBBBBS', '.SBBS.', '.SSSS.'];
-// The damaged wall the crew must paint over. Low down, four patches the crew try to hide, each in its own way (see
-// COVER); up high, a big peeled area with a strip of paint hanging, a long crack, a cluster of chips and a patch with
-// cracks running out of it.
+// The damaged wall the crew must paint over, spread out and at different heights. Four patches the crew try to hide,
+// each in its own way (see COVER); the rest up high: a big peeled area with a strip of paint hanging, a long crack, a
+// cluster of chips and a patch with cracks running out of it.
 type Defect = { level: 'low' | 'high'; kind: 'patch' | 'crack' | 'chips'; peel?: boolean; cracks?: boolean; style: Record<string, string | number> };
 const DEFECTS: Defect[] = [
-  { level: 'low', kind: 'patch', style: { left: '24%', bottom: 68, width: 22, height: 16 } },
-  { level: 'low', kind: 'patch', cracks: true, style: { left: '36%', bottom: 70, width: 50, height: 24 } },
-  { level: 'low', kind: 'patch', style: { left: '51%', bottom: 68, width: 58, height: 18 } },
-  { level: 'low', kind: 'patch', style: { left: '67%', bottom: 72, width: 34, height: 22 } },
-  { level: 'high', kind: 'patch', peel: true, style: { left: '15%', top: '20%', width: 110, height: 64 } },
-  { level: 'high', kind: 'crack', style: { left: '41%', top: '9%', width: 150, height: 70 } },
-  { level: 'high', kind: 'chips', style: { left: '63%', top: '30%', width: 60, height: 40 } },
-  { level: 'high', kind: 'patch', cracks: true, style: { left: '80%', top: '42%', width: 62, height: 40 } },
+  { level: 'low', kind: 'patch', style: { left: '17%', bottom: 68, width: 22, height: 16 } },
+  { level: 'low', kind: 'patch', style: { left: '31%', bottom: 150, width: 30, height: 22 } },
+  { level: 'low', kind: 'patch', cracks: true, style: { left: '52%', bottom: 176, width: 70, height: 44 } },
+  { level: 'low', kind: 'patch', style: { left: '86%', bottom: 70, width: 34, height: 22 } },
+  { level: 'high', kind: 'patch', peel: true, style: { left: '3%', top: '16%', width: 110, height: 64 } },
+  { level: 'high', kind: 'crack', style: { left: '35%', top: '7%', width: 150, height: 70 } },
+  { level: 'high', kind: 'chips', style: { left: '68%', top: '20%', width: 60, height: 40 } },
+  { level: 'high', kind: 'patch', cracks: true, style: { left: '90%', top: '46%', width: 62, height: 40 } },
 ];
-// How the crew hide the low patches, one entry per patch: who stands in front of it and how.
-const COVER: { members: number[]; how: 'fits' | 'arms' | 'squeeze' | 'sign' }[] = [
-  { members: [0], how: 'fits' },
-  { members: [1], how: 'arms' },
-  { members: [2, 3], how: 'squeeze' },
+// How the crew hide the four patches, one entry per patch: who hides it and how. One just stands in front of it, one
+// jumps up to its patch and stays stuck to the wall over it, two throw a red sheet over theirs, one holds up a sign.
+const COVER: { members: number[]; how: 'body' | 'jump' | 'sheet' | 'sign' }[] = [
+  { members: [0], how: 'body' },
+  { members: [1], how: 'jump' },
+  { members: [2, 3], how: 'sheet' },
   { members: [4], how: 'sign' },
 ];
 
@@ -260,8 +261,10 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const team = [0, 1, 2, 3, 4].map(() => crew());
       const benchSpot = stageEl.querySelector('.ending-boss');
       const bossTarget = benchSpot ? boxOf(benchSpot).x : stageEl.clientWidth * .1;
-      const low = [...stageEl.querySelectorAll<HTMLElement>('.stage-hole-low')].map(hole => holeCenter(hole).x - CREW_W / 2);
+      const low = [...stageEl.querySelectorAll<HTMLElement>('.stage-hole-low')].map(hole => holeCenter(hole));
       let sign: HTMLElement | null = null;
+      let sheet: HTMLElement | null = null;
+      let hanging: { member: Member; lift: number } | null = null;
 
       // In they come, the crew a few steps ahead of the boss.
       boss.draw('idle', 'normal', 'right');
@@ -276,22 +279,34 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await pause(500);
       marks.forEach(mark => mark.remove());
       for (const facing of [-1, 1]) { team.forEach((member, index) => member.pose({ facing: index % 2 ? -facing : facing })); await pause(220); }
-      // Each patch hidden its own way: one fits behind a robot (who leans on the wall, all innocence), one is too big
-      // (arms spread wide, the edges still showing), two robots squeeze together in front of the wide one, and the last
-      // one gets a little sign held up in front of it.
+      // Each patch hidden its own way (see COVER).
       await Promise.all(COVER.flatMap((cover, patch) => cover.members.map(async (index, slot) => {
         const member = team[index];
-        const x = (low[patch] ?? member.x) + (cover.how === 'squeeze' ? (slot ? 10 : -10) : 0);
+        const center = low[patch];
+        const x = (center ? center.x - CREW_W / 2 : member.x) + (cover.how === 'sheet' ? (slot ? 20 : -20) : 0);
         await member.walk(x, RUN_SPEED);
-        if (cover.how === 'arms') member.pose({ arms: true });
-        if (cover.how === 'squeeze') member.pose({ facing: slot ? -1 : 1 });
+        if (cover.how === 'jump' && center) {
+          // A big jump up to its patch, and it stays there, stuck to the wall with its arms spread over it.
+          const lift = groundY() - center.y - CREW_H / 2;
+          member.pose({ arms: true });
+          await tween(520, t => member.place(x, lift * (1 - (1 - t) * (1 - t)) + Math.sin(Math.PI * t) * 18));
+          member.place(x, lift);
+          hanging = { member, lift };
+        }
+        if (cover.how === 'sheet' && slot === 0 && center) {
+          // The two of them throw a red sheet up over their patch, as if that would help.
+          await pause(250);
+          const partner = team[cover.members[1]];
+          sheet = await throwSheet(center, member, partner);
+        }
         if (cover.how === 'sign') {
-          sign = spawn('nothing-sign font-mono', member.element, lines.nothing);
-          member.pose({ facing: 1 });
+          // Arms up, holding a little sign over its head.
+          sign = spawn('robot-sign nothing-sign font-mono', member.element, lines.nothing);
+          member.pose({ arms: true, facing: 1 });
         }
       })));
       const leaner = team[0];
-      leaner.pose({ tilt: 12, facing: -1 });
+      leaner.pose({ facing: 1 });
       const whistling = whistle(team[3], 6);
 
       // The boss pictures its bench...
@@ -304,15 +319,21 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       boss.draw('idle', 'normal');
       question.remove();
 
-      // The one leaning slips off its patch, and there it is.
+      // The one hiding the small patch loses its balance and falls over to the left, and there the patch is.
       await whistling;
       const leanFrom = leaner.x;
-      await tween(350, t => { leaner.place(leanFrom - 22 * t); leaner.pose({ tilt: 12 + 20 * t }); });
-      await pause(300);
-      leaner.pose({ tilt: 0 });
+      await tween(260, t => leaner.pose({ tilt: -12 * Math.sin(Math.PI * t * 2) }));
+      await tween(420, t => { leaner.place(leanFrom - 16 * t); leaner.pose({ tilt: -90 * t * t }); });
+      await pause(500);
 
-      // Panic: the sign drops, the crew's arms go up and they sweat; the boss sees it all and blows up.
+      // Panic: the sign drops, the one stuck to the wall falls off, the sheet slides down; the crew's arms go up and they
+      // sweat; the boss sees it all and blows up.
       (sign as HTMLElement | null)?.classList.add('nothing-sign-drop');
+      const fallen = sheet as HTMLElement | null;
+      if (fallen) { fallen.classList.remove('red-sheet-hung'); fallen.classList.add('red-sheet-fall'); fallen.addEventListener('animationend', () => fallen.remove()); }
+      const stuck = hanging as { member: Member; lift: number } | null;
+      if (stuck) void tween(380, t => stuck.member.place(stuck.member.x, stuck.lift * (1 - t * t))).catch(() => {});
+      leaner.pose({ tilt: 0 });
       team.forEach(member => member.pose({ arms: true, face: 'angry' }));
       const alarms = team.map(member => over(member.element, 'stage-mark stage-mark-alert', '!!'));
       const sweat = setInterval(() => {
@@ -338,6 +359,27 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       boss.draw('idle', 'angry');
       void fadeOut(call).catch(() => {});
       return { boss, team };
+    }
+
+    // A red sheet thrown by two of the crew from over their heads up onto a patch, where it swings a little and hangs still.
+    async function throwSheet(center: { x: number; y: number; box: { w: number; h: number } }, first: Member, second: Member) {
+      const cloth = spawn('red-sheet', actors);
+      const width = center.box.w + 28;
+      const height = center.box.h + 32;
+      Object.assign(cloth.style, { width: `${width}px`, height: `${height}px` });
+      const from = { x: (first.x + second.x) / 2 + CREW_W / 2, y: groundY() - CREW_H - 10 };
+      const to = { x: center.x, y: center.y - center.box.h / 2 - 10 + height / 2 };
+      first.pose({ arms: true });
+      second.pose({ arms: true });
+      await tween(700, t => {
+        const x = from.x + (to.x - from.x) * t;
+        const y = from.y + (to.y - from.y) * t - Math.sin(Math.PI * t) * 40;
+        cloth.style.transform = `translate(${x - width / 2}px, ${y - height / 2}px) scale(${.3 + .7 * t}, ${.2 + .8 * t}) rotate(${(1 - t) * -20}deg)`;
+      });
+      first.pose({ arms: false });
+      second.pose({ arms: false });
+      cloth.classList.add('red-sheet-hung');
+      return cloth;
     }
 
     // A paint bucket held in a crew member's hand.
@@ -1152,9 +1194,10 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       <div className="contact-built">{children}</div>
       <div ref={actorsRef} className="stage-actors" aria-hidden="true" />
       {stage !== 'done' && (
+        // Peeking in from the top right corner of the window, half of it showing, tilted, sign held out to the side.
         <button type="button" className="skip-robot" onClick={() => setStage('done')}>
           <span className="robot-sign skip-sign font-mono">{skipLabel}</span>
-          <RobotSprite pose="carry" mood="normal" />
+          <span className="skip-peek"><RobotSprite pose="carry" mood="normal" /></span>
         </button>
       )}
     </section>
