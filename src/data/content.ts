@@ -215,8 +215,8 @@ export const content = {
     pendingLabel: 'em breve',
     rows: [
       { label: 'E-mail', value: 'guigocks@gmail.com', action: 'copiar', kind: 'copy', href: 'guigocks@gmail.com' },
-      // WhatsApp: https://wa.me/55<DDD><número>, only digits.
-      { label: 'WhatsApp', value: 'Chamar no WhatsApp', action: 'abrir conversa', kind: 'external', href: null },
+      // WhatsApp: https://wa.me/55<DDD><número> (only digits), with a message ready to send.
+      { label: 'WhatsApp', value: 'Chamar no WhatsApp', action: 'abrir conversa', kind: 'external', href: `https://wa.me/5545999546529?text=${encodeURIComponent('Olá, Guilherme! Vi seu portfólio e gostaria de conversar.')}` },
       // Résumé: the PDF in public/ (its file name is what the visitor's download gets).
       { label: 'Currículo', value: 'Baixar em PDF', action: 'baixar', kind: 'download', href: '/curriculo-guilherme-gocks.pdf' },
     ],
