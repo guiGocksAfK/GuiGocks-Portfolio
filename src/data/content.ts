@@ -200,11 +200,13 @@ export const content = {
   // Last section: an editorial list of the ways to get in touch. A null href shows the row as coming soon.
   contactSection: {
     section: '05 — Contato',
-    title: ['Vamos construir', 'algo juntos?'],
+    title: 'Vamos construir algo juntos?',
     status: ['Disponível', 'Estágio e júnior', 'Presencial ou remoto', 'Foz do Iguaçu, PR'],
     footerNote: 'Obrigado pela visita',
     // Sign held by the robot that lets the visitor skip the robots building the section.
     skipLabel: 'Pular animação ⏭',
+    // What the boss shouts to call the crew when it finds the section unbuilt.
+    shout: 'EQUIPE!!',
     copiedLabel: 'copiado!',
     pendingLabel: 'em breve',
     rows: [
@@ -215,7 +217,7 @@ export const content = {
       { label: 'Currículo', value: 'Baixar em PDF', action: 'baixar', kind: 'download', href: null },
     ],
   } as {
-    section: string; title: readonly [string, string]; status: readonly string[]; footerNote: string; skipLabel: string; copiedLabel: string; pendingLabel: string;
+    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; shout: string; copiedLabel: string; pendingLabel: string;
     rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null }[];
   },
   contact: {

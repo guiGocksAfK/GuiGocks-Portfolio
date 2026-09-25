@@ -138,12 +138,12 @@ export default function Home() {
           <PatrolRobot />
         </div>
       </section>
-      <ContactStage skipLabel={contactSection.skipLabel}>
+      <ContactStage skipLabel={contactSection.skipLabel} shout={contactSection.shout}>
         <p className="status contact-status font-mono">
           <span aria-hidden="true" />
           {contactSection.status.map((item, index) => <em key={item}>{index > 0 && <i aria-hidden="true">·</i>}{item}</em>)}
         </p>
-        <h2 id="contact-title">{contactSection.title[0]}<br />{contactSection.title[1]}</h2>
+        <h2 id="contact-title">{contactSection.title}</h2>
         <ContactList rows={contactSection.rows} copiedLabel={contactSection.copiedLabel} pendingLabel={contactSection.pendingLabel} />
         {/* Happy ending: a park at dusk standing on the last line of the page. */}
         <EndingScene />

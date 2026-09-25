@@ -70,6 +70,24 @@ function rows(pose: RobotPose, mood: RobotMood) {
   }
 }
 
+// The same robot as markup, for robots created outside React. look shifts the eyes inside the visor to one side.
+export function robotMarkup(pose: RobotPose, mood: RobotMood, look?: 'left' | 'right') {
+  const pixels = rows(pose, mood).map(row => {
+    if (!look || !/^\.B.{7}B\.$/.test(row)) return row;
+    const inside = row.slice(2, 9);
+    return `.B${look === 'left' ? `${inside.slice(1)}D` : `D${inside.slice(0, -1)}`}B.`;
+  });
+  const rects = pixels.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] ? `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${COLORS[pixel]}"/>` : '')).join('');
+  return `<svg viewBox="0 0 ${pixels[0].length} ${pixels.length}" aria-hidden="true">${rects}</svg>`;
+}
+
+// Any character map as markup, with the sprite palette plus extra colours.
+export function pixelMarkup(map: readonly string[], extra: Record<string, string> = {}) {
+  const palette = { ...COLORS, ...extra };
+  const rects = map.flatMap((row, y) => [...row].map((pixel, x) => palette[pixel] ? `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${palette[pixel]}"/>` : '')).join('');
+  return `<svg viewBox="0 0 ${map[0].length} ${map.length}" aria-hidden="true">${rects}</svg>`;
+}
+
 export const ROBOT_WIDTH = 22;
 export const ROBOT_HEIGHT = 24;
 
