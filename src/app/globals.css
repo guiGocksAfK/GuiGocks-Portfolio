@@ -458,16 +458,29 @@ html[data-build='pending'] .skip-robot { position: absolute; right: 4%; bottom: 
 .stage-ground { position: absolute; left: 0; right: 0; height: 0; }
 .sweat { position: absolute; top: 6px; width: 4px; height: 6px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%; background: #6994ff; animation: sweat-drop .6s ease-in forwards; }
 @keyframes sweat-drop { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(14px); } }
-/* Patches of bare plaster in the wall, with jagged edges; the dark one hides an eye. */
+/* The damaged wall: patches of bare plaster, a peeling strip, cracks and chips. */
 html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index: 1; display: block; pointer-events: none; }
-.stage-hole { position: absolute; background: #cfd4dd; box-shadow: inset 0 0 0 2px #a9b0bd; clip-path: polygon(8% 0, 30% 8%, 52% 0, 78% 10%, 100% 24%, 92% 50%, 100% 78%, 80% 100%, 54% 90%, 30% 100%, 6% 86%, 0 60%, 5% 30%); transition: transform .2s ease; }
-.stage-hole:nth-child(even) { clip-path: polygon(0 12%, 24% 0, 46% 10%, 70% 0, 100% 16%, 94% 44%, 100% 70%, 86% 100%, 60% 92%, 36% 100%, 12% 90%, 4% 64%, 0 40%); }
-.stage-hole-dark { background: #050608; box-shadow: inset 0 0 0 3px #a9b0bd, inset 0 0 14px 6px #000; }
+.stage-hole { position: absolute; }
+/* Bare plaster where the paint broke off: sunk in (shadow along the top), a chipped lip of paint along the bottom,
+   grainy inside, with jagged edges. */
+.defect-fill { position: absolute; inset: 0; background: radial-gradient(circle at 30% 40%, rgba(0, 0, 0, .22) 0 1px, transparent 1.5px) 0 0 / 7px 6px, radial-gradient(circle at 70% 60%, rgba(255, 255, 255, .07) 0 1px, transparent 1.5px) 0 0 / 9px 8px, linear-gradient(to bottom, #2e333d, #4a505c 35%, #555c69); box-shadow: inset 0 4px 0 rgba(0, 0, 0, .5), inset 0 -2px 0 #7a8290; clip-path: polygon(8% 0, 30% 8%, 52% 0, 78% 10%, 100% 24%, 92% 50%, 100% 78%, 80% 100%, 54% 90%, 30% 100%, 6% 86%, 0 60%, 5% 30%); }
+.stage-hole:nth-child(even) .defect-fill { clip-path: polygon(0 12%, 24% 0, 46% 10%, 70% 0, 100% 16%, 94% 44%, 100% 70%, 86% 100%, 60% 92%, 36% 100%, 12% 90%, 4% 64%, 0 40%); }
+/* A cluster of paint chips. */
+.defect-chip { inset: auto; }
+.defect-chip-0 { left: 0; top: 4px; width: 22px; height: 16px; }
+.defect-chip-1 { left: 30px; top: 0; width: 14px; height: 11px; }
+.defect-chip-2 { left: 20px; top: 24px; width: 11px; height: 9px; }
+/* A strip of paint peeling off the bottom edge and hanging down, curling at the end. */
+.defect-peel { position: absolute; left: 38%; top: calc(100% - 4px); width: 14px; height: 22px; border-radius: 0 0 8px 3px; background: linear-gradient(90deg, #1b1f27, #262b35 60%, #151920); box-shadow: 2px 2px 0 rgba(0, 0, 0, .4); transform: rotate(-8deg); transform-origin: 50% 0; }
+/* Hairline cracks: dark, with a faint lighter edge; on a patch they run out from it. */
+.defect-crack { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.defect-crack path { fill: none; stroke: #05070a; stroke-width: 2; stroke-linejoin: bevel; vector-effect: non-scaling-stroke; filter: drop-shadow(1px 1px 0 #2a2f3a); }
+.defect-crack-out { left: 70%; top: -30%; width: 110%; height: 90%; }
+/* The sign held up in front of a patch, and how it drops when the game is up. */
+.nothing-sign { position: absolute; left: 50%; bottom: 3px; z-index: 2; padding: 3px 5px; border: 1px solid #8f9bb3; border-radius: 2px; background: #dfe5f1; color: #151a24; font-size: 9px; font-weight: 700; white-space: nowrap; transform: translateX(-50%); }
+.nothing-sign-drop { animation: sign-drop .5s ease-in forwards; }
+@keyframes sign-drop { to { transform: translate(-30%, 16px) rotate(70deg); opacity: 0; } }
 .hole-covered { display: none; }
-.hole-dodge { transform: translate(8px, 6px) scale(.9); }
-/* The eye: shut until it opens, the pupil looking left or right (--look). */
-.stage-eye { position: absolute; left: 50%; top: 50%; width: 34px; height: 18px; margin: -9px 0 0 -17px; border-radius: 50%; background: radial-gradient(circle at calc(50% + var(--look, 0px)) 50%, #0a0a0a 0 4px, #8b1d1d 4.5px 7px, transparent 7.5px), #eceae4; box-shadow: 0 0 0 2px #3a0d0d, 0 0 8px #8b1d1d; transform: scaleY(0); transition: transform .16s ease, background-position .3s; }
-.eye-open { transform: scaleY(1); }
 /* Whistled notes, paint buckets, thrown globs, splats that dry into the wall's colour, the puddle and the mop. */
 .whistle-note { position: absolute; top: -6px; right: -8px; color: #8f9bb3; font-size: 12px; line-height: 1; animation: note-rise 1s ease-out forwards; }
 @keyframes note-rise { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate(10px, -22px) rotate(15deg); } }

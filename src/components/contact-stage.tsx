@@ -5,7 +5,7 @@ import { RobotSprite, crewMarkup, pixelMarkup, robotMarkup, type CrewFace, type 
 
 type Stage = 'blank' | 'playing' | 'done';
 // What the robots say: the boss calling the crew, the boss stopping the fight, the one mopping up grumbling.
-type StageLines = { call: string; stop: string; grumble: string; typo: string; keep: string; sigh: string };
+type StageLines = { call: string; stop: string; grumble: string; typo: string; keep: string; sigh: string; nothing: string };
 
 // Robots on this stage are drawn with 3px pixels (the big robot map is 11×12).
 const BOSS_WIDTH = 33;
@@ -26,15 +26,26 @@ const STEP_INTERVAL = 130;
 const BENCH = ['WWWWWWWWWWWW', 'wwwwwwwwwwww', '.K........K.', 'WWWWWWWWWWWW', 'wwwwwwwwwwww', '.K........K.', '.K........K.'];
 const BENCH_COLORS = { W: '#7a5c46', w: '#5a4334', K: '#2c313b' };
 const BUCKET = ['.SSSS.', 'S....S', 'DDDDDD', 'SBBBBS', '.SBBS.', '.SSSS.'];
-// The patches of bare wall the crew must paint over: small ones low down (they can hide them standing in front) and two
-// big ones up high, the second a dark hole with an eye in it.
-const HOLES: { level: 'low' | 'high'; eye?: boolean; style: Record<string, string | number> }[] = [
-  { level: 'low', style: { left: '30%', bottom: 68, width: 22, height: 18 } },
-  { level: 'low', style: { left: '44%', bottom: 68, width: 20, height: 16 } },
-  { level: 'low', style: { left: '57%', bottom: 68, width: 24, height: 18 } },
-  { level: 'low', style: { left: '70%', bottom: 68, width: 20, height: 16 } },
-  { level: 'high', style: { left: '18%', top: '24%', width: 70, height: 44 } },
-  { level: 'high', eye: true, style: { left: '62%', top: '36%', width: 84, height: 52 } },
+// The damaged wall the crew must paint over. Low down, four patches the crew try to hide, each in its own way (see
+// COVER); up high, a big peeled area with a strip of paint hanging, a long crack, a cluster of chips and a patch with
+// cracks running out of it.
+type Defect = { level: 'low' | 'high'; kind: 'patch' | 'crack' | 'chips'; peel?: boolean; cracks?: boolean; style: Record<string, string | number> };
+const DEFECTS: Defect[] = [
+  { level: 'low', kind: 'patch', style: { left: '24%', bottom: 68, width: 22, height: 16 } },
+  { level: 'low', kind: 'patch', cracks: true, style: { left: '36%', bottom: 70, width: 50, height: 24 } },
+  { level: 'low', kind: 'patch', style: { left: '51%', bottom: 68, width: 58, height: 18 } },
+  { level: 'low', kind: 'patch', style: { left: '67%', bottom: 72, width: 34, height: 22 } },
+  { level: 'high', kind: 'patch', peel: true, style: { left: '15%', top: '20%', width: 110, height: 64 } },
+  { level: 'high', kind: 'crack', style: { left: '41%', top: '9%', width: 150, height: 70 } },
+  { level: 'high', kind: 'chips', style: { left: '63%', top: '30%', width: 60, height: 40 } },
+  { level: 'high', kind: 'patch', cracks: true, style: { left: '80%', top: '42%', width: 62, height: 40 } },
+];
+// How the crew hide the low patches, one entry per patch: who stands in front of it and how.
+const COVER: { members: number[]; how: 'fits' | 'arms' | 'squeeze' | 'sign' }[] = [
+  { members: [0], how: 'fits' },
+  { members: [1], how: 'arms' },
+  { members: [2, 3], how: 'squeeze' },
+  { members: [4], how: 'sign' },
 ];
 
 class Cancelled extends Error {}
@@ -241,19 +252,16 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       })();
     }
 
-    // The scary eye in the dark hole: it opens, looks around, blinks.
-    const eye = () => stageEl.querySelector<HTMLElement>('.stage-eye');
-    function look(direction: number) { eye()?.style.setProperty('--look', `${direction * 7}px`); }
-
     // Scene 1: the boss and the crew arrive together. The crew notice the patches first and try to hide them: each one
-    // stands in front of a patch, one leans, one whistles. The boss pictures its bench, looks around... and an eye opens
-    // in a hole in the wall. The crew panic, the boss blows up and yells for them to fix it.
+    // stands in front of a patch, one leans, one whistles. The boss pictures its bench and looks around... then the one
+    // leaning slips aside and the patch behind it shows. The crew panic, the boss blows up and yells for them to fix it.
     async function arrive() {
       const boss = robot('boss-actor');
-      const team = [0, 1, 2, 3].map(() => crew());
+      const team = [0, 1, 2, 3, 4].map(() => crew());
       const benchSpot = stageEl.querySelector('.ending-boss');
       const bossTarget = benchSpot ? boxOf(benchSpot).x : stageEl.clientWidth * .1;
       const low = [...stageEl.querySelectorAll<HTMLElement>('.stage-hole-low')].map(hole => holeCenter(hole).x - CREW_W / 2);
+      let sign: HTMLElement | null = null;
 
       // In they come, the crew a few steps ahead of the boss.
       boss.draw('idle', 'normal', 'right');
@@ -268,8 +276,22 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await pause(500);
       marks.forEach(mark => mark.remove());
       for (const facing of [-1, 1]) { team.forEach((member, index) => member.pose({ facing: index % 2 ? -facing : facing })); await pause(220); }
-      await Promise.all(team.map((member, index) => member.walk(low[index] ?? member.x, RUN_SPEED)));
-      team[1].pose({ tilt: 12, facing: -1 });
+      // Each patch hidden its own way: one fits behind a robot (who leans on the wall, all innocence), one is too big
+      // (arms spread wide, the edges still showing), two robots squeeze together in front of the wide one, and the last
+      // one gets a little sign held up in front of it.
+      await Promise.all(COVER.flatMap((cover, patch) => cover.members.map(async (index, slot) => {
+        const member = team[index];
+        const x = (low[patch] ?? member.x) + (cover.how === 'squeeze' ? (slot ? 10 : -10) : 0);
+        await member.walk(x, RUN_SPEED);
+        if (cover.how === 'arms') member.pose({ arms: true });
+        if (cover.how === 'squeeze') member.pose({ facing: slot ? -1 : 1 });
+        if (cover.how === 'sign') {
+          sign = spawn('nothing-sign font-mono', member.element, lines.nothing);
+          member.pose({ facing: 1 });
+        }
+      })));
+      const leaner = team[0];
+      leaner.pose({ tilt: 12, facing: -1 });
       const whistling = whistle(team[3], 6);
 
       // The boss pictures its bench...
@@ -282,21 +304,15 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       boss.draw('idle', 'normal');
       question.remove();
 
-      // An eye opens in the dark hole, looks at the boss, at the crew, blinks.
-      const theEye = eye();
-      theEye?.classList.add('eye-open');
-      look(-1);
-      await pause(600);
-      look(1);
-      await pause(450);
-      theEye?.classList.remove('eye-open');
-      await pause(140);
-      theEye?.classList.add('eye-open');
-      look(0);
+      // The one leaning slips off its patch, and there it is.
       await whistling;
-      team[1].pose({ tilt: 0 });
+      const leanFrom = leaner.x;
+      await tween(350, t => { leaner.place(leanFrom - 22 * t); leaner.pose({ tilt: 12 + 20 * t }); });
+      await pause(300);
+      leaner.pose({ tilt: 0 });
 
-      // Panic: the crew's arms go up and they sweat; the boss sees it all and blows up.
+      // Panic: the sign drops, the crew's arms go up and they sweat; the boss sees it all and blows up.
+      (sign as HTMLElement | null)?.classList.add('nothing-sign-drop');
       team.forEach(member => member.pose({ arms: true, face: 'angry' }));
       const alarms = team.map(member => over(member.element, 'stage-mark stage-mark-alert', '!!'));
       const sweat = setInterval(() => {
@@ -362,12 +378,12 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     }
 
     // Scene 2: they dash off the screen for paint and come back with buckets. One drops its bucket on the way, which
-    // leaves a puddle; it picks the bucket up and carries on. Then they throw paint at every patch; the eye dodges the
-    // first throw and gets the second one full in the face.
+    // leaves a puddle; it picks the bucket up and carries on. Then they throw paint at every patch.
     async function paintHoles(team: Member[]) {
       const width = stageEl.clientWidth;
       const sides = team.map(member => member.x < width / 2 ? -1 : 1);
       team.forEach(member => member.pose({ arms: false, face: 'normal' }));
+      stageEl.querySelector('.nothing-sign')?.remove();
       await Promise.all(team.map(async (member, index) => {
         await pause(index * 90);
         await member.walk(sides[index] < 0 ? -CREW_W - 30 : width + 30, DASH_SPEED);
@@ -382,9 +398,11 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
       await Promise.all(team.map(async (member, index) => {
         await pause(index * 120);
-        const hole = low[index];
+        // Each low patch is painted by the first of those who hid it; anyone else comes back to the middle.
+        const patch = COVER.findIndex(cover => cover.members[0] === index);
+        const hole = patch >= 0 ? low[patch] : undefined;
         const center = hole ? holeCenter(hole) : null;
-        const spot = center ? center.x - sides[index] * 60 - CREW_W / 2 : member.x;
+        const spot = center ? center.x - sides[index] * 60 - CREW_W / 2 : width * .5;
         if (index === dropper) {
           // Halfway back the bucket slips out of its hand, tips over and spills.
           const halfway = member.x + (spot - member.x) * .45;
@@ -418,34 +436,14 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         if (hole && center) await throwPaint(member, center, hole);
       }));
 
-      // The patches up high: the eye first. It dodges a throw (closing up, the paint splashes beside it) and then the
-      // second one covers it.
-      const [upper, eyeHole] = [high.find(hole => !hole.querySelector('.stage-eye')), high.find(hole => hole.querySelector('.stage-eye'))];
-      const eyeThrower = team[3];
-      const otherThrower = team[0];
-      await Promise.all([
-        (async () => {
-          if (!upper) return;
-          const center = holeCenter(upper);
-          await otherThrower.walk(center.x - 40, DASH_SPEED);
-          await throwPaint(otherThrower, center, upper);
-        })(),
-        (async () => {
-          if (!eyeHole) return;
-          const center = holeCenter(eyeHole);
-          await eyeThrower.walk(center.x + 50, DASH_SPEED);
-          const miss = { ...center, x: center.x - 52, y: center.y - 20 };
-          const dodging = (async () => { await pause(260); eye()?.classList.remove('eye-open'); eyeHole.classList.add('hole-dodge'); })();
-          await throwPaint(eyeThrower, miss, null);
-          await dodging;
-          await pause(350);
-          eyeHole.classList.remove('hole-dodge');
-          eye()?.classList.add('eye-open');
-          look(1);
-          await pause(400);
-          await throwPaint(eyeThrower, center, eyeHole);
-        })(),
-      ]);
+      // The patches up high, shared out among the crew.
+      await Promise.all(team.map(async (thrower, index) => {
+        for (const hole of high.filter((_, holeIndex) => holeIndex % team.length === index)) {
+          const center = holeCenter(hole);
+          await thrower.walk(center.x - 40, DASH_SPEED);
+          await throwPaint(thrower, center, hole);
+        }
+      }));
       buckets.forEach(pail => pail.remove());
       return { puddle: puddle as { element: HTMLElement; x: number } | null, dropper: team[dropper] };
     }
@@ -1138,9 +1136,16 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
   return (
     <section ref={sectionRef} id="contato" aria-labelledby="contact-title" className="contact-section" data-stage={stage}>
       <div className="stage-holes" aria-hidden="true">
-        {HOLES.map((hole, index) => (
-          <span key={index} className={`stage-hole stage-hole-${hole.level}${hole.eye ? ' stage-hole-dark' : ''}`} style={hole.style}>
-            {hole.eye && <span className="stage-eye" />}
+        {DEFECTS.map((hole, index) => (
+          <span key={index} className={`stage-hole stage-hole-${hole.level}`} style={hole.style}>
+            {hole.kind === 'patch' && <span className="defect-fill" />}
+            {hole.kind === 'chips' && [0, 1, 2].map(chip => <span key={chip} className={`defect-fill defect-chip defect-chip-${chip}`} />)}
+            {hole.peel && <span className="defect-peel" />}
+            {(hole.kind === 'crack' || hole.cracks) && (
+              <svg className={`defect-crack${hole.kind === 'patch' ? ' defect-crack-out' : ''}`} viewBox="0 0 100 50" preserveAspectRatio="none">
+                <path d="M0 6 L12 10 L20 20 L34 18 L42 28 L56 26 L64 36 L78 38 L88 46 L100 50 M34 18 L38 8 L48 4 M64 36 L70 46" />
+              </svg>
+            )}
           </span>
         ))}
       </div>
