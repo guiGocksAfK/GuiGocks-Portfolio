@@ -416,8 +416,10 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .zap-shard-2 { --dx: 14px; animation-delay: .1s; }
 @keyframes zap-shard { to { translate: var(--dx, 0) 34px; rotate: 200deg; opacity: 0; } }
 .zap-icon.zap-taped .zap-tape { position: absolute; left: -5px; top: 8px; display: block; width: 32px; height: 6px; background: #e2cf9a; opacity: .92; rotate: -22deg; }
-.zap-icon:is(.zap-burnt, .zap-ready, .zap-done) svg { fill: var(--muted); }
-.contact-row:hover .zap-icon:is(.zap-burnt, .zap-ready, .zap-done) svg { fill: var(--accent); }
+.zap-icon:is(.zap-burnt, .zap-ready, .zap-done) svg,
+html[data-zap-gag='skipped'] .zap-icon svg { fill: var(--muted); }
+.contact-row:hover .zap-icon:is(.zap-burnt, .zap-ready, .zap-done) svg,
+html[data-zap-gag='skipped'] .contact-row:hover .zap-icon svg { fill: var(--accent); }
 /* The robot who fixes it: its toolbox, the sparks of its whacks, the blast (a flash, smoke, the tape flying off), and
    how it (and later its seat at the picnic) look afterwards. */
 .zap-toolbox { position: absolute; left: -9px; bottom: 6px; width: 10px; height: 7px; border-radius: 1px; background: #8f9bb3; box-shadow: inset 0 2px 0 #5d6678; }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { armZapGag } from '@/components/zap-gag';
+import { armZapGag, skipZapGag } from '@/components/zap-gag';
 import { crewMarkup, pixelMarkup, robotMarkup, type CrewFace, type RobotMood, type RobotPose } from '@/components/robot-sprite';
 
 type Stage = 'blank' | 'playing' | 'done';
@@ -1421,10 +1421,9 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       <div className="contact-built">{children}</div>
       <div ref={actorsRef} className="stage-actors" aria-hidden="true" />
       {stage !== 'done' && (
-        // TEMPORARY (for testing): skipping also arms the WhatsApp gag; later only a watched show should.
         // Hanging on a rope from a pulley at the end of the line above, just past the section's right edge, its sign
         // hanging under its seat on two strings (and some popcorn while it watches). Hovering brings it down.
-        <button ref={skipRef} type="button" className="skip-robot" data-mode={skipMode} aria-label={skipLabel} onClick={() => { armZapGag(); setStage('done'); }}>
+        <button ref={skipRef} type="button" className="skip-robot" data-mode={skipMode} aria-label={skipLabel} onClick={() => { skipZapGag(sectionRef.current); setStage('done'); }}>
           <span className="skip-pulley" aria-hidden="true" />
           <span className="skip-swing" aria-hidden="true">
             <span className="skip-rope" />

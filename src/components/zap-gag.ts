@@ -14,6 +14,10 @@ const CREW_H = 27;
 
 export const zapGagArmed = () => document.documentElement.dataset.zapGag === 'armed';
 export const armZapGag = () => { document.documentElement.dataset.zapGag = 'armed'; };
+export const skipZapGag = (section: HTMLElement | null) => {
+  document.documentElement.dataset.zapGag = 'skipped';
+  section?.querySelector<HTMLElement>('.ending-picnic-crew-2')?.classList.add('zap-charred');
+};
 
 class Aborted extends Error {}
 
