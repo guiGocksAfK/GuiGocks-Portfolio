@@ -47,10 +47,13 @@ export function ContactList({ rows, copiedLabel, pendingLabel, zapReady }: { row
   const zapGag = useRef<AbortController | null>(null);
   const zapLeave = useRef<(() => Promise<void>) | null>(null);
 
-  // WhatsApp: the first click of the visit (after watching the section being built) plays the gag instead of opening;
-  // the next click opens WhatsApp (and sends the robot holding its "now it works" sign back to the picnic, if it is
-  // still there); a click during the gag opens WhatsApp and cuts it short.
+  // The first click plays the gag. Further clicks cannot open WhatsApp until the robot finishes fixing it.
   function openZap(event: MouseEvent<HTMLAnchorElement>) {
+    // The controller is set immediately, so even another click before React renders the first step is blocked.
+    if (zapGag.current && zap !== 'ready' && zap !== 'done') {
+      event.preventDefault();
+      return;
+    }
     if (zap === 'intact' && zapGagArmed() && zapIcon.current) {
       event.preventDefault();
       const controller = new AbortController();
@@ -97,6 +100,7 @@ export function ContactList({ rows, copiedLabel, pendingLabel, zapReady }: { row
     <ul className="contact-list">
       {rows.map(row => {
         const done = row.kind === 'copy' && copied;
+        const zapBusy = row.icon === 'whatsapp' && zap !== 'intact' && zap !== 'ready' && zap !== 'done';
         const inner = (
           <>
             <span className="contact-label font-mono">{row.label}</span>
@@ -126,7 +130,8 @@ export function ContactList({ rows, copiedLabel, pendingLabel, zapReady }: { row
         return (
           <li key={row.label}>
             <a
-              className="contact-row" href={row.href} title={row.action} onClick={row.icon === 'whatsapp' ? openZap : undefined}
+              className="contact-row" href={zapBusy ? undefined : row.href} title={row.action}
+              aria-disabled={zapBusy || undefined} onClick={row.icon === 'whatsapp' ? openZap : undefined}
               {...(row.kind === 'external' ? { target: '_blank', rel: 'noopener noreferrer' } : { download: '' })}
             >{inner}</a>
           </li>

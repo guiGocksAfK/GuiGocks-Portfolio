@@ -450,6 +450,8 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* Hovering a row leaves it still: only its action (text and icon) turns blue. */
 .contact-row:hover .contact-action, .contact-row:focus-visible .contact-action { color: var(--accent); }
 .contact-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.contact-row[aria-disabled='true'] { cursor: default; }
+.contact-row[aria-disabled='true']:hover .contact-action { color: var(--muted); }
 .contact-row-pending { cursor: default; }
 .contact-row-pending .contact-value { color: var(--muted); }
 .contact-row-pending:hover .contact-action { color: var(--muted); }
