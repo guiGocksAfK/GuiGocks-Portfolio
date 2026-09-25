@@ -1,0 +1,146 @@
+// Pixel-art robot drawn from character maps: each character is one pixel, "." is transparent.
+export type RobotPose = 'idle' | 'blink' | 'crouch' | 'jump' | 'carry';
+export type RobotMood = 'normal' | 'angry' | 'happy' | 'sad';
+
+const COLORS: Record<string, string> = {
+  B: '#dfe5f1', // body
+  S: '#8f9bb3', // shade: antenna, arms, feet
+  D: '#151a24', // visor
+  A: '#6994ff', // accent: antenna tip, eyes, chest light
+  R: '#ff6b6b', // angry eyes
+  O: '#ffb347', // crew hard hats
+  K: '#2b2118', // avatar hair
+  F: '#d9a47c', // avatar skin
+  M: '#9b5b4a', // avatar mouth
+};
+
+function pixelRects(rows: string[]) {
+  return rows.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] && <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill={COLORS[pixel]} />));
+}
+
+// Delivery drone: two frames of the rotors (wide/narrow) alternate in CSS to look like spinning.
+const DRONE_BODY = ['.S.........S.', '.SSSSBBBSSSS.', '....BDADB....', '....BBBBB....', '.....S.S.....', '.....S.S.....'];
+const DRONE_ROTORS = ['SSS.......SSS', '.S.........S.'];
+
+export function DroneSprite() {
+  return (
+    <svg viewBox="0 0 13 7" aria-hidden="true">
+      <g className="drone-rotor-a">{pixelRects([DRONE_ROTORS[0]])}</g>
+      <g className="drone-rotor-b">{pixelRects([DRONE_ROTORS[1]])}</g>
+      <g transform="translate(0 1)">{pixelRects(DRONE_BODY)}</g>
+    </svg>
+  );
+}
+
+// Forklift for the tool store, facing right: roof cage with a hard-hat driver, orange body, mast and forks in front.
+// Plain markup because it is created outside React.
+const FORKLIFT = ['.SSSSS.....S..', '.S.O.S.....S..', '.S.B.S.....S..', '.SOOOOOO....S.', 'OOOOOOOOO...S.', 'OOOOOOOOO...S.', 'OOOOOOOOOSSSSS', '.OOOOOOOO.....', '.DD....DD.....', '.DD....DD.....'];
+
+export function forkliftMarkup() {
+  const rects = FORKLIFT.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] ? `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${COLORS[pixel]}"/>` : '')).join('');
+  return `<svg viewBox="0 0 14 10" aria-hidden="true">${rects}</svg>`;
+}
+
+// Stand-in portrait for the badge until a real photo exists: a person in a hard hat.
+const AVATAR = ['...OOOOOO...', '..OOOOOOOO..', '.OOOOOOOOOO.', '..KKKKKKKK..', '..KFFFFFFK..', '..FDFFFFDF..', '..FFFFFFFF..', '..FFFMMFFF..', '...FFFFFF...', '....FFFF....', '.AAAAAAAAAA.', 'AAAAAAAAAAAA'];
+
+export function AvatarSprite() {
+  return <svg viewBox="0 0 12 12" aria-hidden="true">{pixelRects(AVATAR)}</svg>;
+}
+
+// Five rows: top, three visor rows, bottom.
+const HEADS: Record<RobotMood | 'blink', string[]> = {
+  normal: ['..BBBBBBB..', '.BDDDDDDDB.', '.BDADDDADB.', '.BDDDDDDDB.', '..BBBBBBB..'],
+  blink: ['..BBBBBBB..', '.BDDDDDDDB.', '.BDDDDDDDB.', '.BDSSDSSDB.', '..BBBBBBB..'],
+  angry: ['..BBBBBBB..', '.BRDDDDDRB.', '.BDRDDDRDB.', '.BDDDDDDDB.', '..BBBBBBB..'],
+  happy: ['..BBBBBBB..', '.BDADDDADB.', '.BADADADAB.', '.BDDDDDDDB.', '..BBBBBBB..'],
+  // Droopy eyes low and wide apart.
+  sad: ['..BBBBBBB..', '.BDDDDDDDB.', '.BDDDDDDDB.', '.BADDDDDAB.', '..BBBBBBB..'],
+};
+
+function rows(pose: RobotPose, mood: RobotMood) {
+  const head = HEADS[pose === 'blink' && mood === 'normal' ? 'blink' : mood];
+  // Arms raised: the top of the head is replaced by the hands' row.
+  const armsUp = ['.....A.....', 'S....S....S', 'S.BBBBBBB.S', ...head.slice(1)];
+  switch (pose) {
+    case 'crouch': return ['...........', '.....A.....', '.....S.....', ...head, '.SBBBABBBS.', '.S.BBBBB.S.', '..B.....B..', '.SS.....SS.'];
+    case 'jump': return [...armsUp, '...SSSSS...', '...BBABB...', '...BBBBB...', '...BB.BB...', '...........'];
+    case 'carry': return [...armsUp, '...SSSSS...', '...BBABB...', '...BBBBB...', '...B...B...', '..SS...SS..'];
+    default: return ['.....A.....', '.....S.....', ...head, '...SSSSS...', '.SBBBABBBS.', '.S.BBBBB.S.', '...B...B...', '..SS...SS..'];
+  }
+}
+
+// The same robot as markup, for robots created outside React. look shifts the eyes inside the visor to one side.
+export function robotMarkup(pose: RobotPose, mood: RobotMood, look?: 'left' | 'right') {
+  const pixels = rows(pose, mood).map(row => {
+    if (!look || !/^\.B.{7}B\.$/.test(row)) return row;
+    const inside = row.slice(2, 9);
+    return `.B${look === 'left' ? `${inside.slice(1)}D` : `D${inside.slice(0, -1)}`}B.`;
+  });
+  const rects = pixels.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] ? `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${COLORS[pixel]}"/>` : '')).join('');
+  return `<svg viewBox="0 0 ${pixels[0].length} ${pixels.length}" aria-hidden="true">${rects}</svg>`;
+}
+
+// Any character map as markup, with the sprite palette plus extra colours.
+export function pixelMarkup(map: readonly string[], extra: Record<string, string> = {}) {
+  const palette = { ...COLORS, ...extra };
+  const rects = map.flatMap((row, y) => [...row].map((pixel, x) => palette[pixel] ? `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${palette[pixel]}"/>` : '')).join('');
+  return `<svg viewBox="0 0 ${map[0].length} ${map.length}" aria-hidden="true">${rects}</svg>`;
+}
+
+export const ROBOT_WIDTH = 22;
+export const ROBOT_HEIGHT = 24;
+
+export function RobotSprite({ pose, mood }: { pose: RobotPose; mood: RobotMood }) {
+  const pixels = rows(pose, mood);
+  return (
+    <svg viewBox={`0 0 ${pixels[0].length} ${pixels.length}`} aria-hidden="true">
+      {pixels.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] && <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill={COLORS[pixel]} />))}
+    </svg>
+  );
+}
+
+// Envelope carried by the mail robot.
+const ENVELOPE = ['SSSSSSSSS', 'SBBBBBBBS', 'SSBBBBBSS', 'SBSBBBSBS', 'SBBSSSBBS', 'SSSSSSSSS'];
+
+export function EnvelopeSprite() {
+  return (
+    <svg viewBox="0 0 9 6" aria-hidden="true">
+      {ENVELOPE.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] && <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill={COLORS[pixel]} />))}
+    </svg>
+  );
+}
+
+// Rubber stamp held by the inspector robot.
+const STAMP_TOOL = ['..SSS..', '..SSS..', '...S...', '...S...', '.AAAAA.', 'AAAAAAA', 'AAAAAAA'];
+
+export function StampToolSprite() {
+  return (
+    <svg viewBox="0 0 7 7" aria-hidden="true">
+      {STAMP_TOOL.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] && <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill={COLORS[pixel]} />))}
+    </svg>
+  );
+}
+
+// Crew: smaller robots with hard hats that carry words in and out. They are created outside React, so they render to markup.
+export const CREW_WIDTH = 16;
+export const CREW_HEIGHT = 18;
+
+const CREW_LEGS = [['..B..B..', '.SS..SS.'], ['.B....B.', 'SS....SS']];
+
+export type CrewFace = 'normal' | 'angry' | 'tired';
+
+// hat: 'O' is the crew's orange hard hat, 'A' the patrol guard's blue cap, 'none' just the antenna (off duty). face: red eyes when angry, shut grey slits when tired.
+export function crewMarkup(carrying: boolean, step: number, hat: 'O' | 'A' | 'none' = 'O', face: CrewFace = 'normal') {
+  const top = carrying
+    ? ['..OOOO..', 'SOOOOOOS', 'SBDDDDBS', 'SBADDABS', '..BBBB..', '..BABB..', '..BBBB..']
+    : ['..OOOO..', '.OOOOOO.', '.BDDDDB.', '.BADDAB.', '..BBBB..', '.SBABBS.', '..BBBB..'];
+  const pixels = [...top, ...CREW_LEGS[step % 2]].map((row, index) => {
+    if (index < 2 && hat === 'none') return index ? (carrying ? 'S.BBBB.S' : '..BBBB..') : '...A....';
+    if (index < 2) return row.replaceAll('O', hat);
+    if (index === 3 && face !== 'normal') return row.replaceAll('A', face === 'angry' ? 'R' : 'S');
+    return row;
+  });
+  const rects = pixels.flatMap((row, y) => [...row].map((pixel, x) => COLORS[pixel] ? `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${COLORS[pixel]}"/>` : '')).join('');
+  return `<svg viewBox="0 0 8 9" aria-hidden="true">${rects}</svg>`;
+}
