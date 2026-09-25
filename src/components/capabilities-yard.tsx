@@ -7,7 +7,7 @@ import { RobotSprite, crewMarkup, forkliftMarkup } from '@/components/robot-spri
 type Crate = string | { name: string; projects: readonly string[]; used?: readonly string[] };
 type Shelf = { label: string; items: readonly Crate[] };
 type Languages = { label: string; items: readonly { name: string; level: string }[]; chat: readonly [string, string] };
-type CounterLabels = { hint: string; projects: string; used: string; pumpOff: string; pumpOn: string };
+type CounterLabels = { hint: string; nudge: string; projects: string; used: string; pumpOff: string; pumpOn: string };
 type ProjectLink = { name: string; href: string };
 type Opened = { name: string; projects: readonly string[]; used?: readonly string[]; shelf: string };
 type Controller = { toggle: (button: HTMLButtonElement, opened: Opened) => void };
@@ -24,6 +24,7 @@ const PIPE: Motion = [200, 300]; // the crate's bulge travelling inside the pipe
 const LIFT: Motion = [100, 600]; // the crate sucked back up from the desk into the nozzle
 const LID_TIME = 380; // matches the lid transition in CSS
 const HAND_OUT = 350; // ms per thing taken out of the crate; matches the stagger of .crate-details-list items
+const NUDGE_TIME = 4000; // how long the note about the pump's lever stays up
 const RETURN_FACTOR = 1.6; // putting a crate back is quicker than fetching it
 const FALL_GRAVITY = 1110; // px/s², the crate dropping from the nozzle onto the desk
 
@@ -380,6 +381,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       else if (job.mode === 'inline') await openInPlace(job);
       else { button.classList.add('crate-opened'); setOpened(data); }
       phase = 'open';
+      if (job.mode === 'desk' && animatedRef.current) nudge();
       // A skipped opening shows everything taken out of the crate at once.
       if (skipping) area.querySelectorAll('.crate-details *').forEach(element => element.getAnimations().forEach(animation => animation.finish()));
       endSkip();
@@ -399,6 +401,16 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       resume();
     }
 
+    // After the first full trip of the visit, a note next to the pump says it can be switched off, for a few seconds.
+    let nudged = false;
+    function nudge() {
+      if (nudged) return;
+      nudged = true;
+      pump.classList.add('pump-nudge');
+      const timer = setTimeout(() => { timers.delete(timer); pump.classList.remove('pump-nudge'); }, NUDGE_TIME);
+      timers.add(timer);
+    }
+
     // Esc, or a click outside, puts an open crate back.
     const putBack = () => { if (phase === 'open') close().catch(ignoreCancelled); };
 
@@ -412,6 +424,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
     };
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') putBack(); };
     const onClick = (event: MouseEvent) => {
+      pump.classList.remove('pump-nudge');
       if (phase === 'open' && !(event.target as Element).closest('.crate-button, .crate-details, .pump-switch')) putBack();
     };
     document.addEventListener('keydown', onKey);
@@ -505,7 +518,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       document.removeEventListener('click', onClick);
       window.removeEventListener('resize', onResizeClerk);
       fx.replaceChildren();
-      pump.classList.remove('pump-on');
+      pump.classList.remove('pump-on', 'pump-nudge');
       area.querySelectorAll('.ladder-clerk, .forklift, .crate-popper').forEach(element => element.remove());
       area.classList.remove('yard-skip');
       area.querySelectorAll('.crate-away, .crate-opened').forEach(element => element.classList.remove('crate-away', 'crate-opened'));
@@ -594,6 +607,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
             >
               <span className="pump-lever" aria-hidden="true" />
               <span className="pump-tip font-mono" aria-hidden="true">{animated ? counter.pumpOff : counter.pumpOn}</span>
+              <span className="pump-note font-mono" aria-hidden="true">{counter.nudge}</span>
             </button>
             <span className="pump-light" aria-hidden="true" />
           </span>

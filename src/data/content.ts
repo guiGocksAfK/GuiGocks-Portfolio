@@ -107,7 +107,7 @@ export const content = {
       ] },
     ],
     // Clicking a crate sends it to the office counter, where a robot takes out what is inside.
-    counter: { hint: 'Clique num caixote para ver o que tem dentro', pumpOff: 'Desligar a bomba (sem animação)', pumpOn: 'Ligar a bomba (com animação)', projects: 'Projetos', used: 'Usei' },
+    counter: { hint: 'Clique num caixote para ver o que tem dentro', nudge: 'Achou demorado? Desligue a bomba.', pumpOff: 'Desligar a bomba (sem animação)', pumpOn: 'Ligar a bomba (com animação)', projects: 'Projetos', used: 'Usei' },
     languages: {
       label: 'Idiomas',
       items: [{ name: 'Português', level: 'Nativo' }, { name: 'Inglês', level: 'Avançado' }],
@@ -117,7 +117,7 @@ export const content = {
   } as {
     section: string; title: string; countLabel: string;
     shelves: readonly { label: string; items: readonly (string | { name: string; projects: readonly string[]; used?: readonly string[] })[] }[];
-    counter: { hint: string; projects: string; used: string; pumpOff: string; pumpOn: string };
+    counter: { hint: string; nudge: string; projects: string; used: string; pumpOff: string; pumpOn: string };
     languages: { label: string; items: readonly { name: string; level: string }[]; chat: readonly [string, string] };
   },
   projects: {

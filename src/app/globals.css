@@ -336,6 +336,12 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* Hover label next to the pump, over the free strip above the rack. */
 .pump-tip { position: absolute; left: calc(100% + 34px); top: 50%; padding: 3px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--background); color: var(--foreground); font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transform: translate(-4px, -50%); transition: opacity .2s, transform .2s; }
 .pump-switch:hover .pump-tip, .pump-switch:focus-visible .pump-tip { opacity: 1; transform: translate(0, -50%); }
+/* Note shown once, after the first full trip: points at the lever, which wiggles meanwhile. */
+.pump-note { position: absolute; left: calc(100% + 34px); top: 50%; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transform: translate(-4px, -50%); transition: opacity .3s, transform .3s; }
+.pump-note::before { content: ''; position: absolute; right: 100%; top: 50%; margin-top: -4px; border: 4px solid transparent; border-right-color: var(--accent); }
+.pump-nudge .pump-note { opacity: 1; transform: translate(0, -50%); }
+.pump-nudge .pump-tip { opacity: 0; }
+.pump-nudge .pump-lever { animation: lever-wiggle .5s ease-in-out infinite; }
 .pump-on .pump-needle { transform: rotate(55deg); }
 .pump-on .pump-light { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 /* One puff out of the exhaust stack when the pump starts. */
