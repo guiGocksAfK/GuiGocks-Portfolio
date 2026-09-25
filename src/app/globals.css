@@ -418,7 +418,9 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* While pending, every piece of the section is out of sight on its own, so the robots can bring them in one by one:
    a piece shows once it gets .is-built; the list's and the footer's lines are drawn on stage instead. */
 html[data-build='pending'] .contact-built { pointer-events: none; }
-html[data-build='pending'] .contact-built :is(.contact-status, h2, .contact-row > *, .ending > *, .ending-picnic > *, .section-footer > *):not(.is-built) { visibility: hidden; opacity: 0; }
+html[data-build='pending'] .contact-built :is(.contact-status, h2, .contact-row > *, .ending > *, .ending-picnic > *, .ending-boss, .section-footer > *):not(.is-built) { visibility: hidden; opacity: 0; }
+/* While it is being built the park doesn't crop or fade its edges, so what the crew carry in shows all the way. */
+html[data-build='pending'] .contact-built .ending { overflow: visible; -webkit-mask-image: none; mask-image: none; }
 html[data-build='pending'] .contact-built :is(.contact-list, .contact-list > li) { border-color: transparent; }
 html[data-build='pending'] .contact-built .section-footer { border-top-color: transparent; }
 .contact-built :is(.contact-status, h2, .contact-row > *, .ending > *, .ending-picnic > *, .section-footer > *) { transition: opacity .6s ease; }

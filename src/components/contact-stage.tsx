@@ -955,11 +955,14 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const width = stageEl.clientWidth;
       const pullers = [helper(box.x + 30), helper(box.x + box.w - CREW_W - 30)];
       pullers.forEach(member => member.pose({ arms: true }));
-      const sky = showPart(part('.ending-sky'), { y: -box.h });
+      // The backdrop unrolls downwards from the top of the park.
+      const sky = showPart(part('.ending-sky'));
+      if (sky) sky.style.clipPath = 'inset(0 0 100% 0)';
       await tween(1300, t => {
-        if (sky) movePart(sky, { y: -box.h * (1 - smooth(t)) });
+        if (sky) sky.style.clipPath = `inset(0 0 ${100 * (1 - smooth(t))}% 0)`;
         pullers.forEach(member => member.place(member.x, GRASS + Math.abs(Math.sin(t * Math.PI * 3)) * 4));
       });
+      if (sky) sky.style.clipPath = '';
       pullers.forEach(member => member.pose({ arms: false }));
       const leaving = Promise.all(pullers.map((member, index) => leave(member, index ? width + 40 : -CREW_W - 40)));
 
@@ -994,8 +997,9 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         rider.element.remove();
       })();
 
-      const hills = showPart(part('.ending-hills'), { y: 50 });
-      const rising = hills ? tween(900, t => movePart(hills, { y: 50 * (1 - smooth(t)) })) : Promise.resolve();
+      const hills = showPart(part('.ending-hills'), { y: 20 });
+      if (hills) hills.style.clipPath = 'inset(100% 0 0 0)';
+      const rising = hills ? tween(900, t => { movePart(hills, { y: 20 * (1 - smooth(t)) }); hills.style.clipPath = `inset(${100 * (1 - smooth(t))}% 0 0 0)`; }).then(() => { hills.style.clipPath = ''; }) : Promise.resolve();
 
       await pause(500);
       for (const star of stageEl.querySelectorAll<HTMLElement>('.ending-star')) {
@@ -1013,10 +1017,22 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         const lakeBox = boxOf(lake);
         lake.style.transformOrigin = 'left center';
         showPart(lake, { scale: '0 1' });
-        const roller = helper(lakeBox.x - CREW_W);
-        await walkOnGrass(roller, lakeBox.x + lakeBox.w - CREW_W / 2, 260, x => { lake.style.scale = `${Math.min(1, Math.max(0, (x + CREW_W / 2 - lakeBox.x) / lakeBox.w))} 1`; });
+        // Walking along the lake's far edge, at its height.
+        const edge = groundY() - lakeBox.y;
+        const roller = crew();
+        roller.place(lakeBox.x - CREW_W, edge);
+        roller.pose({ facing: 1 });
+        roller.legs(true);
+        const fromX = roller.x;
+        const toX = lakeBox.x + lakeBox.w - CREW_W / 2;
+        await tween((toX - fromX) / 260 * 1000, t => {
+          const x = fromX + (toX - fromX) * t;
+          roller.place(x, edge);
+          lake.style.scale = `${Math.min(1, Math.max(0, (x + CREW_W / 2 - lakeBox.x) / lakeBox.w))} 1`;
+        });
+        roller.legs(false);
         lake.style.scale = '1 1';
-        void leave(roller, width + 40);
+        void (async () => { await leap(roller, roller.x + 40, GRASS, 450, 16); await leave(roller, width + 40); })().catch(() => {});
       }
       await Promise.all([lowering, rising, leaving]);
     }
@@ -1087,16 +1103,18 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const spreader = helper(blanketBox.x - CREW_W - 10);
       await walkOnGrass(spreader, blanketBox.x + blanketBox.w - CREW_W / 2, 200, x => { blanket.style.scale = `${Math.min(1, Math.max(0, (x + CREW_W / 2 - blanketBox.x) / blanketBox.w))} 1`; });
       blanket.style.scale = '1 1';
-      // The same one goes back for the basket and sets it down.
+      const spreaderOff = leave(spreader, stageEl.clientWidth + 40);
+      // Someone else brings the basket in from the right and sets it down.
       const basketBox = boxOf(basket);
-      spreader.pose({ arms: true });
+      const bringer = helper(stageEl.clientWidth + 40);
+      bringer.pose({ arms: true });
       showPart(basket);
       const hold = (x: number) => movePart(basket, { x: x + CREW_W / 2 - (basketBox.x + basketBox.w / 2), y: -CREW_H + 4 });
-      hold(spreader.x);
-      await walkOnGrass(spreader, basketBox.x + basketBox.w / 2 - CREW_W / 2, CREW_WALK, hold);
+      hold(bringer.x);
+      await walkOnGrass(bringer, basketBox.x + basketBox.w / 2 - CREW_W / 2, CREW_WALK, hold);
       await tween(250, t => movePart(basket, { y: (-CREW_H + 4) * (1 - t) }));
-      spreader.pose({ arms: false });
-      await leave(spreader, stageEl.clientWidth + 40);
+      bringer.pose({ arms: false });
+      await Promise.all([spreaderOff, leave(bringer, stageEl.clientWidth + 40)]);
     }
 
     // The bench comes last: the boss taps its foot until two of the crew bring it, then sits down with a sigh and the
@@ -1104,12 +1122,19 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     async function bench(boss: ReturnType<typeof robot>, waiting: Promise<unknown>) {
       const seat = part('.ending-bench');
       if (!seat) return;
+      // While it waits, now and then a short fit of impatience: tapping its foot, huffing, rolling its eyes up.
       let tapping = true;
       const impatience = (async () => {
+        const fits = [
+          async () => { const dots = over(boss.element, 'stage-mark', '…'); for (let tap = 0; tap < 3; tap++) await boss.hop(3, 220); dots.remove(); },
+          async () => { boss.draw('idle', 'angry'); puff(boss.element, 'left'); await pause(500); boss.draw('idle', 'normal'); },
+          async () => { boss.draw('blink', 'normal'); await pause(600); boss.draw('idle', 'normal', 'right'); await pause(400); boss.draw('idle', 'normal'); },
+        ];
+        for (let fit = 0; tapping; fit++) {
+          await fits[fit % fits.length]();
+          for (let wait = 0; wait < 8 && tapping; wait++) await pause(200);
+        }
         boss.draw('idle', 'normal');
-        const dots = over(boss.element, 'stage-mark', '…');
-        while (tapping) await boss.hop(3, 260);
-        dots.remove();
       })();
       await waiting;
       const seatBox = boxOf(seat);
@@ -1135,6 +1160,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const fromY = boss.y;
       await tween(500, t => boss.place(fromX + (spot.x - fromX) * t, fromY + (spot.y - fromY) * t - Math.sin(Math.PI * t) * 24));
       boss.element.remove();
+      showPart(sitting);
       const sigh = spawn('stage-grumble stage-sigh font-mono', actors, lines.sigh);
       Object.assign(sigh.style, { left: `${spot.x + spot.w + 6}px`, top: `${spot.y - 18}px` });
 
@@ -1188,8 +1214,27 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     }
 
     async function buildPark(boss: ReturnType<typeof robot>, team: Member[]) {
-      // The crew still standing move down onto the grass.
-      team.forEach(member => member.place(member.x, GRASS));
+      // Everyone steps up onto the grass; the crew clear the stage to watch from two gaps in the park (clapping now and
+      // then: a little hop with their arms up) until it's time for their hats.
+      const width = stageEl.clientWidth;
+      const bossY = boss.y;
+      void tween(250, t => boss.place(boss.x, bossY - GRASS * t - Math.sin(Math.PI * t) * 8)).catch(() => {});
+      const seats = [.3, .34, .38, .68, .72];
+      await Promise.all(team.map(async (member, index) => {
+        await leap(member, member.x, GRASS, 250, 8);
+        await walkOnGrass(member, width * seats[index % seats.length]);
+        member.pose({ facing: index < 3 ? -1 : 1 });
+      }));
+      let watching = true;
+      const cheering = (async () => {
+        for (let round = 0; watching; round++) {
+          const fan = team[round % team.length];
+          fan.pose({ arms: true });
+          await tween(260, t => fan.place(fan.x, GRASS + Math.sin(Math.PI * t) * 5));
+          fan.pose({ arms: false });
+          for (let wait = 0; wait < 5 && watching; wait++) await pause(200);
+        }
+      })();
       const scenery = (async () => {
         const sky = backdrop();
         await pause(900);
@@ -1201,6 +1246,8 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         await Promise.all([sky, lawn, woods, blanket]);
       })();
       await bench(boss, scenery);
+      watching = false;
+      await cheering;
       await celebrate(team);
     }
 
