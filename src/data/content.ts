@@ -203,6 +203,8 @@ export const content = {
     title: ['Vamos construir', 'algo juntos?'],
     status: ['Disponível', 'Estágio e júnior', 'Presencial ou remoto', 'Foz do Iguaçu, PR'],
     footerNote: 'Obrigado pela visita',
+    // Sign held by the robot that lets the visitor skip the robots building the section.
+    skipLabel: 'Pular animação ⏭',
     copiedLabel: 'copiado!',
     pendingLabel: 'em breve',
     rows: [
@@ -213,7 +215,7 @@ export const content = {
       { label: 'Currículo', value: 'Baixar em PDF', action: 'baixar', kind: 'download', href: null },
     ],
   } as {
-    section: string; title: readonly [string, string]; status: readonly string[]; footerNote: string; copiedLabel: string; pendingLabel: string;
+    section: string; title: readonly [string, string]; status: readonly string[]; footerNote: string; skipLabel: string; copiedLabel: string; pendingLabel: string;
     rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null }[];
   },
   contact: {

@@ -15,6 +15,7 @@ import { SceneTrigger } from '@/components/scene-trigger';
 import { CapabilitiesYard } from '@/components/capabilities-yard';
 import { ContactList } from '@/components/contact-list';
 import { EndingScene } from '@/components/ending-scene';
+import { ContactStage } from '@/components/contact-stage';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -137,7 +138,7 @@ export default function Home() {
           <PatrolRobot />
         </div>
       </section>
-      <section id="contato" aria-labelledby="contact-title" className="contact-section">
+      <ContactStage skipLabel={contactSection.skipLabel}>
         <p className="status contact-status font-mono">
           <span aria-hidden="true" />
           {contactSection.status.map((item, index) => <em key={item}>{index > 0 && <i aria-hidden="true">·</i>}{item}</em>)}
@@ -147,7 +148,7 @@ export default function Home() {
         {/* Happy ending: a park at dusk standing on the last line of the page. */}
         <EndingScene />
         <div className="section-footer font-mono"><span>{contactSection.section}</span><span>{contactSection.footerNote}</span></div>
-      </section>
+      </ContactStage>
       </main>
     </div>
   );

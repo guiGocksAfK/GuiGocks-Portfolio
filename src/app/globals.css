@@ -18,7 +18,7 @@
 }
 
 html { scroll-behavior: smooth; scroll-padding-top: 24px; }
-body { background: var(--background); color: var(--foreground); font-family: var(--font-geist-sans), sans-serif; }
+body { overflow-x: clip; background: var(--background); color: var(--foreground); font-family: var(--font-geist-sans), sans-serif; }
 ::selection { background: var(--accent); color: var(--background); }
 a { text-decoration: none; }
 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: 3px; }
@@ -411,6 +411,22 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
   .contact-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 18px 4px; }
   .contact-label { grid-column: 1 / -1; }
 }
+/* The section still to be built (html[data-build="pending"], set by the boot script): a blank off-white canvas across the
+   whole width, only the skip robot on it, the content in the page but out of sight. */
+.contact-section { position: relative; }
+.contact-canvas, .skip-robot { display: none; }
+html[data-build='pending'] .contact-built { opacity: 0; pointer-events: none; }
+html[data-build='pending'] .contact-canvas { position: absolute; top: 0; bottom: 0; left: 50%; z-index: 0; display: block; width: 100vw; margin-left: -50vw; background: #e4e7ee; }
+.contact-built { position: relative; z-index: 1; transition: opacity .6s ease; }
+/* Skip robot: stands at the bottom right, where the section's last line will be, holding up its sign. */
+html[data-build='pending'] .skip-robot { position: absolute; right: 4%; bottom: 66px; z-index: 3; display: block; width: 33px; height: 36px; cursor: pointer; }
+.skip-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.skip-sign { font-size: 12px; pointer-events: auto; transition: background-color .2s, color .2s; }
+.skip-robot:hover .skip-sign, .skip-robot:focus-visible .skip-sign { background: var(--accent); color: var(--background); }
+.skip-robot:hover, .skip-robot:focus-visible { animation: skip-hop .4s ease-out; }
+.skip-robot:focus-visible { outline: none; }
+.skip-robot:focus-visible .skip-sign { outline: 2px solid var(--accent); outline-offset: 2px; }
+@keyframes skip-hop { 40% { transform: translateY(-5px); } }
 /* Happy ending: a park at dusk standing on the footer's line. Sky fading into the page, a pale sun setting behind the
    hills and the lake, grass on the ground, and the pixel sprites placed along it. Calm idle loops only. */
 .ending { position: relative; height: 200px; margin-top: 64px; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); }

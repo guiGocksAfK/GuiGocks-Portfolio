@@ -2,7 +2,8 @@
 const EVENT = 'name-painted';
 
 // Runs before the page is painted (see layout.tsx) so the name already starts unpainted (blue) on every load.
-export const PAINT_BOOT_SCRIPT = `try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.dataset.paint='pending'}catch(e){}`;
+// Also marks the contact section as still to be built by the robots (see contact-stage.tsx).
+export const PAINT_BOOT_SCRIPT = `try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.dataset.paint='pending';document.documentElement.dataset.build='pending'}}catch(e){}`;
 
 export const isNamePending = () => document.documentElement.dataset.paint === 'pending';
 
