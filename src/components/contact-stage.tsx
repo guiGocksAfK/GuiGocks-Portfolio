@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { RobotSprite, crewMarkup, pixelMarkup, robotMarkup, type CrewFace, type RobotMood, type RobotPose } from '@/components/robot-sprite';
 
 type Stage = 'blank' | 'playing' | 'done';
-// What the robots say: the boss calling the crew, the boss stopping the fight, the painter grumbling.
+// What the robots say: the boss calling the crew, the boss stopping the fight, the one mopping up grumbling.
 type StageLines = { call: string; stop: string; grumble: string; typo: string; keep: string; sigh: string };
 
 // Robots on this stage are drawn with 3px pixels (the big robot map is 11×12).
@@ -15,9 +15,9 @@ const WALK_SPEED = 80; // px per second: an unhurried stroll
 const CREW_W = 24;
 const CREW_H = 27;
 const CREW_WALK = 150; // called by the boss, the crew comes at a brisk walk
-const ANNOYED_WALK = 200; // the painter hurrying back to fix the streak
+const ANNOYED_WALK = 200; // the one who spilled the paint, hurrying to mop it up
 const RUN_SPEED = 220;
-const ROLL_SPEED = 300; // the giant paint roller crossing the whole screen
+const DASH_SPEED = 260; // the crew dashing off for paint and back
 const LINE_SPEED = 380; // a crew member running along a line, drawing it behind
 const WRITE_INTERVAL = 105; // ms per letter written with the giant pencil
 const ERASE_INTERVAL = 90;
@@ -25,14 +25,25 @@ const PENCIL_TILT = 24; // degrees the giant pencil leans back from upright
 const STEP_INTERVAL = 130;
 const BENCH = ['WWWWWWWWWWWW', 'wwwwwwwwwwww', '.K........K.', 'WWWWWWWWWWWW', 'wwwwwwwwwwww', '.K........K.', '.K........K.'];
 const BENCH_COLORS = { W: '#7a5c46', w: '#5a4334', K: '#2c313b' };
+const BUCKET = ['.SSSS.', 'S....S', 'DDDDDD', 'SBBBBS', '.SBBS.', '.SSSS.'];
+// The patches of bare wall the crew must paint over: small ones low down (they can hide them standing in front) and two
+// big ones up high, the second a dark hole with an eye in it.
+const HOLES: { level: 'low' | 'high'; eye?: boolean; style: Record<string, string | number> }[] = [
+  { level: 'low', style: { left: '30%', bottom: 68, width: 22, height: 18 } },
+  { level: 'low', style: { left: '44%', bottom: 68, width: 20, height: 16 } },
+  { level: 'low', style: { left: '57%', bottom: 68, width: 24, height: 18 } },
+  { level: 'low', style: { left: '70%', bottom: 68, width: 20, height: 16 } },
+  { level: 'high', style: { left: '18%', top: '24%', width: 70, height: 44 } },
+  { level: 'high', eye: true, style: { left: '62%', top: '36%', width: 84, height: 52 } },
+];
 
 class Cancelled extends Error {}
 
 const finishBuild = () => { delete document.documentElement.dataset.build; };
 
 // The contact section is built by the robots in front of the visitor. The boot script marks the page before the first
-// paint (html[data-build="pending"]), so the section starts as a blank off-white canvas with only a robot holding a
-// "skip" sign; without JS or with reduced motion it is simply finished. The content is in the page all along (only
+// paint (html[data-build="pending"]), so the section starts empty, its wall full of bare patches, with only a robot
+// holding a "skip" sign; without JS or with reduced motion it is simply finished. The content is in the page all along (only
 // hidden from sight), so screen readers and search engines get it right away. The show starts once the section's last
 // line is on screen and pauses while it is off screen; clicking the sign at any moment jumps to the finished section.
 export function ContactStage({ skipLabel, lines, children }: { skipLabel: string; lines: StageLines; children: ReactNode }) {
@@ -150,58 +161,6 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       actor.appendChild(element);
     }
 
-    // Scene 1: the boss comes for its bench, finds a blank screen and calls the crew.
-    async function bossArrives() {
-      const boss = robot('boss-actor');
-      const benchSpot = stageEl.querySelector('.ending-boss');
-      const target = benchSpot ? boxOf(benchSpot).x : stageEl.clientWidth * .1;
-      boss.draw('idle', 'normal', 'right');
-      boss.place(-BOSS_WIDTH - 20, groundY() - BOSS_HEIGHT);
-      await pause(300);
-      await boss.walk(target);
-      boss.draw('idle', 'normal');
-      await pause(300);
-
-      // It pictures its bench.
-      const thought = over(boss.element, 'thought', `<span class="thought-trail"></span>${pixelMarkup(BENCH, BENCH_COLORS)}`);
-      await pause(1100);
-      await fadeOut(thought);
-      await pause(200);
-
-      // No bench anywhere: it looks one way, then the other.
-      const question = over(boss.element, 'stage-mark', '?');
-      for (const look of ['left', 'right'] as const) {
-        boss.draw('idle', 'normal', look);
-        await pause(500);
-      }
-      boss.draw('idle', 'normal');
-      await pause(300);
-
-      // Then it notices the whole screen is blank.
-      question.remove();
-      const surprise = over(boss.element, 'stage-mark stage-mark-alert', '!');
-      boss.draw('blink', 'normal');
-      await boss.hop(8, 260);
-      boss.draw('idle', 'normal');
-      await pause(500);
-      await fadeOut(surprise);
-
-      // It gets angry: red eyes, steam out of its head, two stomping hops and a shout for the crew.
-      boss.draw('idle', 'angry');
-      await pause(350);
-      for (let index = 0; index < 3; index++) {
-        puff(boss.element, index % 2 ? 'right' : 'left');
-        await pause(280);
-      }
-      boss.draw('jump', 'angry');
-      const call = over(boss.element, 'stage-shout font-mono', lines.call);
-      for (let jump = 0; jump < 2; jump++) await boss.hop(12, 320);
-      await pause(900);
-      await fadeOut(call);
-      boss.draw('idle', 'angry');
-      return boss;
-    }
-
     // Fight clouds, sweat, the slip's streak: things at ground level go in a zero-height strip along the ground.
     const ground = document.createElement('span');
     ground.className = 'stage-ground';
@@ -268,98 +227,257 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     }
     type Member = ReturnType<typeof crew>;
 
-    // Scene 2: the crew answers the call, sees the blank screen and panics: "!", arms up, shaking and sweating.
-    // The crew comes in from the left, the boss's side; onPanic lets the next scene start while they are still panicking.
-    async function crewPanics(onPanic: () => void) {
-      const width = stageEl.clientWidth;
-      const spots = [.22, .28, .34].map(fraction => width * fraction);
-      const team = spots.map(() => crew());
-      team.forEach((member, index) => member.place(-CREW_W - 16 - (spots.length - 1 - index) * 45));
-      await Promise.all(team.map((member, index) => member.walk(spots[index], CREW_WALK)));
-      await pause(200);
+    // The unfinished wall: patches of bare plaster (and one dark hole) the crew has to paint over.
+    const holeCenter = (hole: HTMLElement) => { const box = boxOf(hole); return { x: box.x + box.w / 2, y: box.y + box.h / 2, box }; };
+
+    // Little notes floating up from a whistling crew member.
+    function whistle(member: Member, count: number) {
+      return (async () => {
+        for (let index = 0; index < count; index++) {
+          const note = spawn('whistle-note', member.element, index % 2 ? '♫' : '♪');
+          note.addEventListener('animationend', () => note.remove());
+          await pause(380);
+        }
+      })();
+    }
+
+    // The scary eye in the dark hole: it opens, looks around, blinks.
+    const eye = () => stageEl.querySelector<HTMLElement>('.stage-eye');
+    function look(direction: number) { eye()?.style.setProperty('--look', `${direction * 7}px`); }
+
+    // Scene 1: the boss and the crew arrive together. The crew notice the patches first and try to hide them: each one
+    // stands in front of a patch, one leans, one whistles. The boss pictures its bench, looks around... and an eye opens
+    // in a hole in the wall. The crew panic, the boss blows up and yells for them to fix it.
+    async function arrive() {
+      const boss = robot('boss-actor');
+      const team = [0, 1, 2, 3].map(() => crew());
+      const benchSpot = stageEl.querySelector('.ending-boss');
+      const bossTarget = benchSpot ? boxOf(benchSpot).x : stageEl.clientWidth * .1;
+      const low = [...stageEl.querySelectorAll<HTMLElement>('.stage-hole-low')].map(hole => holeCenter(hole).x - CREW_W / 2);
+
+      // In they come, the crew a few steps ahead of the boss.
+      boss.draw('idle', 'normal', 'right');
+      boss.place(-BOSS_WIDTH - 150, groundY() - BOSS_HEIGHT);
+      team.forEach((member, index) => member.place(-CREW_W - 10 - (team.length - 1 - index) * 34));
+      const crewStops = team.map((_, index) => bossTarget + 70 + index * 34);
+      await Promise.all([boss.walk(bossTarget), ...team.map((member, index) => member.walk(crewStops[index], (crewStops[index] - member.x) / ((bossTarget - boss.x) / WALK_SPEED)))]);
+      boss.draw('idle', 'normal');
+
+      // The crew see the patches: "!", a quick look at each other, then they rush to cover them.
       const marks = team.map(member => over(member.element, 'stage-mark stage-mark-alert', '!'));
-      await pause(600);
+      await pause(500);
       marks.forEach(mark => mark.remove());
+      for (const facing of [-1, 1]) { team.forEach((member, index) => member.pose({ facing: index % 2 ? -facing : facing })); await pause(220); }
+      await Promise.all(team.map((member, index) => member.walk(low[index] ?? member.x, RUN_SPEED)));
+      team[1].pose({ tilt: 12, facing: -1 });
+      const whistling = whistle(team[3], 6);
+
+      // The boss pictures its bench...
+      const thought = over(boss.element, 'thought', `<span class="thought-trail"></span>${pixelMarkup(BENCH, BENCH_COLORS)}`);
+      await pause(1100);
+      await fadeOut(thought);
+      // ...and looks around, suspicious; the crew smile back.
+      const question = over(boss.element, 'stage-mark', '?');
+      for (const side of ['left', 'right'] as const) { boss.draw('idle', 'normal', side); await pause(450); }
+      boss.draw('idle', 'normal');
+      question.remove();
+
+      // An eye opens in the dark hole, looks at the boss, at the crew, blinks.
+      const theEye = eye();
+      theEye?.classList.add('eye-open');
+      look(-1);
+      await pause(600);
+      look(1);
+      await pause(450);
+      theEye?.classList.remove('eye-open');
+      await pause(140);
+      theEye?.classList.add('eye-open');
+      look(0);
+      await whistling;
+      team[1].pose({ tilt: 0 });
+
+      // Panic: the crew's arms go up and they sweat; the boss sees it all and blows up.
       team.forEach(member => member.pose({ arms: true, face: 'angry' }));
-      onPanic();
+      const alarms = team.map(member => over(member.element, 'stage-mark stage-mark-alert', '!!'));
       const sweat = setInterval(() => {
         const member = team[Math.floor(Math.random() * team.length)];
         const drop = spawn('sweat', member.element);
         drop.style.left = `${Math.random() < .5 ? 1 : 19}px`;
         drop.addEventListener('animationend', () => drop.remove());
-      }, 160);
+      }, 150);
       intervals.add(sweat);
-      await tween(1600, t => team.forEach((member, index) => member.place(spots[index] + Math.round(Math.sin(t * 70 + index * 2) * 1.5))));
+      const surprise = over(boss.element, 'stage-mark stage-mark-alert', '!');
+      boss.draw('blink', 'normal');
+      await boss.hop(8, 260);
+      await pause(300);
+      surprise.remove();
+      alarms.forEach(alarm => alarm.remove());
+      boss.draw('idle', 'angry');
+      for (let index = 0; index < 3; index++) { puff(boss.element, index % 2 ? 'right' : 'left'); await pause(240); }
+      boss.draw('jump', 'angry');
+      const call = over(boss.element, 'stage-shout font-mono', lines.call);
+      for (let jump = 0; jump < 2; jump++) await boss.hop(12, 300);
       clearInterval(sweat);
       intervals.delete(sweat);
-      team.forEach((member, index) => { member.place(spots[index]); member.pose({ arms: false, face: 'normal' }); });
-      return team;
+      boss.draw('idle', 'angry');
+      void fadeOut(call).catch(() => {});
+      return { boss, team };
     }
 
-    // Scene 3: a painter pushes a giant roller across the whole screen, painting the blank canvas dark behind it.
-    async function paintWall() {
-      const paint = stageEl.querySelector<HTMLElement>('.contact-paint');
-      if (!paint) return crew('painter');
-      const wall = boxOf(paint);
-      const roller = document.createElement('span');
-      roller.className = 'giant-roller';
-      roller.innerHTML = '<span class="roller-drum"></span><span class="roller-pole"></span>';
-      roller.style.height = `${groundY()}px`;
-      actors.insertBefore(roller, actors.firstChild);
-      const painter = crew('painter');
-      const from = wall.x - 30;
-      // It stops once the drum reaches the right edge, the painter still in sight at the far right.
-      const to = wall.x + wall.w;
-      const at = (x: number) => {
-        roller.style.transform = `translateX(${x}px)`;
-        painter.place(x - 62);
-        paint.style.clipPath = `inset(0 ${Math.max(0, wall.x + wall.w - x - 11)}px 0 0)`;
-      };
-      at(from);
-      painter.pose({ facing: 1 });
-      painter.legs(true);
-      await tween((to - from) / ROLL_SPEED * 1000, t => at(from + (to - from) * t));
-      painter.legs(false);
-      roller.remove();
-      paint.style.clipPath = 'none';
-      return painter;
+    // A paint bucket held in a crew member's hand.
+    function bucket(member: Member) {
+      const element = spawn('paint-bucket', member.element);
+      element.innerHTML = pixelMarkup(BUCKET);
+      return element;
     }
 
-    // Scene 4: on the wet paint one of the crew slips and slides on its back, leaving a streak; a second one trips over
-    // it; they get up furious and brawl until the boss yells at them to stop.
-    async function slipAndFight(team: Member[], boss: Awaited<ReturnType<typeof bossArrives>>) {
+    // A glob of paint thrown along an arc at a patch; it splats over it and dries into the wall's own colour.
+    async function throwPaint(member: Member, target: { x: number; y: number; box: { w: number; h: number } }, hole: HTMLElement | null) {
+      const direction = target.x > member.x + CREW_W / 2 ? 1 : -1;
+      member.pose({ facing: direction, arms: true });
+      const from = { x: member.x + CREW_W / 2 + direction * 8, y: groundY() - CREW_H - member.lift };
+      const glob = spawn('paint-glob', actors);
+      const peak = Math.min(from.y, target.y) - 50;
+      const control = 2 * peak - (from.y + target.y) / 2;
+      await tween(520, t => {
+        const x = from.x + (target.x - from.x) * t;
+        const y = (1 - t) * (1 - t) * from.y + 2 * (1 - t) * t * control + t * t * target.y;
+        glob.style.transform = `translate(${x}px, ${y}px)`;
+      });
+      glob.remove();
+      member.pose({ arms: false });
+      const splat = spawn('paint-splat', actors);
+      const size = Math.max(target.box.w, target.box.h) * 1.5;
+      Object.assign(splat.style, { left: `${target.x - size / 2}px`, top: `${target.y - size / 2}px`, width: `${size}px`, height: `${size * .8}px` });
+      splat.addEventListener('animationend', () => splat.remove());
+      for (let index = 0; index < 5; index++) {
+        const drop = spawn('paint-drop', actors);
+        const angle = Math.random() * Math.PI * 2;
+        Object.assign(drop.style, { left: `${target.x}px`, top: `${target.y}px` });
+        drop.style.setProperty('--dx', `${Math.cos(angle) * (size * .6 + Math.random() * 12)}px`);
+        drop.style.setProperty('--dy', `${Math.sin(angle) * (size * .5 + Math.random() * 10)}px`);
+        drop.addEventListener('animationend', () => drop.remove());
+      }
+      hole?.classList.add('hole-covered');
+    }
+
+    // Scene 2: they dash off the screen for paint and come back with buckets. One drops its bucket on the way, which
+    // leaves a puddle; it picks the bucket up and carries on. Then they throw paint at every patch; the eye dodges the
+    // first throw and gets the second one full in the face.
+    async function paintHoles(team: Member[]) {
       const width = stageEl.clientWidth;
-      const slider = team[2];
-      const tripper = team[1];
-      const slipAt = width * .6;
-      const slideTo = width * .68;
+      const sides = team.map(member => member.x < width / 2 ? -1 : 1);
+      team.forEach(member => member.pose({ arms: false, face: 'normal' }));
+      await Promise.all(team.map(async (member, index) => {
+        await pause(index * 90);
+        await member.walk(sides[index] < 0 ? -CREW_W - 30 : width + 30, DASH_SPEED);
+      }));
+      await pause(400);
 
-      // It dashes off toward the middle, the second one right behind it, and its feet go out from under it.
-      const chase = (async () => { await pause(250); await tripper.walk(slideTo - 34, RUN_SPEED); })();
+      const low = [...stageEl.querySelectorAll<HTMLElement>('.stage-hole-low')];
+      const high = [...stageEl.querySelectorAll<HTMLElement>('.stage-hole-high')];
+      const buckets = team.map(member => bucket(member));
+      let puddle: { element: HTMLElement; x: number } | null = null;
+      const dropper = 1;
+
+      await Promise.all(team.map(async (member, index) => {
+        await pause(index * 120);
+        const hole = low[index];
+        const center = hole ? holeCenter(hole) : null;
+        const spot = center ? center.x - sides[index] * 60 - CREW_W / 2 : member.x;
+        if (index === dropper) {
+          // Halfway back the bucket slips out of its hand, tips over and spills.
+          const halfway = member.x + (spot - member.x) * .45;
+          await member.walk(halfway, DASH_SPEED);
+          const pail = buckets[index];
+          const start = boxOf(pail);
+          pail.remove();
+          const falling = spawn('paint-bucket paint-bucket-loose', actors);
+          falling.innerHTML = pixelMarkup(BUCKET);
+          const direction = spot > member.x ? 1 : -1;
+          const landX = start.x + direction * 34;
+          const landY = groundY() - 12;
+          await tween(420, t => { falling.style.transform = `translate(${start.x + (landX - start.x) * t}px, ${start.y + (landY - start.y) * t * t - Math.sin(Math.PI * t) * 14}px) rotate(${direction * 90 * t}deg)`; });
+          const spill = spawn('puddle');
+          spill.style.left = `${landX + direction * 8}px`;
+          puddle = { element: spill, x: landX + direction * 8 };
+          await tween(500, t => { spill.style.width = `${70 * t}px`; if (direction < 0) spill.style.left = `${landX - 8 - 70 * t}px`; });
+          if (direction < 0) puddle.x = landX - 8 - 70;
+          const oops = over(member.element, 'stage-mark', '…');
+          member.pose({ face: 'tired' });
+          await member.walk(landX - direction * 18, CREW_WALK);
+          await pause(250);
+          falling.remove();
+          buckets[index] = bucket(member);
+          oops.remove();
+          member.pose({ face: 'normal' });
+          await member.walk(spot, DASH_SPEED);
+        } else {
+          await member.walk(spot, DASH_SPEED);
+        }
+        if (hole && center) await throwPaint(member, center, hole);
+      }));
+
+      // The patches up high: the eye first. It dodges a throw (closing up, the paint splashes beside it) and then the
+      // second one covers it.
+      const [upper, eyeHole] = [high.find(hole => !hole.querySelector('.stage-eye')), high.find(hole => hole.querySelector('.stage-eye'))];
+      const eyeThrower = team[3];
+      const otherThrower = team[0];
+      await Promise.all([
+        (async () => {
+          if (!upper) return;
+          const center = holeCenter(upper);
+          await otherThrower.walk(center.x - 40, DASH_SPEED);
+          await throwPaint(otherThrower, center, upper);
+        })(),
+        (async () => {
+          if (!eyeHole) return;
+          const center = holeCenter(eyeHole);
+          await eyeThrower.walk(center.x + 50, DASH_SPEED);
+          const miss = { ...center, x: center.x - 52, y: center.y - 20 };
+          const dodging = (async () => { await pause(260); eye()?.classList.remove('eye-open'); eyeHole.classList.add('hole-dodge'); })();
+          await throwPaint(eyeThrower, miss, null);
+          await dodging;
+          await pause(350);
+          eyeHole.classList.remove('hole-dodge');
+          eye()?.classList.add('eye-open');
+          look(1);
+          await pause(400);
+          await throwPaint(eyeThrower, center, eyeHole);
+        })(),
+      ]);
+      buckets.forEach(pail => pail.remove());
+      return { puddle: puddle as { element: HTMLElement; x: number } | null, dropper: team[dropper] };
+    }
+
+    // Scene 3: one of the crew runs across and slips on the puddle, a second one trips over it; they get up furious and
+    // brawl until the boss yells at them to stop (and its stomp lays down the ground line).
+    async function slipAndFight(team: Member[], boss: ReturnType<typeof robot>, puddleX: number) {
+      const slider = team[2];
+      const tripper = team[3];
+      const direction = puddleX < slider.x ? -1 : 1;
+      const slipAt = puddleX + 20 - CREW_W / 2;
+      const slideTo = slipAt + direction * stageEl.clientWidth * .08;
+
+      const chase = (async () => { await pause(250); await tripper.walk(slideTo - direction * 34, RUN_SPEED); })();
       await slider.walk(slipAt, RUN_SPEED);
-      const streak = spawn('paint-streak');
-      streak.style.left = `${slipAt + CREW_W / 2}px`;
       await tween(800, t => {
         const eased = 1 - (1 - t) * (1 - t);
-        const x = slipAt + (slideTo - slipAt) * eased;
-        slider.place(x, Math.sin(Math.PI * Math.min(1, t * 2)) * 10);
+        slider.place(slipAt + (slideTo - slipAt) * eased, Math.sin(Math.PI * Math.min(1, t * 2)) * 10);
         slider.pose({ tilt: -90 * Math.min(1, t * 1.8) });
-        streak.style.width = `${x - slipAt}px`;
       });
-
-      // The second one trips right over it.
       await chase;
       const tripFrom = tripper.x;
       await tween(600, t => {
-        tripper.place(tripFrom + 70 * t, Math.sin(Math.PI * t) * 18);
+        tripper.place(tripFrom + direction * 70 * t, Math.sin(Math.PI * t) * 18);
         tripper.pose({ tilt: 90 * Math.min(1, t * 1.3) });
       });
       await pause(400);
 
-      // Both get up, glare at each other and brawl in a dust cloud.
       await tween(300, t => { slider.pose({ tilt: -90 * (1 - t) }); tripper.pose({ tilt: 90 * (1 - t) }); });
-      slider.pose({ face: 'angry', facing: 1 });
-      tripper.pose({ face: 'angry', facing: -1 });
+      const [left, right] = slider.x < tripper.x ? [slider, tripper] : [tripper, slider];
+      left.pose({ face: 'angry', facing: 1 });
+      right.pose({ face: 'angry', facing: -1 });
       const middle = (slider.x + tripper.x) / 2 + CREW_W / 2;
       const alerts = [slider, tripper].map(member => over(member.element, 'stage-mark stage-mark-alert', '!'));
       const speedLines = spawn('fight-lines');
@@ -384,50 +502,47 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       intervals.add(debris);
       await pause(1200);
 
-      // The boss stomps and yells; the cloud clears and the two are left apart, sulking.
       boss.draw('jump', 'angry');
       const stop = over(boss.element, 'stage-shout font-mono', lines.stop);
       for (let jump = 0; jump < 2; jump++) await boss.hop(12, 320);
-      // Its stomp lays down the ground line.
       const spreading = spreadGroundLine(boss);
       clearInterval(debris);
       intervals.delete(debris);
       cloud.remove();
-      slider.place(middle - CREW_W / 2 - 34);
-      tripper.place(middle - CREW_W / 2 + 34);
-      slider.pose({ face: 'tired', facing: -1 });
-      tripper.pose({ face: 'tired', facing: 1 });
+      left.place(middle - CREW_W / 2 - 34);
+      right.place(middle - CREW_W / 2 + 34);
+      left.pose({ face: 'tired', facing: -1 });
+      right.pose({ face: 'tired', facing: 1 });
       slider.element.style.opacity = '1';
       tripper.element.style.opacity = '1';
       boss.draw('idle', 'angry');
       await pause(800);
       await fadeOut(stop);
       await spreading;
-      return { streak, from: slipAt, to: slideTo };
     }
 
-    // Scene 5: the painter comes back with a hand roller, grumbling, and paints over the streak.
-    async function repaint(painter: Member, mark: { streak: HTMLElement; from: number; to: number }) {
-      painter.pose({ face: 'angry' });
-      const handRoller = spawn('hand-roller', painter.element);
-      await painter.walk(mark.to + CREW_W / 2 + 6, ANNOYED_WALK);
-      const grumble = over(painter.element, 'stage-grumble font-mono', lines.grumble);
-      painter.legs(true);
-      const start = painter.x;
-      const length = mark.to - mark.from;
-      await tween(1800, t => {
-        // Back and forth, working its way to the left end of the streak and covering it as it goes.
-        const reach = start - (start - mark.from) * t;
-        painter.place(reach + Math.abs(Math.sin(t * Math.PI * 4)) * 18);
-        mark.streak.style.width = `${Math.max(0, Math.min(length, reach - mark.from - CREW_W / 2))}px`;
+    // Scene 4: the one who spilled the paint mops the puddle up, grumbling.
+    async function mop(member: Member, puddle: { element: HTMLElement; x: number } | null) {
+      if (!puddle) return;
+      const width = puddle.element.offsetWidth;
+      const start = puddle.x + width + 6;
+      member.pose({ face: 'angry' });
+      const tool = spawn('stage-mop', member.element);
+      await member.walk(start, ANNOYED_WALK);
+      member.pose({ facing: -1 });
+      const grumble = over(member.element, 'stage-grumble font-mono', lines.grumble);
+      member.legs(true);
+      await tween(1600, t => {
+        const reach = start - (width + 6) * t;
+        member.place(reach + Math.abs(Math.sin(t * Math.PI * 4)) * 14);
+        puddle.element.style.width = `${Math.max(0, reach - puddle.x - 6)}px`;
       });
-      painter.legs(false);
-      mark.streak.remove();
-      await pause(300);
+      member.legs(false);
+      puddle.element.remove();
+      await pause(250);
       await fadeOut(grumble);
-      handRoller.remove();
-      painter.pose({ face: 'normal' });
-      return painter;
+      tool.remove();
+      member.pose({ face: 'normal' });
     }
 
     // A line of the finished section drawn on stage (the real borders stay hidden until the end).
@@ -448,7 +563,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     }
 
     // The ground line spreads out from the boss's feet as it lands from its stomp, with a puff of dust on each side.
-    async function spreadGroundLine(boss: Awaited<ReturnType<typeof bossArrives>>) {
+    async function spreadGroundLine(boss: ReturnType<typeof robot>) {
       const footer = stageEl.querySelector('.section-footer');
       if (!footer) return;
       const footerBox = boxOf(footer);
@@ -472,10 +587,11 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     // drawing it under their feet as they go.
     async function runLines() {
       const list = stageEl.querySelector('.contact-list');
-      const paint = stageEl.querySelector('.contact-paint');
-      if (!list || !paint) return;
+      if (!list) return;
       const listBox = boxOf(list);
-      const wall = boxOf(paint);
+      // From the window's left edge to its right edge, in the section's coordinates.
+      const sectionLeft = stageEl.getBoundingClientRect().left;
+      const wall = { x: -sectionLeft, w: document.documentElement.clientWidth };
       const left = listBox.x;
       const right = listBox.x + listBox.w;
       const rowLines = [listBox.y, ...[...list.children].map(row => { const box = boxOf(row); return box.y + box.h - 1; })];
@@ -584,33 +700,55 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await member.walk(member.x + direction * 60, CREW_WALK);
 
       if (dropAt) {
-        // The "@" slips off the pile, bounces on the ground and rolls away.
+        // The "@" pops off the pile, bounces on the ground and rolls away; just as the robot is about to catch it, it
+        // rolls off again; the second time the robot pounces on it.
         const text = carried.textContent ?? '';
         const at = text.indexOf('@');
         if (at >= 0) {
           carried.innerHTML = `${text.slice(0, at)}<span class="carried-gap">@</span>${text.slice(at + 1)}`;
           const gap = carried.querySelector<HTMLElement>('.carried-gap');
           const start = gap ? boxOf(gap) : boxOf(carried);
-          const sign = spawn('fallen-at font-mono', actors, '@');
-          const groundTop = groundY() - 18;
-          const rollTo = start.x + direction * 90;
-          await tween(450, t => { sign.style.transform = `translate(${start.x}px, ${start.y + (groundTop - start.y) * t * t}px)`; });
-          await tween(700, t => { sign.style.transform = `translate(${start.x + (rollTo - start.x) * (1 - (1 - t) * (1 - t))}px, ${groundTop - Math.abs(Math.sin(t * Math.PI * 2)) * 6 * (1 - t)}px) rotate(${direction * t * 540}deg)`; });
-          const alarm = over(member.element, 'stage-mark stage-mark-alert', '!');
-          await pause(450);
+          const sign = spawn('fallen-at', actors, '@');
+          const groundTop = groundY() - 26;
+          let signX = start.x;
+          let spin = 0;
+          const put = (x: number, y: number) => { signX = x; sign.style.transform = `translate(${x}px, ${y}px) rotate(${spin}deg)`; };
+          // Up out of the pile, down to the ground, two shrinking bounces.
+          await tween(700, t => { spin = direction * t * 200; put(start.x + direction * 30 * t, start.y - 34 * Math.sin(Math.PI * Math.min(1, t * 1.4)) + (groundTop - start.y) * t * t); });
+          for (const height of [18, 8]) {
+            const bounceX = signX;
+            await tween(260, t => { spin += direction * 6; put(bounceX + direction * 14 * t, groundTop - Math.sin(Math.PI * t) * height); });
+          }
+          const roll = async (distance: number, duration: number) => {
+            const fromX = signX;
+            await tween(duration, t => { spin += direction * 9; put(fromX + direction * distance * (1 - (1 - t) * (1 - t)), groundTop); });
+          };
+          await roll(130, 900);
+          const alarm = over(member.element, 'stage-mark stage-mark-alert', '!!');
+          await pause(500);
           alarm.remove();
-          // It runs after it, picks it up and clicks it back into the e-mail.
-          await member.walk(rollTo - direction * 6, RUN_SPEED);
+          // First try: it runs over, and the "@" rolls off again right under its nose.
+          await member.walk(signX - direction * 30, RUN_SPEED);
+          await roll(80, 600);
+          const huff = over(member.element, 'stage-mark stage-mark-alert', '!');
+          await pause(300);
+          huff.remove();
+          // Second try: it leaps onto it.
+          const leapFrom = member.x;
+          const target = signX - direction * 4;
+          await tween(420, t => member.place(leapFrom + (target - leapFrom) * t, Math.sin(Math.PI * t) * 22));
           member.pose({ facing: direction });
+          await pause(200);
+          // Back into the e-mail with a click and a twinkle.
           const back = gap ? boxOf(gap) : boxOf(carried);
-          const from = { x: rollTo, y: groundTop };
-          await tween(380, t => { sign.style.transform = `translate(${from.x + (back.x - from.x) * t}px, ${from.y + (back.y - from.y) * t - Math.sin(Math.PI * t) * 20}px)`; });
+          const from = { x: signX, y: groundTop };
+          await tween(420, t => { spin = 0; put(from.x + (back.x - from.x) * t, from.y + (back.y - from.y) * t - Math.sin(Math.PI * t) * 30); });
           sign.remove();
           gap?.classList.remove('carried-gap');
           const click = spawn('fight-twinkle stage-click', actors, '✦');
           Object.assign(click.style, { left: `${back.x}px`, top: `${back.y}px` });
           click.addEventListener('animationend', () => click.remove());
-          await pause(350);
+          await pause(450);
         }
       }
 
@@ -623,13 +761,19 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       actors.appendChild(flyer);
       // offsetWidth ignores the carrying scale, so this is the copy's real size.
       const scale = start.w / Math.max(flyer.offsetWidth, 1);
-      member.pose({ arms: false });
-      await tween(700, t => {
-        const eased = smooth(t);
-        const x = start.x + (target.x - start.x) * eased;
-        const y = start.y + (target.y - start.y) * eased - Math.sin(Math.PI * t) * 70;
-        flyer.style.transform = `translate(${x}px, ${y}px) scale(${scale + (1 - scale) * eased})`;
+      // A little hop to put some strength into the throw; the piece goes up past its place and drops into it.
+      const standX = member.x;
+      const standLift = member.lift;
+      const hop = tween(300, t => member.place(standX, standLift + Math.sin(Math.PI * t) * 10));
+      const peak = Math.min(start.y, target.y) - 70;
+      const control = 2 * peak - (start.y + target.y) / 2;
+      await tween(850, t => {
+        const x = start.x + (target.x - start.x) * t;
+        const y = (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * control + t * t * target.y;
+        flyer.style.transform = `translate(${x}px, ${y}px) scale(${scale + (1 - scale) * t}) rotate(${Math.sin(Math.PI * t) * -6}deg)`;
       });
+      await hop;
+      member.pose({ arms: false });
       flyer.remove();
       // Shown at once (no fade) so the piece takes over from the copy without a flicker.
       targets.forEach(element => { element.style.transition = 'none'; element.classList.add('is-built', 'just-built'); });
@@ -643,12 +787,15 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const crew = [...team].sort((a, b) => a.x - b.x);
       const partsOf = (row: HTMLElement) => [...row.children] as HTMLElement[];
       const valueOf = (row: HTMLElement) => row.querySelector<HTMLElement>('.contact-value') ?? row;
+      const [email, ...others] = rows;
       const jobs: (() => Promise<void>)[] = [];
       if (status) jobs.push(() => deliver(crew[0], status, [status]));
-      rows.forEach((row, index) => jobs.push(() => deliver(crew[(index + 1) % crew.length], valueOf(row), partsOf(row), index === 0)));
+      others.forEach((row, index) => jobs.push(() => deliver(crew[(index + 2) % crew.length], valueOf(row), partsOf(row))));
       await Promise.all(jobs.map(async (job, index) => { await pause(index * 550); await job(); }));
       // The footer's two notes, one after the other.
       for (const note of footerTexts) await deliver(crew[crew.length - 1], note, [note]);
+      // The e-mail comes last, on its own, so its dropped "@" gets all the attention.
+      if (email) await deliver(crew[1], valueOf(email), partsOf(email), true);
     }
 
     // ——— The park: every piece of the happy ending is brought in by the crew, many at once. ———
@@ -840,7 +987,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
     // The bench comes last: the boss taps its foot until two of the crew bring it, then sits down with a sigh and the
     // pigeons fly in.
-    async function bench(boss: Awaited<ReturnType<typeof bossArrives>>, waiting: Promise<unknown>) {
+    async function bench(boss: ReturnType<typeof robot>, waiting: Promise<unknown>) {
       const seat = part('.ending-bench');
       if (!seat) return;
       let tapping = true;
@@ -926,7 +1073,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await Promise.all(byDistance.slice(spots.length).map(member => leave(member, width + 40)));
     }
 
-    async function buildPark(boss: Awaited<ReturnType<typeof bossArrives>>, team: Member[]) {
+    async function buildPark(boss: ReturnType<typeof robot>, team: Member[]) {
       // The crew still standing move down onto the grass.
       team.forEach(member => member.place(member.x, GRASS));
       const scenery = (async () => {
@@ -945,19 +1092,17 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
     async function run() {
       await pause(200);
-      const boss = await bossArrives();
+      const { boss, team } = await arrive();
       await pause(200);
-      let painting: Promise<Member> | undefined;
-      const team = await crewPanics(() => { painting = paintWall(); });
-      const painter = await (painting ?? paintWall());
+      const { puddle, dropper } = await paintHoles(team);
       await pause(300);
       const lining = runLines();
-      const streak = await slipAndFight(team, boss);
+      await slipAndFight(team, boss, puddle?.x ?? stageEl.clientWidth * .3);
       await lining;
+      await pause(200);
+      await mop(dropper, puddle);
       await pause(300);
-      await repaint(painter, streak);
-      await pause(300);
-      const crew = [...team, painter];
+      const crew = team;
       await writeTitle([...crew].sort((a, b) => a.x - b.x)[0]);
       await pause(300);
       await placeWords(crew);
@@ -992,8 +1137,13 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
   return (
     <section ref={sectionRef} id="contato" aria-labelledby="contact-title" className="contact-section" data-stage={stage}>
-      <span className="contact-canvas" aria-hidden="true" />
-      <span className="contact-paint" aria-hidden="true" />
+      <div className="stage-holes" aria-hidden="true">
+        {HOLES.map((hole, index) => (
+          <span key={index} className={`stage-hole stage-hole-${hole.level}${hole.eye ? ' stage-hole-dark' : ''}`} style={hole.style}>
+            {hole.eye && <span className="stage-eye" />}
+          </span>
+        ))}
+      </div>
       <div className="contact-built">{children}</div>
       <div ref={actorsRef} className="stage-actors" aria-hidden="true" />
       {stage !== 'done' && (
