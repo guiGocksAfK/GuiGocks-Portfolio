@@ -130,12 +130,13 @@ const CREW_LEGS = [['..B..B..', '.SS..SS.'], ['.B....B.', 'SS....SS']];
 
 export type CrewFace = 'normal' | 'angry' | 'tired';
 
-// hat: 'O' is the crew's orange hard hat, 'A' the patrol guard's blue cap. face: red eyes when angry, shut grey slits when tired.
-export function crewMarkup(carrying: boolean, step: number, hat: 'O' | 'A' = 'O', face: CrewFace = 'normal') {
+// hat: 'O' is the crew's orange hard hat, 'A' the patrol guard's blue cap, 'none' just the antenna (off duty). face: red eyes when angry, shut grey slits when tired.
+export function crewMarkup(carrying: boolean, step: number, hat: 'O' | 'A' | 'none' = 'O', face: CrewFace = 'normal') {
   const top = carrying
     ? ['..OOOO..', 'SOOOOOOS', 'SBDDDDBS', 'SBADDABS', '..BBBB..', '..BABB..', '..BBBB..']
     : ['..OOOO..', '.OOOOOO.', '.BDDDDB.', '.BADDAB.', '..BBBB..', '.SBABBS.', '..BBBB..'];
   const pixels = [...top, ...CREW_LEGS[step % 2]].map((row, index) => {
+    if (index < 2 && hat === 'none') return index ? (carrying ? 'S.BBBB.S' : '..BBBB..') : '...A....';
     if (index < 2) return row.replaceAll('O', hat);
     if (index === 3 && face !== 'normal') return row.replaceAll('A', face === 'angry' ? 'R' : 'S');
     return row;

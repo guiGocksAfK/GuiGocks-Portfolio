@@ -418,10 +418,10 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* While pending, every piece of the section is out of sight on its own, so the robots can bring them in one by one:
    a piece shows once it gets .is-built; the list's and the footer's lines are drawn on stage instead. */
 html[data-build='pending'] .contact-built { pointer-events: none; }
-html[data-build='pending'] .contact-built :is(.contact-status, h2, .contact-row > *, .ending, .section-footer > *):not(.is-built) { opacity: 0; }
+html[data-build='pending'] .contact-built :is(.contact-status, h2, .contact-row > *, .ending > *, .ending-picnic > *, .section-footer > *):not(.is-built) { visibility: hidden; opacity: 0; }
 html[data-build='pending'] .contact-built :is(.contact-list, .contact-list > li) { border-color: transparent; }
 html[data-build='pending'] .contact-built .section-footer { border-top-color: transparent; }
-.contact-built :is(.contact-status, h2, .contact-row > *, .ending, .section-footer > *) { transition: opacity .6s ease; }
+.contact-built :is(.contact-status, h2, .contact-row > *, .ending > *, .ending-picnic > *, .section-footer > *) { transition: opacity .6s ease; }
 html[data-build='pending'] .contact-canvas { position: absolute; top: 0; bottom: 0; left: 50%; z-index: 0; display: block; width: 100vw; margin-left: -50vw; background: #e4e7ee; }
 .contact-built { position: relative; z-index: 1; }
 /* Skip robot: stands at the bottom right, where the section's last line will be, holding up its sign. */
@@ -487,6 +487,12 @@ html[data-build='pending'] .contact-paint { position: absolute; top: 0; bottom: 
 .stage-click { z-index: 6; }
 .just-built { animation: piece-land .35s ease-out; }
 @keyframes piece-land { 0% { transform: translateY(-6px); } 60% { transform: translateY(2px); } 100% { transform: none; } }
+/* The park being built: the rope the sun comes down on, the green roller, the hats thrown in the air, the boss's sigh. */
+.stage-rope { position: absolute; width: 2px; height: 0; background: #8f9bb3; }
+.rope-rider { z-index: 3; }
+.grass-roller { background: #1d3028; box-shadow: 0 0 0 1px #2a4d3c; }
+.flying-hat { position: absolute; left: 0; top: 0; width: 14px; height: 6px; border-radius: 6px 6px 1px 1px; background: #ffb347; }
+.stage-sigh { right: auto; bottom: auto; }
 /* The light streak left in the wet paint by the slip, and the painter's hand roller. */
 .paint-streak { position: absolute; top: -7px; width: 0; height: 5px; border-radius: 2px; background: #e4e7ee; }
 .hand-roller { position: absolute; left: -13px; bottom: 7px; width: 13px; height: 6px; border-radius: 2px; background: #1c2130; box-shadow: 0 0 0 1px #5d6678; }

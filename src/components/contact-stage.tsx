@@ -5,7 +5,7 @@ import { RobotSprite, crewMarkup, pixelMarkup, robotMarkup, type CrewFace, type 
 
 type Stage = 'blank' | 'playing' | 'done';
 // What the robots say: the boss calling the crew, the boss stopping the fight, the painter grumbling.
-type StageLines = { call: string; stop: string; grumble: string; typo: string; keep: string };
+type StageLines = { call: string; stop: string; grumble: string; typo: string; keep: string; sigh: string };
 
 // Robots on this stage are drawn with 3px pixels (the big robot map is 11×12).
 const BOSS_WIDTH = 33;
@@ -228,10 +228,11 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       let step = 0;
       let arms = false;
       let face: CrewFace = 'normal';
+      let hat: 'O' | 'none' = 'O';
       let facing = 1;
       let tilt = 0;
       let legs: ReturnType<typeof setInterval> | undefined;
-      const draw = () => { body.innerHTML = crewMarkup(arms, step, 'O', face); };
+      const draw = () => { body.innerHTML = crewMarkup(arms, step, hat, face); };
       const render = () => {
         element.style.transform = `translate(${x}px, ${y}px)`;
         body.style.transform = `scaleX(${facing}) rotate(${tilt}deg)`;
@@ -242,8 +243,9 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         get x() { return x; },
         get lift() { return groundY() - CREW_H - y; },
         place: (nextX: number, lift = 0) => { x = nextX; y = groundY() - CREW_H - lift; render(); },
-        pose: (options: { arms?: boolean; face?: CrewFace; facing?: number; tilt?: number }) => {
+        pose: (options: { arms?: boolean; face?: CrewFace; facing?: number; tilt?: number; hat?: 'O' | 'none' }) => {
           arms = options.arms ?? arms;
+          hat = options.hat ?? hat;
           face = options.face ?? face;
           facing = options.facing ?? facing;
           tilt = options.tilt ?? tilt;
@@ -386,6 +388,8 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       boss.draw('jump', 'angry');
       const stop = over(boss.element, 'stage-shout font-mono', lines.stop);
       for (let jump = 0; jump < 2; jump++) await boss.hop(12, 320);
+      // Its stomp lays down the ground line.
+      const spreading = spreadGroundLine(boss);
       clearInterval(debris);
       intervals.delete(debris);
       cloud.remove();
@@ -398,6 +402,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       boss.draw('idle', 'angry');
       await pause(800);
       await fadeOut(stop);
+      await spreading;
       return { streak, from: slipAt, to: slideTo };
     }
 
@@ -442,18 +447,11 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await tween(duration, t => member.place(fromX + (toX - fromX) * t, fromLift + (toLift - fromLift) * t + Math.sin(Math.PI * t) * height));
     }
 
-    // Scene 6: the boss stomps and the ground line spreads out from its feet; then each crew member jumps onto the end of
-    // one of the list's lines and runs along it, drawing it, and hops down at the other end.
-    async function drawLines(team: Member[], boss: Awaited<ReturnType<typeof bossArrives>>) {
-      const list = stageEl.querySelector('.contact-list');
+    // The ground line spreads out from the boss's feet as it lands from its stomp, with a puff of dust on each side.
+    async function spreadGroundLine(boss: Awaited<ReturnType<typeof bossArrives>>) {
       const footer = stageEl.querySelector('.section-footer');
-      if (!list || !footer) return;
-      const listBox = boxOf(list);
+      if (!footer) return;
       const footerBox = boxOf(footer);
-
-      boss.draw('jump', 'angry');
-      await boss.hop(14, 380);
-      boss.draw('idle', 'angry');
       const center = boss.x + BOSS_WIDTH / 2;
       const groundLine = stageLine(center, footerBox.y);
       for (const side of ['left', 'right'] as const) {
@@ -468,37 +466,36 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         groundLine.style.left = `${left}px`;
         groundLine.style.width = `${right - left}px`;
       });
-      boss.draw('idle', 'normal');
-      await pause(300);
+    }
 
-      const rowLines = [listBox.y, ...[...list.children].map(row => { const box = boxOf(row); return box.y + box.h - 1; })];
+    // Meanwhile, four more of the crew dash across the screen from edge to edge, one on each of the list's lines,
+    // drawing it under their feet as they go.
+    async function runLines() {
+      const list = stageEl.querySelector('.contact-list');
+      const paint = stageEl.querySelector('.contact-paint');
+      if (!list || !paint) return;
+      const listBox = boxOf(list);
+      const wall = boxOf(paint);
       const left = listBox.x;
       const right = listBox.x + listBox.w;
-      // Top line to the robot furthest right, and so on; each starts at the end nearest to it.
-      const runners = [...team].sort((a, b) => b.x - a.x).slice(0, rowLines.length);
-      await Promise.all(runners.map(async (member, index) => {
-        const y = rowLines[index];
+      const rowLines = [listBox.y, ...[...list.children].map(row => { const box = boxOf(row); return box.y + box.h - 1; })];
+      const from = wall.x - CREW_W - 10;
+      const to = wall.x + wall.w + 10;
+      await Promise.all(rowLines.map(async (y, index) => {
+        await pause(index * 300);
+        const runner = crew('line-runner');
         const lift = groundY() - y;
-        const fromRight = member.x > (left + right) / 2;
-        const start = fromRight ? right - CREW_W : left;
-        const end = fromRight ? left : right - CREW_W;
-        await pause(index * 350);
-        await leap(member, start, lift, 520, 40);
-        const line = stageLine(fromRight ? right : left, y);
-        member.pose({ facing: fromRight ? -1 : 1 });
-        member.legs(true);
-        await tween(Math.abs(end - start) / LINE_SPEED * 1000, t => {
-          const x = start + (end - start) * t;
-          member.place(x, lift);
-          const reach = fromRight ? right - (x + CREW_W / 2) : x + CREW_W / 2 - left;
-          line.style.width = `${Math.max(0, reach)}px`;
-          if (fromRight) line.style.left = `${right - Math.max(0, reach)}px`;
+        const line = stageLine(left, y);
+        runner.place(from, lift);
+        runner.pose({ facing: 1 });
+        runner.legs(true);
+        await tween((to - from) / LINE_SPEED * 1000, t => {
+          const x = from + (to - from) * t;
+          runner.place(x, lift);
+          line.style.width = `${Math.min(right - left, Math.max(0, x + CREW_W / 2 - left))}px`;
         });
-        line.style.left = `${left}px`;
-        line.style.width = `${right - left}px`;
-        member.legs(false);
-        // Down to the ground just past the end of the line.
-        await leap(member, fromRight ? left + 8 + index * 30 : right - CREW_W - 8 - index * 30, 0, 460, 16);
+        runner.legs(false);
+        runner.element.remove();
       }));
     }
 
@@ -654,6 +651,298 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       for (const note of footerTexts) await deliver(crew[crew.length - 1], note, [note]);
     }
 
+    // ——— The park: every piece of the happy ending is brought in by the crew, many at once. ———
+    const part = (selector: string) => stageEl.querySelector<HTMLElement>(selector);
+    // Shows a piece of the park at once, offset from its place (translate/rotate/scale compose with its own transform).
+    function showPart(element: HTMLElement | null, offset: { x?: number; y?: number; rotate?: number; scale?: string } = {}) {
+      if (!element) return null;
+      element.style.transition = 'none';
+      movePart(element, offset);
+      element.classList.add('is-built');
+      return element;
+    }
+    function movePart(element: HTMLElement, { x = 0, y = 0, rotate = 0, scale }: { x?: number; y?: number; rotate?: number; scale?: string }) {
+      element.style.translate = `${x}px ${y}px`;
+      element.style.rotate = `${rotate}deg`;
+      if (scale) element.style.scale = scale;
+    }
+    // Everyone in the park walks on the grass, a little above the footer's line.
+    const GRASS = 16;
+    function helper(x: number) {
+      const member = crew();
+      member.place(x, GRASS);
+      return member;
+    }
+    async function walkOnGrass(member: Member, toX: number, speed = CREW_WALK, onStep?: (x: number) => void) {
+      const fromX = member.x;
+      member.pose({ facing: toX < fromX ? -1 : 1 });
+      member.legs(true);
+      await tween(Math.abs(toX - fromX) / speed * 1000, t => { const x = fromX + (toX - fromX) * t; member.place(x, GRASS); onStep?.(x); });
+      member.legs(false);
+    }
+    async function leave(member: Member, toX: number) {
+      await walkOnGrass(member, toX);
+      member.element.remove();
+    }
+
+    // The sky comes down like a theatre backdrop pulled by two of the crew, the sun is lowered on a rope by another one
+    // hanging from it, the stars pop in, the hills rise from below and the lake is unrolled like a carpet.
+    async function backdrop() {
+      const scene = part('.ending');
+      if (!scene) return;
+      const box = boxOf(scene);
+      const width = stageEl.clientWidth;
+      const pullers = [helper(box.x + 30), helper(box.x + box.w - CREW_W - 30)];
+      pullers.forEach(member => member.pose({ arms: true }));
+      const sky = showPart(part('.ending-sky'), { y: -box.h });
+      await tween(1300, t => {
+        if (sky) movePart(sky, { y: -box.h * (1 - smooth(t)) });
+        pullers.forEach(member => member.place(member.x, GRASS + Math.abs(Math.sin(t * Math.PI * 3)) * 4));
+      });
+      pullers.forEach(member => member.pose({ arms: false }));
+      const leaving = Promise.all(pullers.map((member, index) => leave(member, index ? width + 40 : -CREW_W - 40)));
+
+      const sun = part('.ending-sun');
+      const lowering = (async () => {
+        if (!sun) return;
+        const sunBox = boxOf(sun);
+        const drop = sunBox.y - box.y + sunBox.h;
+        showPart(sun, { y: -drop });
+        const rope = document.createElement('span');
+        rope.className = 'stage-rope';
+        rope.style.left = `${sunBox.x + sunBox.w / 2}px`;
+        rope.style.top = `${box.y - 40}px`;
+        actors.appendChild(rope);
+        const rider = crew('rope-rider');
+        rider.pose({ arms: true });
+        const ride = (offset: number) => {
+          const sunTop = sunBox.y - offset;
+          rope.style.height = `${Math.max(0, sunTop - (box.y - 40))}px`;
+          rider.place(sunBox.x + sunBox.w / 2 - CREW_W / 2, groundY() - sunTop + 2);
+          if (sun) movePart(sun, { y: -offset });
+        };
+        await tween(1400, t => ride(drop * (1 - smooth(t))));
+        await pause(250);
+        // The rider climbs back up with the rope, leaving the sun hanging in the sky.
+        await tween(700, t => {
+          const up = (sunBox.y - box.y + 60) * smooth(t);
+          rope.style.height = `${Math.max(0, sunBox.y - (box.y - 40) - up)}px`;
+          rider.place(sunBox.x + sunBox.w / 2 - CREW_W / 2, groundY() - (sunBox.y - up) + 2);
+        });
+        rope.remove();
+        rider.element.remove();
+      })();
+
+      const hills = showPart(part('.ending-hills'), { y: 50 });
+      const rising = hills ? tween(900, t => movePart(hills, { y: 50 * (1 - smooth(t)) })) : Promise.resolve();
+
+      await pause(500);
+      for (const star of stageEl.querySelectorAll<HTMLElement>('.ending-star')) {
+        showPart(star);
+        const sparkle = spawn('fight-twinkle stage-click', actors, '✦');
+        const starBox = boxOf(star);
+        Object.assign(sparkle.style, { left: `${starBox.x - 5}px`, top: `${starBox.y - 6}px` });
+        sparkle.addEventListener('animationend', () => sparkle.remove());
+        await pause(260);
+      }
+
+      // The lake, unrolled from its left end by a crew member walking along it.
+      const lake = part('.ending-lake');
+      if (lake) {
+        const lakeBox = boxOf(lake);
+        lake.style.transformOrigin = 'left center';
+        showPart(lake, { scale: '0 1' });
+        const roller = helper(lakeBox.x - CREW_W);
+        await walkOnGrass(roller, lakeBox.x + lakeBox.w - CREW_W / 2, 260, x => { lake.style.scale = `${Math.min(1, Math.max(0, (x + CREW_W / 2 - lakeBox.x) / lakeBox.w))} 1`; });
+        lake.style.scale = '1 1';
+        void leave(roller, width + 40);
+      }
+      await Promise.all([lowering, rising, leaving]);
+    }
+
+    // A painter runs a green roller along the ground and the grass comes up behind it.
+    async function grass() {
+      const lawn = part('.ending-grass');
+      if (!lawn) return;
+      const lawnBox = boxOf(lawn);
+      showPart(lawn);
+      lawn.style.clipPath = 'inset(0 100% 0 0)';
+      const painter = helper(lawnBox.x - 40);
+      const roller = spawn('hand-roller grass-roller', painter.element);
+      await walkOnGrass(painter, lawnBox.x + lawnBox.w, 420, x => { lawn.style.clipPath = `inset(0 ${Math.max(0, lawnBox.x + lawnBox.w - x)}px 0 0)`; });
+      lawn.style.clipPath = '';
+      roller.remove();
+      painter.element.remove();
+    }
+
+    // Two carry the tree in lying on their heads and stand it up; another brings the bush in its arms.
+    async function trees() {
+      const width = stageEl.clientWidth;
+      const tree = part('.ending-tree');
+      const bush = part('.ending-bush');
+      const planting = (async () => {
+        if (!tree) return;
+        const treeBox = boxOf(tree);
+        const carriers = [helper(-CREW_W - 90), helper(-CREW_W - 40)];
+        carriers.forEach(member => member.pose({ arms: true }));
+        const lift = 14;
+        // Lying on its side over the front carrier's head, following it.
+        const place = (x: number) => movePart(tree, { x: x - (treeBox.x + 6), y: -lift, rotate: -90 });
+        showPart(tree);
+        place(carriers[0].x);
+        await Promise.all(carriers.map((member, index) => walkOnGrass(member, treeBox.x + index * 44 + 6, CREW_WALK, index ? undefined : place)));
+        // Stand it up.
+        await tween(600, t => movePart(tree, { y: -lift * (1 - t), rotate: -90 * (1 - smooth(t)) }));
+        movePart(tree, {});
+        carriers.forEach(member => member.pose({ arms: false }));
+        await Promise.all(carriers.map(member => leave(member, -CREW_W - 40)));
+      })();
+      const potting = (async () => {
+        if (!bush) return;
+        const bushBox = boxOf(bush);
+        const gardener = helper(width + 30);
+        gardener.pose({ arms: true });
+        showPart(bush);
+        const hold = (x: number) => movePart(bush, { x: x + CREW_W / 2 - (bushBox.x + bushBox.w / 2), y: -CREW_H - 2 });
+        hold(width + 30);
+        await walkOnGrass(gardener, bushBox.x + bushBox.w / 2 - CREW_W / 2, CREW_WALK, hold);
+        await tween(300, t => movePart(bush, { y: (-CREW_H - 2) * (1 - t) }));
+        gardener.pose({ arms: false });
+        await leave(gardener, width + 30);
+      })();
+      await Promise.all([planting, potting]);
+    }
+
+    // The blanket is spread, the basket put down; later two of the crew sit on it and a third flies the kite.
+    async function picnic() {
+      const scene = part('.ending-picnic');
+      const blanket = part('.ending-blanket');
+      const basket = part('.ending-basket');
+      if (!scene || !blanket || !basket) return;
+      showPart(scene);
+      const blanketBox = boxOf(blanket);
+      blanket.style.transformOrigin = 'left center';
+      showPart(blanket, { scale: '0 1' });
+      const spreader = helper(blanketBox.x - CREW_W - 10);
+      await walkOnGrass(spreader, blanketBox.x + blanketBox.w - CREW_W / 2, 200, x => { blanket.style.scale = `${Math.min(1, Math.max(0, (x + CREW_W / 2 - blanketBox.x) / blanketBox.w))} 1`; });
+      blanket.style.scale = '1 1';
+      // The same one goes back for the basket and sets it down.
+      const basketBox = boxOf(basket);
+      spreader.pose({ arms: true });
+      showPart(basket);
+      const hold = (x: number) => movePart(basket, { x: x + CREW_W / 2 - (basketBox.x + basketBox.w / 2), y: -CREW_H + 4 });
+      hold(spreader.x);
+      await walkOnGrass(spreader, basketBox.x + basketBox.w / 2 - CREW_W / 2, CREW_WALK, hold);
+      await tween(250, t => movePart(basket, { y: (-CREW_H + 4) * (1 - t) }));
+      spreader.pose({ arms: false });
+      await leave(spreader, stageEl.clientWidth + 40);
+    }
+
+    // The bench comes last: the boss taps its foot until two of the crew bring it, then sits down with a sigh and the
+    // pigeons fly in.
+    async function bench(boss: Awaited<ReturnType<typeof bossArrives>>, waiting: Promise<unknown>) {
+      const seat = part('.ending-bench');
+      if (!seat) return;
+      let tapping = true;
+      const impatience = (async () => {
+        boss.draw('idle', 'normal');
+        const dots = over(boss.element, 'stage-mark', '…');
+        while (tapping) await boss.hop(3, 260);
+        dots.remove();
+      })();
+      await waiting;
+      const seatBox = boxOf(seat);
+      // It steps aside to make room.
+      await boss.walk(boss.x + 60);
+      const carriers = [helper(-CREW_W - 100), helper(-CREW_W - 40)];
+      carriers.forEach(member => member.pose({ arms: true }));
+      showPart(seat);
+      const hold = (x: number) => movePart(seat, { x: x - (seatBox.x + 6), y: -CREW_H + 2 });
+      hold(-CREW_W - 100);
+      await Promise.all(carriers.map((member, index) => walkOnGrass(member, seatBox.x + 6 + index * 40, CREW_WALK, index ? undefined : hold)));
+      await tween(300, t => movePart(seat, { y: (-CREW_H + 2) * (1 - t) }));
+      movePart(seat, {});
+      carriers.forEach(member => member.pose({ arms: false }));
+      const leaving = Promise.all(carriers.map(member => leave(member, -CREW_W - 40)));
+      tapping = false;
+      await impatience;
+      // Hop onto the bench: the sitting boss of the scene takes over.
+      const sitting = part('.ending-boss');
+      const spot = sitting ? boxOf(sitting) : seatBox;
+      boss.draw('jump', 'happy');
+      const fromX = boss.x;
+      const fromY = boss.y;
+      await tween(500, t => boss.place(fromX + (spot.x - fromX) * t, fromY + (spot.y - fromY) * t - Math.sin(Math.PI * t) * 24));
+      boss.element.remove();
+      const sigh = spawn('stage-grumble stage-sigh font-mono', actors, lines.sigh);
+      Object.assign(sigh.style, { left: `${spot.x + spot.w + 6}px`, top: `${spot.y - 18}px` });
+
+      // The pigeons fly in from the sky and land in front of it.
+      await Promise.all([...stageEl.querySelectorAll<HTMLElement>('.ending-pigeon')].map(async (pigeon, index) => {
+        await pause(index * 250);
+        showPart(pigeon, { x: 260, y: -160 });
+        await tween(1300, t => movePart(pigeon, { x: 260 * (1 - smooth(t)), y: -160 * (1 - t) * (1 - t) + Math.sin(t * Math.PI * 6) * 3 * (1 - t) }));
+        movePart(pigeon, {});
+      }));
+      await pause(600);
+      sigh.remove();
+      await leaving;
+    }
+
+    // Job done: the crew throw their hard hats in the air, two sit down for the picnic and one goes to fly the kite.
+    async function celebrate(crewLeft: Member[]) {
+      const width = stageEl.clientWidth;
+      for (const member of crewLeft) {
+        member.pose({ arms: true, hat: 'none' });
+        const hat = spawn('flying-hat', actors);
+        const x = member.x;
+        const y = groundY() - CREW_H - member.lift;
+        void tween(1100, t => { hat.style.transform = `translate(${x + 4 + t * 20}px, ${y - Math.sin(Math.PI * t) * 90 + t * 40}px) rotate(${t * 540}deg)`; hat.style.opacity = String(t > .8 ? (1 - t) / .2 : 1); }).then(() => hat.remove(), () => hat.remove());
+      }
+      await tween(600, t => crewLeft.forEach(member => member.place(member.x, GRASS + Math.sin(Math.PI * t) * 6)));
+      crewLeft.forEach(member => member.pose({ arms: false }));
+      await pause(500);
+      const spots = ['.ending-picnic-crew-1', '.ending-picnic-crew-2', '.ending-flyer'].map(part);
+      // From left to right: the two nearest the blanket sit down, the next one takes the kite.
+      const byDistance = [...crewLeft].sort((a, b) => a.x - b.x);
+      await Promise.all(spots.map(async (spot, index) => {
+        const member = byDistance[index];
+        if (!member) return;
+        if (!spot) { await leave(member, width + 40); return; }
+        const spotBox = boxOf(spot);
+        await walkOnGrass(member, spotBox.x);
+        member.element.remove();
+        showPart(spot);
+        if (spot.classList.contains('ending-flyer')) {
+          const rig = spot.querySelector<HTMLElement>('.ending-kite-rig');
+          if (rig) {
+            rig.style.translate = '0 60px';
+            rig.style.opacity = '0';
+            await tween(1000, t => { rig.style.translate = `0 ${60 * (1 - smooth(t))}px`; rig.style.opacity = String(Math.min(1, t * 3)); });
+          }
+        }
+      }));
+      // Anyone left over walks off.
+      await Promise.all(byDistance.slice(spots.length).map(member => leave(member, width + 40)));
+    }
+
+    async function buildPark(boss: Awaited<ReturnType<typeof bossArrives>>, team: Member[]) {
+      // The crew still standing move down onto the grass.
+      team.forEach(member => member.place(member.x, GRASS));
+      const scenery = (async () => {
+        const sky = backdrop();
+        await pause(900);
+        const lawn = grass();
+        await pause(900);
+        const woods = trees();
+        await pause(1200);
+        const blanket = picnic();
+        await Promise.all([sky, lawn, woods, blanket]);
+      })();
+      await bench(boss, scenery);
+      await celebrate(team);
+    }
+
     async function run() {
       await pause(200);
       const boss = await bossArrives();
@@ -662,17 +951,21 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const team = await crewPanics(() => { painting = paintWall(); });
       const painter = await (painting ?? paintWall());
       await pause(300);
+      const lining = runLines();
       const streak = await slipAndFight(team, boss);
+      await lining;
       await pause(300);
       await repaint(painter, streak);
       await pause(300);
       const crew = [...team, painter];
-      await drawLines(crew, boss);
-      await pause(300);
       await writeTitle([...crew].sort((a, b) => a.x - b.x)[0]);
       await pause(300);
       await placeWords(crew);
-      // Next: the park and the happy ending.
+      await pause(400);
+      await buildPark(boss, crew);
+      // The happy ending stays; the stage is handed over to the finished section.
+      await pause(600);
+      setStage('done');
     }
 
     const viewObserver = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; resume(); }, { threshold: .3 });
@@ -690,6 +983,10 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       actors.replaceChildren();
       // Pieces placed by the robots were shown without their fade; give them their normal transitions back.
       stageEl.querySelectorAll<HTMLElement>('.is-built').forEach(element => element.style.removeProperty('transition'));
+      // A skip in the middle of the park leaves no piece half way in.
+      stageEl.querySelectorAll<HTMLElement>('.ending, .ending *').forEach(element => {
+        for (const property of ['translate', 'rotate', 'scale', 'clip-path', 'transform-origin', 'opacity']) element.style.removeProperty(property);
+      });
     };
   }, [stage, lines]);
 

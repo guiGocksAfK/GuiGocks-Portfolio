@@ -207,7 +207,7 @@ export const content = {
     skipLabel: 'Pular animação ⏭',
     // What the robots say while building: the boss calling the crew, the boss stopping the fight, the painter grumbling.
     // typo: how the title gets misspelt at first; keep: what stays when the typo is erased (both must start the title).
-    lines: { call: 'EQUIPE!!', stop: 'CHEGA!!', grumble: 'affs…', typo: 'Vamos contruir', keep: 'Vamos con' },
+    lines: { call: 'EQUIPE!!', stop: 'CHEGA!!', grumble: 'affs…', typo: 'Vamos contruir', keep: 'Vamos con', sigh: 'ufa…' },
     copiedLabel: 'copiado!',
     pendingLabel: 'em breve',
     rows: [
@@ -218,7 +218,7 @@ export const content = {
       { label: 'Currículo', value: 'Baixar em PDF', action: 'baixar', kind: 'download', href: null },
     ],
   } as {
-    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; grumble: string; typo: string; keep: string }; copiedLabel: string; pendingLabel: string;
+    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; grumble: string; typo: string; keep: string; sigh: string }; copiedLabel: string; pendingLabel: string;
     rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null }[];
   },
   contact: {
