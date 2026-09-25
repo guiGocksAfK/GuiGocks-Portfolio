@@ -382,7 +382,7 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
   .crate-inline { display: block; padding: 4px 0 6px; }
 }
 /* Contact: the page's ending. No cards: a status line, a big title and an editorial list of full-width rows split by
-   thin lines, each with a mono label, a big value and its action; hovering a row lights it and slides it along. */
+   thin lines, each with a mono label, a big value and its action; hovering a row turns its action blue. */
 .contact-section { padding: 56px 0 0; }
 .contact-section .section-footer { margin-top: 0; }
 .contact-status { flex-wrap: wrap; gap: 6px 14px; margin-bottom: 20px; font-size: 12px; }
@@ -395,16 +395,45 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .contact-label { color: var(--accent); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 .contact-value { overflow-wrap: anywhere; font-size: clamp(17px, 1.6vw, 22px); font-weight: 500; letter-spacing: -.035em; transition: transform .3s ease; }
 .contact-action { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; transition: color .25s; }
-.contact-icon { width: 18px; height: 18px; transition: transform .3s ease; }
-.contact-row:hover, .contact-row:focus-visible { background: #11151b; }
-.contact-row:hover .contact-value, .contact-row:focus-visible .contact-value { transform: translateX(10px); }
-.contact-row:hover .contact-action, .contact-row:focus-visible .contact-action { color: var(--foreground); }
-.contact-row:hover .contact-icon, .contact-row:focus-visible .contact-icon { transform: translate(3px, -3px); }
+.contact-icon { width: 22px; height: 22px; }
+/* Just copied: a check and "copied!", in blue. */
+.contact-action-done { color: var(--accent); }
+/* The WhatsApp button, green until its gag (zap-gag.ts): broken in two halves with shards falling, taped back together,
+   then burnt into the site's colours, with a note that it works now. */
+.zap-icon { position: relative; display: inline-block; width: 22px; height: 22px; }
+.zap-icon svg { position: absolute; inset: 0; display: block; width: 22px; height: 22px; fill: #25d366; }
+.zap-half, .zap-shard, .zap-tape { display: none; }
+.zap-broken .zap-whole { visibility: hidden; }
+.zap-broken :is(.zap-half, .zap-shard) { display: block; }
+.zap-half-left { clip-path: polygon(0 0, 55% 0, 42% 45%, 58% 60%, 45% 100%, 0 100%); rotate: -14deg; translate: -3px 2px; }
+.zap-half-right { clip-path: polygon(55% 0, 100% 0, 100% 100%, 45% 100%, 58% 60%, 42% 45%); rotate: 12deg; translate: 3px 4px; }
+.zap-shard { position: absolute; left: 10px; top: 10px; width: 4px; height: 4px; background: #25d366; animation: zap-shard .7s ease-in forwards; }
+.zap-shard-0 { --dx: 6px; }
+.zap-shard-1 { --dx: -10px; animation-delay: .05s; }
+.zap-shard-2 { --dx: 14px; animation-delay: .1s; }
+@keyframes zap-shard { to { translate: var(--dx, 0) 34px; rotate: 200deg; opacity: 0; } }
+.zap-taped .zap-tape { position: absolute; left: -5px; top: 8px; display: block; width: 32px; height: 6px; background: #e2cf9a; opacity: .92; rotate: -22deg; }
+.zap-icon:is(.zap-burnt, .zap-ready, .zap-done) svg { fill: var(--muted); }
+.contact-row:hover .zap-icon:is(.zap-burnt, .zap-ready, .zap-done) svg { fill: var(--accent); }
+.zap-ready { position: absolute; right: calc(100% + 12px); top: 50%; color: var(--accent); font-size: 12px; white-space: nowrap; translate: 0 -50%; animation: zap-ready 1s ease-in-out infinite alternate; }
+@keyframes zap-ready { to { translate: -4px -50%; } }
+/* The robot who fixes it: its toolbox, the sparks of its whacks, the blast (a flash, smoke, the tape flying off), and
+   how it (and later its seat at the picnic) look afterwards. */
+.zap-toolbox { position: absolute; left: -9px; bottom: 6px; width: 10px; height: 7px; border-radius: 1px; background: #8f9bb3; box-shadow: inset 0 2px 0 #5d6678; }
+.zap-spark { position: absolute; z-index: 5; color: #ffd76a; font-size: 11px; line-height: 1; animation: fight-twinkle .5s ease-out forwards; }
+.zap-flash { position: absolute; z-index: 5; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; background: #fff6d8; animation: zap-flash .45s ease-out forwards; }
+@keyframes zap-flash { from { scale: .3; opacity: 1; } to { scale: 4; opacity: 0; } }
+.zap-smoke { position: absolute; z-index: 5; width: 40px; height: 30px; margin: -15px 0 0 -20px; background: radial-gradient(circle at 30% 60%, #5d6678 0 9px, transparent 10px), radial-gradient(circle at 60% 40%, #8f9bb3 0 11px, transparent 12px), radial-gradient(circle at 75% 70%, #5d6678 0 8px, transparent 9px); animation: zap-smoke 1.1s ease-out forwards; }
+@keyframes zap-smoke { from { scale: .4; opacity: .95; } to { scale: 1.8; translate: 0 -14px; opacity: 0; } }
+.zap-tape-flying { position: absolute; z-index: 5; width: 32px; height: 6px; margin: -3px 0 0 -16px; background: #e2cf9a; animation: zap-tape .9s ease-out forwards; }
+@keyframes zap-tape { from { rotate: -22deg; } to { translate: 30px -70px; rotate: 380deg; opacity: 0; } }
+.zap-puff { --drift: 5px; z-index: 5; }
+.zap-charred { filter: brightness(.28) contrast(1.3); }
+/* Hovering a row leaves it still: only its action (text and icon) turns blue. */
+.contact-row:hover .contact-action, .contact-row:focus-visible .contact-action { color: var(--accent); }
 .contact-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .contact-row-pending { cursor: default; }
 .contact-row-pending .contact-value { color: var(--muted); }
-.contact-row-pending:hover { background: none; }
-.contact-row-pending:hover .contact-value { transform: none; }
 .contact-row-pending:hover .contact-action { color: var(--muted); }
 @media (max-width: 700px) {
   .contact-section { padding-top: 60px; }

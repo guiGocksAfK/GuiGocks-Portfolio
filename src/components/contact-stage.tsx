@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { armZapGag } from '@/components/zap-gag';
 import { crewMarkup, pixelMarkup, robotMarkup, type CrewFace, type RobotMood, type RobotPose } from '@/components/robot-sprite';
 
 type Stage = 'blank' | 'playing' | 'done';
@@ -1272,8 +1273,10 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       parkStarted = true;
       void skipFinale().catch(() => {});
       await buildPark(boss, crew);
-      // The happy ending stays; the stage is handed over to the finished section.
+      // The happy ending stays; the stage is handed over to the finished section, and since the visitor watched it all,
+      // the WhatsApp button's gag is armed for its first click.
       await pause(600);
+      armZapGag();
       setStage('done');
     }
 

@@ -213,16 +213,18 @@ export const content = {
     },
     copiedLabel: 'copiado!',
     pendingLabel: 'em breve',
+    // Shown by the WhatsApp button once the robot has (sort of) fixed it.
+    zapReady: 'Agora funciona →',
     rows: [
-      { label: 'E-mail', value: 'guigocks@gmail.com', action: 'copiar', kind: 'copy', href: 'guigocks@gmail.com' },
+      { label: 'E-mail', value: 'guigocks@gmail.com', action: 'Copiar e-mail', kind: 'copy', href: 'guigocks@gmail.com' },
       // WhatsApp: https://wa.me/55<DDD><número> (only digits), with a message ready to send.
-      { label: 'WhatsApp', value: 'Chamar no WhatsApp', action: 'abrir conversa', kind: 'external', href: `https://wa.me/5545999546529?text=${encodeURIComponent('Olá, Guilherme! Vi seu portfólio e gostaria de conversar.')}` },
+      { label: 'WhatsApp', value: 'Chamar no WhatsApp', action: 'Abrir conversa no WhatsApp', kind: 'external', icon: 'whatsapp', href: `https://wa.me/5545999546529?text=${encodeURIComponent('Olá, Guilherme! Vi seu portfólio e gostaria de conversar.')}` },
       // Résumé: the PDF in public/ (its file name is what the visitor's download gets).
-      { label: 'Currículo', value: 'Baixar em PDF', action: 'baixar', kind: 'download', href: '/curriculo-guilherme-gocks.pdf' },
+      { label: 'Currículo', value: 'Baixar em PDF', action: 'Baixar currículo', kind: 'download', href: '/curriculo-guilherme-gocks.pdf' },
     ],
   } as {
-    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; typo: string; keep: string; sigh: string; nothing: string; jokes: readonly string[]; finale: string }; copiedLabel: string; pendingLabel: string;
-    rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null }[];
+    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; typo: string; keep: string; sigh: string; nothing: string; jokes: readonly string[]; finale: string }; copiedLabel: string; pendingLabel: string; zapReady: string;
+    rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null; icon?: 'whatsapp' }[];
   },
   contact: {
     email: 'guigocks@gmail.com',
