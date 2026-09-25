@@ -217,8 +217,8 @@ export const content = {
       { label: 'E-mail', value: 'guigocks@gmail.com', action: 'copiar', kind: 'copy', href: 'guigocks@gmail.com' },
       // WhatsApp: https://wa.me/55<DDD><número>, only digits.
       { label: 'WhatsApp', value: 'Chamar no WhatsApp', action: 'abrir conversa', kind: 'external', href: null },
-      // Résumé: save the PDF in public/ and use its path, e.g. /curriculo-guilherme-gocks.pdf.
-      { label: 'Currículo', value: 'Baixar em PDF', action: 'baixar', kind: 'download', href: null },
+      // Résumé: the PDF in public/ (its file name is what the visitor's download gets).
+      { label: 'Currículo', value: 'Baixar em PDF', action: 'baixar', kind: 'download', href: '/curriculo-guilherme-gocks.pdf' },
     ],
   } as {
     section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; typo: string; keep: string; sigh: string; nothing: string; jokes: readonly string[]; finale: string }; copiedLabel: string; pendingLabel: string;
