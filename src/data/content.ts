@@ -205,21 +205,26 @@ export const content = {
     footerNote: 'Obrigado pela visita',
     // Sign held by the robot that lets the visitor skip the robots building the section.
     skipLabel: 'Pular animação ⏭',
-    // What the robots say while building: the boss calling the crew, the boss stopping the fight, the painter grumbling.
+    // What the robots say while building: the boss ordering paint, the boss stopping the fight.
     // typo: how the title gets misspelt at first; keep: what stays when the typo is erased (both must start the title).
-    lines: { call: 'EQUIPE!!', stop: 'CHEGA!!', grumble: 'affs…', typo: 'Vamos contruir', keep: 'Vamos con', sigh: 'ufa…', nothing: 'NADA AQUI :)' },
+    lines: { call: 'TINTA, JÁ!!', stop: 'CHEGA!!', typo: 'Vamos contruir', keep: 'Vamos con', sigh: 'ufa…', nothing: 'NADA AQUI :)',
+      // The skip robot's lines: its jokes as it peeks out, the last one before the park.
+      jokes: ['Tá longo, né?', 'Pode pular, eu não conto', 'Ainda dá tempo!'], finale: 'Ok, agora vale ver o final',
+    },
     copiedLabel: 'copiado!',
     pendingLabel: 'em breve',
+    // Shown by the WhatsApp button once the robot has (sort of) fixed it.
+    zapReady: 'Agora funciona →',
     rows: [
-      { label: 'E-mail', value: 'guigocks@gmail.com', action: 'copiar', kind: 'copy', href: 'guigocks@gmail.com' },
-      // WhatsApp: https://wa.me/55<DDD><número>, only digits.
-      { label: 'WhatsApp', value: 'Chamar no WhatsApp', action: 'abrir conversa', kind: 'external', href: null },
-      // Résumé: save the PDF in public/ and use its path, e.g. /curriculo-guilherme-gocks.pdf.
-      { label: 'Currículo', value: 'Baixar em PDF', action: 'baixar', kind: 'download', href: null },
+      { label: 'E-mail', value: 'guigocks@gmail.com', action: 'Copiar e-mail', kind: 'copy', href: 'guigocks@gmail.com' },
+      // WhatsApp: https://wa.me/55<DDD><número> (only digits), with a message ready to send.
+      { label: 'WhatsApp', value: 'Chamar no WhatsApp', action: 'Abrir conversa no WhatsApp', kind: 'external', icon: 'whatsapp', href: `https://wa.me/5545999546529?text=${encodeURIComponent('Olá, Guilherme! Vi seu portfólio e gostaria de conversar.')}` },
+      // Résumé: the PDF in public/ (its file name is what the visitor's download gets).
+      { label: 'Currículo', value: 'Baixar em PDF', action: 'Baixar currículo', kind: 'download', href: '/curriculo-guilherme-gocks.pdf' },
     ],
   } as {
-    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; grumble: string; typo: string; keep: string; sigh: string; nothing: string }; copiedLabel: string; pendingLabel: string;
-    rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null }[];
+    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; typo: string; keep: string; sigh: string; nothing: string; jokes: readonly string[]; finale: string }; copiedLabel: string; pendingLabel: string; zapReady: string;
+    rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null; icon?: 'whatsapp' }[];
   },
   contact: {
     email: 'guigocks@gmail.com',

@@ -1,30 +1,41 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { RobotSprite, crewMarkup, pixelMarkup, robotMarkup, type CrewFace, type RobotMood, type RobotPose } from '@/components/robot-sprite';
+import { armZapGag, skipZapGag } from '@/components/zap-gag';
+import { crewMarkup, pixelMarkup, robotMarkup, type CrewFace, type RobotMood, type RobotPose } from '@/components/robot-sprite';
 
 type Stage = 'blank' | 'playing' | 'done';
-// What the robots say: the boss calling the crew, the boss stopping the fight, the one mopping up grumbling.
-type StageLines = { call: string; stop: string; grumble: string; typo: string; keep: string; sigh: string; nothing: string };
+// What the robots say or show: the boss calling the crew and stopping the fight, the title's typo, the boss's sigh, the sign.
+type StageLines = {
+  call: string; stop: string; typo: string; keep: string; sigh: string; nothing: string;
+  // The skip robot: its jokes when it peeks out, and its last one before the park.
+  jokes: readonly string[]; finale: string;
+};
+// The skip robot's moods: loud (in full view, waving its sign), quiet (half hidden at the edge), peek (out for a joke).
+type SkipMode = 'loud' | 'quiet' | 'peek';
 
 // Robots on this stage are drawn with 3px pixels (the big robot map is 11×12).
 const BOSS_WIDTH = 33;
 const BOSS_HEIGHT = 36;
-const WALK_SPEED = 80; // px per second: an unhurried stroll
+const WALK_SPEED = 138; // px per second: the boss's walk
 // The crew (8×9 map) with 3px pixels too.
 const CREW_W = 24;
 const CREW_H = 27;
 const CREW_WALK = 150; // called by the boss, the crew comes at a brisk walk
-const ANNOYED_WALK = 200; // the one who spilled the paint, hurrying to mop it up
+const ANNOYED_WALK = 200; // a brisk walk: off to mop up the puddle, stepping up to throw a word
 const RUN_SPEED = 220;
-const DASH_SPEED = 260; // the crew dashing off for paint and back
+const DASH_SPEED = 520;
+const COVER_RUN = 245; // the crew rushing to hide the patches
+const FOOTER_AFTER = 1600; // ms into the e-mail's delivery (the "@" rolling off) when the footer's notes get thrown
+const SKIP_PEEK_EVERY = 15000; // ms between the skip robot's peeks with a joke
+const COVER_GAP = 550; // ms between one disguise's trick and the next
+const ORDER_SINKS_IN = 400; // ms after the boss's shout before the crew react to it // the crew dashing off for paint and back
 const LINE_SPEED = 380; // a crew member running along a line, drawing it behind
-const WRITE_INTERVAL = 105; // ms per letter written with the giant pencil
-const ERASE_INTERVAL = 90;
+const RUNNER_LEAP = 34; // how high a line runner leaps over the gaps before and after its line
+const WRITE_INTERVAL = 75; // ms per letter written with the giant pencil
+const ERASE_INTERVAL = 70;
 const PENCIL_TILT = 24; // degrees the giant pencil leans back from upright
 const STEP_INTERVAL = 130;
-const BENCH = ['WWWWWWWWWWWW', 'wwwwwwwwwwww', '.K........K.', 'WWWWWWWWWWWW', 'wwwwwwwwwwww', '.K........K.', '.K........K.'];
-const BENCH_COLORS = { W: '#7a5c46', w: '#5a4334', K: '#2c313b' };
 const BUCKET = ['.SSSS.', 'S....S', 'DDDDDD', 'SBBBBS', '.SBBS.', '.SSSS.'];
 // The damaged wall the crew must paint over, spread out and at different heights. Four patches the crew try to hide,
 // each in its own way (see COVER); the rest up high: a big peeled area with a strip of paint hanging, a long crack, a
@@ -61,7 +72,24 @@ const finishBuild = () => { delete document.documentElement.dataset.build; };
 export function ContactStage({ skipLabel, lines, children }: { skipLabel: string; lines: StageLines; children: ReactNode }) {
   const sectionRef = useRef<HTMLElement>(null);
   const actorsRef = useRef<HTMLDivElement>(null);
+  const skipRef = useRef<HTMLButtonElement>(null);
+  const skipBodyRef = useRef<HTMLSpanElement>(null);
+  // The skip robot's reactions to the show, set up by the show itself.
+  const skip = useRef<{ flinch: () => Promise<void>; coverEyes: (on: boolean) => void; laugh: () => Promise<void> } | null>(null);
   const [stage, setStage] = useState<Stage>('blank');
+  const [skipMode, setSkipMode] = useState<SkipMode>('loud');
+  const [skipLine, setSkipLine] = useState<string | null>(null);
+
+  // The skip robot's sprite is drawn by hand (so the show can change its face); it starts happy. Its rope hangs from a
+  // pulley at the end of the line above the section (the previous section's footer line), measured here.
+  useEffect(() => {
+    if (skipBodyRef.current) skipBodyRef.current.innerHTML = robotMarkup('idle', 'happy');
+    const section = sectionRef.current;
+    const line = section?.previousElementSibling?.querySelector('.section-footer');
+    if (section && line && skipRef.current) {
+      skipRef.current.style.setProperty('--anchor', `${line.getBoundingClientRect().top - section.getBoundingClientRect().top}px`);
+    }
+  }, []);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -248,14 +276,15 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         for (let index = 0; index < count; index++) {
           const note = spawn('whistle-note', member.element, index % 2 ? '♫' : '♪');
           note.addEventListener('animationend', () => note.remove());
-          await pause(380);
+          await pause(300);
         }
       })();
     }
 
     // Scene 1: the boss and the crew arrive together. The crew notice the patches first and try to hide them: each one
-    // stands in front of a patch, one leans, one whistles. The boss pictures its bench and looks around... then the one
-    // leaning slips aside and the patch behind it shows. The crew panic, the boss blows up and yells for them to fix it.
+    // hides one in its own way, the tricks one after the other; then, one of them whistling, the boss stands there
+    // confused. The sheet slides off its patch: the boss sees it and orders paint, and a moment later the crew react,
+    // the disguise falls apart and they leave their posts.
     async function arrive() {
       const boss = robot('boss-actor');
       const team = [0, 1, 2, 3, 4].map(() => crew());
@@ -268,34 +297,38 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
       // In they come, the crew a few steps ahead of the boss.
       boss.draw('idle', 'normal', 'right');
-      boss.place(-BOSS_WIDTH - 150, groundY() - BOSS_HEIGHT);
+      boss.place(-BOSS_WIDTH - 40, groundY() - BOSS_HEIGHT);
       team.forEach((member, index) => member.place(-CREW_W - 10 - (team.length - 1 - index) * 34));
       const crewStops = team.map((_, index) => bossTarget + 70 + index * 34);
       await Promise.all([boss.walk(bossTarget), ...team.map((member, index) => member.walk(crewStops[index], (crewStops[index] - member.x) / ((bossTarget - boss.x) / WALK_SPEED)))]);
       boss.draw('idle', 'normal');
 
-      // The crew see the patches: "!", a quick look at each other, then they rush to cover them.
+      // The crew see the patches ("!", a quick look at each other) and hide them, one disguise at a time.
       const marks = team.map(member => over(member.element, 'stage-mark stage-mark-alert', '!'));
-      await pause(500);
+      await pause(250);
       marks.forEach(mark => mark.remove());
-      for (const facing of [-1, 1]) { team.forEach((member, index) => member.pose({ facing: index % 2 ? -facing : facing })); await pause(220); }
-      // Each patch hidden its own way (see COVER).
+      team.forEach((member, index) => member.pose({ facing: index % 2 ? 1 : -1 }));
+      await pause(150);
+      // Each patch hidden its own way (see COVER). They all run off together; the tricks themselves come one after the
+      // other, each waiting for its turn once its robots get there.
+      const started = performance.now();
       await Promise.all(COVER.flatMap((cover, patch) => cover.members.map(async (index, slot) => {
         const member = team[index];
         const center = low[patch];
         const x = (center ? center.x - CREW_W / 2 : member.x) + (cover.how === 'sheet' ? (slot ? 20 : -20) : 0);
-        await member.walk(x, RUN_SPEED);
+        await member.walk(x, COVER_RUN);
+        await pause(Math.max(0, patch * COVER_GAP - (performance.now() - started)));
         if (cover.how === 'jump' && center) {
           // A big jump up to its patch, and it stays there, stuck to the wall with its arms spread over it.
           const lift = groundY() - center.y - CREW_H / 2;
           member.pose({ arms: true });
-          await tween(520, t => member.place(x, lift * (1 - (1 - t) * (1 - t)) + Math.sin(Math.PI * t) * 18));
+          await tween(420, t => member.place(x, lift * (1 - (1 - t) * (1 - t)) + Math.sin(Math.PI * t) * 18));
           member.place(x, lift);
           hanging = { member, lift };
         }
         if (cover.how === 'sheet' && slot === 0 && center) {
           // The two of them throw a red sheet up over their patch, as if that would help.
-          await pause(250);
+          await pause(100);
           const partner = team[cover.members[1]];
           sheet = await throwSheet(center, member, partner);
         }
@@ -305,80 +338,97 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
           member.pose({ arms: true, facing: 1 });
         }
       })));
-      const leaner = team[0];
-      leaner.pose({ facing: 1 });
-      const whistling = whistle(team[3], 6);
+      team[0].pose({ facing: 1 });
 
-      // The boss pictures its bench...
-      const thought = over(boss.element, 'thought', `<span class="thought-trail"></span>${pixelMarkup(BENCH, BENCH_COLORS)}`);
-      await pause(1100);
-      await fadeOut(thought);
-      // ...and looks around, suspicious; the crew smile back.
+      // With everyone in place trying to look normal, the boss stands there confused for a while: "?", looking one
+      // way and the other, a puzzled little hop, looking around again.
+      void whistle(team[3], 4).catch(() => {});
       const question = over(boss.element, 'stage-mark', '?');
-      for (const side of ['left', 'right'] as const) { boss.draw('idle', 'normal', side); await pause(450); }
+      for (const side of ['left', 'right', 'left'] as const) { boss.draw('idle', 'normal', side); await pause(390); }
+      boss.draw('idle', 'normal');
+      await boss.hop(4, 240);
+      await pause(300);
+      for (const side of ['right', 'left'] as const) { boss.draw('idle', 'normal', side); await pause(350); }
       boss.draw('idle', 'normal');
       question.remove();
+      await pause(200);
 
-      // The one hiding the small patch loses its balance and falls over to the left, and there the patch is.
-      await whistling;
-      const leanFrom = leaner.x;
-      await tween(260, t => leaner.pose({ tilt: -12 * Math.sin(Math.PI * t * 2) }));
-      await tween(420, t => { leaner.place(leanFrom - 16 * t); leaner.pose({ tilt: -90 * t * t }); });
-      await pause(500);
-
-      // Panic: the sign drops, the one stuck to the wall falls off, the sheet slides down; the crew's arms go up and they
-      // sweat; the boss sees it all and blows up.
-      (sign as HTMLElement | null)?.classList.add('nothing-sign-drop');
+      // The giveaway: the sheet slides off its patch all by itself.
       const fallen = sheet as HTMLElement | null;
-      if (fallen) { fallen.classList.remove('red-sheet-hung'); fallen.classList.add('red-sheet-fall'); fallen.addEventListener('animationend', () => fallen.remove()); }
-      const stuck = hanging as { member: Member; lift: number } | null;
-      if (stuck) void tween(380, t => stuck.member.place(stuck.member.x, stuck.lift * (1 - t * t))).catch(() => {});
-      leaner.pose({ tilt: 0 });
-      team.forEach(member => member.pose({ arms: true, face: 'angry' }));
-      const alarms = team.map(member => over(member.element, 'stage-mark stage-mark-alert', '!!'));
-      const sweat = setInterval(() => {
-        const member = team[Math.floor(Math.random() * team.length)];
-        const drop = spawn('sweat', member.element);
-        drop.style.left = `${Math.random() < .5 ? 1 : 19}px`;
-        drop.addEventListener('animationend', () => drop.remove());
-      }, 150);
-      intervals.add(sweat);
+      if (fallen) {
+        fallen.classList.add('red-sheet-fall');
+        fallen.addEventListener('animationend', () => fallen.remove());
+        await pause(380);
+      }
+      // The boss sees it: "!" and a start. The crew hold still in their disguises, hoping.
       const surprise = over(boss.element, 'stage-mark stage-mark-alert', '!');
       boss.draw('blink', 'normal');
-      await boss.hop(8, 260);
-      await pause(300);
+      await boss.hop(8, 220);
+      boss.draw('idle', 'normal');
+      await pause(220);
       surprise.remove();
-      alarms.forEach(alarm => alarm.remove());
+
+      // The boss blows up and gives the order.
       boss.draw('idle', 'angry');
-      for (let index = 0; index < 3; index++) { puff(boss.element, index % 2 ? 'right' : 'left'); await pause(240); }
+      for (let index = 0; index < 2; index++) { puff(boss.element, index % 2 ? 'right' : 'left'); await pause(150); }
       boss.draw('jump', 'angry');
       const call = over(boss.element, 'stage-shout font-mono', lines.call);
-      for (let jump = 0; jump < 2; jump++) await boss.hop(12, 300);
-      clearInterval(sweat);
-      intervals.delete(sweat);
-      boss.draw('idle', 'angry');
+      void skip.current?.flinch().catch(() => {});
+      const stomping = (async () => {
+        for (let jump = 0; jump < 2; jump++) await boss.hop(12, 250);
+        boss.draw('idle', 'angry');
+      })();
+
+      // Right after the shout the order sinks in: "!!" over the crew one after the other, and the disguise falls apart
+      // as they leave their posts: the sign drops, the one stuck to the wall slides down, arms go up.
+      await pause(ORDER_SINKS_IN);
+      const alarms: HTMLElement[] = [];
+      for (const member of team) {
+        alarms.push(over(member.element, 'stage-mark stage-mark-alert', '!!'));
+        await pause(70);
+      }
+      (sign as HTMLElement | null)?.classList.add('nothing-sign-drop');
+      const stuck = hanging as { member: Member; lift: number } | null;
+      if (stuck) await tween(280, t => stuck.member.place(stuck.member.x, stuck.lift * (1 - t * t)));
+      team.forEach(member => member.pose({ arms: true, face: 'angry' }));
+      await pause(200);
+      alarms.forEach(alarm => alarm.remove());
+      await stomping;
       void fadeOut(call).catch(() => {});
       return { boss, team };
     }
 
-    // A red sheet thrown by two of the crew from over their heads up onto a patch, where it swings a little and hangs still.
+    // A red sheet thrown by two of the crew from over their heads up onto a patch, where it floats down and hangs still.
     async function throwSheet(center: { x: number; y: number; box: { w: number; h: number } }, first: Member, second: Member) {
       const cloth = spawn('red-sheet', actors);
       const width = center.box.w + 28;
       const height = center.box.h + 32;
       Object.assign(cloth.style, { width: `${width}px`, height: `${height}px` });
+      // It flies up bunched into a bundle high above the patch, opens out in the air and floats down onto it like a
+      // blanket, swaying and rippling less and less until it lands.
       const from = { x: (first.x + second.x) / 2 + CREW_W / 2, y: groundY() - CREW_H - 10 };
-      const to = { x: center.x, y: center.y - center.box.h / 2 - 10 + height / 2 };
+      const top = { x: center.x, y: center.y - center.box.h / 2 - 10 };
+      const high = top.y - 70;
+      const place = (x: number, y: number, extra = '') => { cloth.style.transform = `translate(${x - width / 2}px, ${y}px) ${extra}`; };
       first.pose({ arms: true });
       second.pose({ arms: true });
-      await tween(700, t => {
-        const x = from.x + (to.x - from.x) * t;
-        const y = from.y + (to.y - from.y) * t - Math.sin(Math.PI * t) * 40;
-        cloth.style.transform = `translate(${x - width / 2}px, ${y - height / 2}px) scale(${.3 + .7 * t}, ${.2 + .8 * t}) rotate(${(1 - t) * -20}deg)`;
+      await tween(380, t => {
+        const eased = 1 - (1 - t) * (1 - t);
+        place(from.x + (top.x - from.x) * eased, from.y + (high - from.y) * eased, `scale(.25, .15) rotate(${(1 - eased) * -40}deg)`);
       });
       first.pose({ arms: false });
       second.pose({ arms: false });
-      cloth.classList.add('red-sheet-hung');
+      await tween(220, t => {
+        const eased = 1 - (1 - t) ** 3;
+        place(top.x, high - 4 * eased, `scale(${.25 + .75 * eased}, ${.15 + .6 * eased})`);
+      });
+      await tween(650, t => {
+        const eased = 1 - (1 - t) * (1 - t);
+        const calm = 1 - t;
+        place(top.x + Math.sin(t * Math.PI * 2) * 12 * calm, high - 4 + (top.y - high + 4) * eased,
+          `rotate(${Math.sin(t * Math.PI * 2) * 6 * calm}deg) skewX(${Math.sin(t * Math.PI * 3) * 9 * calm}deg) scale(1, ${.75 + .25 * eased})`);
+      });
+      place(top.x, top.y);
       return cloth;
     }
 
@@ -397,7 +447,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const glob = spawn('paint-glob', actors);
       const peak = Math.min(from.y, target.y) - 50;
       const control = 2 * peak - (from.y + target.y) / 2;
-      await tween(520, t => {
+      await tween(420, t => {
         const x = from.x + (target.x - from.x) * t;
         const y = (1 - t) * (1 - t) * from.y + 2 * (1 - t) * t * control + t * t * target.y;
         glob.style.transform = `translate(${x}px, ${y}px)`;
@@ -424,31 +474,32 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     async function paintHoles(team: Member[]) {
       const width = stageEl.clientWidth;
       const sides = team.map(member => member.x < width / 2 ? -1 : 1);
+      // The one who drops its bucket is the one with the sign (far right): it overshoots into the open middle of the
+      // screen on the way back, and that is where the puddle ends up.
+      const dropper = 4;
       team.forEach(member => member.pose({ arms: false, face: 'normal' }));
       stageEl.querySelector('.nothing-sign')?.remove();
       await Promise.all(team.map(async (member, index) => {
-        await pause(index * 90);
+        await pause(index * 60);
         await member.walk(sides[index] < 0 ? -CREW_W - 30 : width + 30, DASH_SPEED);
       }));
-      await pause(400);
+      await pause(150);
 
       const low = [...stageEl.querySelectorAll<HTMLElement>('.stage-hole-low')];
       const high = [...stageEl.querySelectorAll<HTMLElement>('.stage-hole-high')];
       const buckets = team.map(member => bucket(member));
       let puddle: { element: HTMLElement; x: number } | null = null;
-      const dropper = 1;
 
       await Promise.all(team.map(async (member, index) => {
-        await pause(index * 120);
+        await pause(index * 60);
         // Each low patch is painted by the first of those who hid it; anyone else comes back to the middle.
         const patch = COVER.findIndex(cover => cover.members[0] === index);
         const hole = patch >= 0 ? low[patch] : undefined;
         const center = hole ? holeCenter(hole) : null;
         const spot = center ? center.x - sides[index] * 60 - CREW_W / 2 : width * .5;
         if (index === dropper) {
-          // Halfway back the bucket slips out of its hand, tips over and spills.
-          const halfway = member.x + (spot - member.x) * .45;
-          await member.walk(halfway, DASH_SPEED);
+          // On the way back, in the open middle of the screen, the bucket slips out of its hand, tips over and spills.
+          await member.walk(width * .62, DASH_SPEED);
           const pail = buckets[index];
           const start = boxOf(pail);
           pail.remove();
@@ -457,16 +508,16 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
           const direction = spot > member.x ? 1 : -1;
           const landX = start.x + direction * 34;
           const landY = groundY() - 12;
-          await tween(420, t => { falling.style.transform = `translate(${start.x + (landX - start.x) * t}px, ${start.y + (landY - start.y) * t * t - Math.sin(Math.PI * t) * 14}px) rotate(${direction * 90 * t}deg)`; });
+          await tween(300, t => { falling.style.transform = `translate(${start.x + (landX - start.x) * t}px, ${start.y + (landY - start.y) * t * t - Math.sin(Math.PI * t) * 14}px) rotate(${direction * 90 * t}deg)`; });
           const spill = spawn('puddle');
           spill.style.left = `${landX + direction * 8}px`;
           puddle = { element: spill, x: landX + direction * 8 };
-          await tween(500, t => { spill.style.width = `${70 * t}px`; if (direction < 0) spill.style.left = `${landX - 8 - 70 * t}px`; });
+          await tween(250, t => { spill.style.width = `${70 * t}px`; if (direction < 0) spill.style.left = `${landX - 8 - 70 * t}px`; });
           if (direction < 0) puddle.x = landX - 8 - 70;
           const oops = over(member.element, 'stage-mark', '…');
           member.pose({ face: 'tired' });
           await member.walk(landX - direction * 18, CREW_WALK);
-          await pause(250);
+          await pause(100);
           falling.remove();
           buckets[index] = bucket(member);
           oops.remove();
@@ -492,12 +543,20 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
     // Scene 3: one of the crew runs across and slips on the puddle, a second one trips over it; they get up furious and
     // brawl until the boss yells at them to stop (and its stomp lays down the ground line).
-    async function slipAndFight(team: Member[], boss: ReturnType<typeof robot>, puddleX: number) {
+    async function slipAndFight(team: Member[], boss: ReturnType<typeof robot>, puddle: { element: HTMLElement; x: number } | null) {
+      const width = stageEl.clientWidth;
       const slider = team[2];
       const tripper = team[3];
+      // First the stage is cleared: the rest step back to watch, near the boss and at the far right, and the two about
+      // to fall line up on the right, so the slip and the brawl happen alone in the middle.
+      const spots: [Member, number][] = [[team[0], .2], [team[1], .26], [team[4], .92], [slider, .8], [tripper, .86]];
+      await Promise.all(spots.map(([member, fraction]) => member.walk(width * fraction, DASH_SPEED)));
+      await pause(150);
+      const puddleX = puddle ? puddle.x : width * .5;
+      const puddleWidth = puddle ? puddle.element.offsetWidth : 0;
       const direction = puddleX < slider.x ? -1 : 1;
-      const slipAt = puddleX + 20 - CREW_W / 2;
-      const slideTo = slipAt + direction * stageEl.clientWidth * .08;
+      const slipAt = (direction < 0 ? puddleX + puddleWidth - 20 : puddleX + 20) - CREW_W / 2;
+      const slideTo = slipAt + direction * width * .08;
 
       const chase = (async () => { await pause(250); await tripper.walk(slideTo - direction * 34, RUN_SPEED); })();
       await slider.walk(slipAt, RUN_SPEED);
@@ -528,6 +587,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       slider.element.style.opacity = '0';
       tripper.element.style.opacity = '0';
       const cloud = spawn('fight-cloud');
+      skip.current?.coverEyes(true);
       cloud.style.left = `${middle - 26}px`;
       const bits = ['fight-fist', 'fight-boot', 'fight-star', 'fight-flash'];
       const debris = setInterval(() => {
@@ -544,7 +604,9 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
       boss.draw('jump', 'angry');
       const stop = over(boss.element, 'stage-shout font-mono', lines.stop);
-      for (let jump = 0; jump < 2; jump++) await boss.hop(12, 320);
+      skip.current?.coverEyes(false);
+      // One big stomp, and the ground line spreads out from where it lands.
+      await boss.hop(22, 460);
       const spreading = spreadGroundLine(boss);
       clearInterval(debris);
       intervals.delete(debris);
@@ -561,16 +623,14 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await spreading;
     }
 
-    // Scene 4: the one who spilled the paint mops the puddle up, grumbling.
+    // Scene 4: the one who spilled the paint mops the puddle up.
     async function mop(member: Member, puddle: { element: HTMLElement; x: number } | null) {
       if (!puddle) return;
       const width = puddle.element.offsetWidth;
       const start = puddle.x + width + 6;
-      member.pose({ face: 'angry' });
       const tool = spawn('stage-mop', member.element);
       await member.walk(start, ANNOYED_WALK);
       member.pose({ facing: -1 });
-      const grumble = over(member.element, 'stage-grumble font-mono', lines.grumble);
       member.legs(true);
       await tween(1600, t => {
         const reach = start - (width + 6) * t;
@@ -580,9 +640,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       member.legs(false);
       puddle.element.remove();
       await pause(250);
-      await fadeOut(grumble);
       tool.remove();
-      member.pose({ face: 'normal' });
     }
 
     // A line of the finished section drawn on stage (the real borders stay hidden until the end).
@@ -647,7 +705,11 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         runner.legs(true);
         await tween((to - from) / LINE_SPEED * 1000, t => {
           const x = from + (to - from) * t;
-          runner.place(x, lift);
+          // No line out past the list's ends: the runner leaps from the edge of the screen onto its line and off the
+          // far end of it again.
+          const end = right - CREW_W;
+          const leap = x < left ? Math.sin(Math.PI * (x - from) / (left - from)) : x > end ? Math.sin(Math.PI * (x - end) / (to - end)) : 0;
+          runner.place(x, lift + leap * RUNNER_LEAP);
           line.style.width = `${Math.min(right - left, Math.max(0, x + CREW_W / 2 - left))}px`;
         });
         runner.legs(false);
@@ -681,7 +743,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const lift = groundY() - lineY;
       const follow = () => writer.place(endX() - 5 + reach, lift);
 
-      await leap(writer, titleBox.x - 5 + reach, lift, 560, 40);
+      await leap(writer, titleBox.x - 5 + reach, lift, 450, 40);
       writer.pose({ facing: 1 });
       const write = async (from: string, to: string) => {
         writer.legs(true);
@@ -692,14 +754,14 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         writer.legs(false);
       };
       await write('', lines.typo);
-      await pause(400);
+      await pause(250);
 
       // It looks at what it wrote... and turns the pencil around.
       const oops = over(writer.element, 'stage-mark', '?');
-      await pause(700);
+      await pause(450);
       oops.remove();
       pencil.classList.add('giant-pencil-erasing');
-      await pause(250);
+      await pause(150);
       for (let length = lines.typo.length; length > lines.keep.length; length--) {
         draft.textContent = lines.typo.slice(0, length - 1);
         for (let crumb = 0; crumb < 2; crumb++) {
@@ -711,22 +773,22 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       }
       follow();
       pencil.classList.remove('giant-pencil-erasing');
-      await pause(300);
+      await pause(200);
       await write(lines.keep, text);
-      await pause(300);
+      await pause(150);
 
       // Done: the real title takes over and the writer jumps back down.
       title.style.transition = 'none';
       title.classList.add('is-built');
       draft.remove();
       pencil.remove();
-      await leap(writer, Math.min(stageEl.clientWidth - CREW_W, writer.x + 40), 0, 500, 20);
+      await leap(writer, Math.min(stageEl.clientWidth - CREW_W, writer.x + 40), 0, 400, 20);
     }
 
     // A crew member carries a piece of the section over its head (a copy of it), walks a few steps and throws it up into
     // place, where the real pieces appear with a little bounce. The e-mail's carrier drops the "@" on the way and has
     // to chase it and click it back in before throwing.
-    async function deliver(member: Member, piece: HTMLElement, targets: HTMLElement[], dropAt = false) {
+    async function deliver(member: Member, piece: HTMLElement, targets: HTMLElement[], dropAt = false, walk = true) {
       const carried = piece.cloneNode(true) as HTMLElement;
       carried.removeAttribute('id');
       carried.classList.add('carried-piece');
@@ -737,7 +799,8 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       member.pose({ arms: true });
       const target = boxOf(piece);
       const direction = target.x + target.w / 2 > member.x ? 1 : -1;
-      await member.walk(member.x + direction * 60, CREW_WALK);
+      if (walk) await member.walk(member.x + direction * 40, ANNOYED_WALK);
+      else { member.pose({ facing: direction }); await pause(150); }
 
       if (dropAt) {
         // The "@" pops off the pile, bounces on the ground and rolls away; just as the robot is about to catch it, it
@@ -754,41 +817,42 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
           let spin = 0;
           const put = (x: number, y: number) => { signX = x; sign.style.transform = `translate(${x}px, ${y}px) rotate(${spin}deg)`; };
           // Up out of the pile, down to the ground, two shrinking bounces.
-          await tween(700, t => { spin = direction * t * 200; put(start.x + direction * 30 * t, start.y - 34 * Math.sin(Math.PI * Math.min(1, t * 1.4)) + (groundTop - start.y) * t * t); });
+          await tween(500, t => { spin = direction * t * 200; put(start.x + direction * 30 * t, start.y - 34 * Math.sin(Math.PI * Math.min(1, t * 1.4)) + (groundTop - start.y) * t * t); });
           for (const height of [18, 8]) {
             const bounceX = signX;
-            await tween(260, t => { spin += direction * 6; put(bounceX + direction * 14 * t, groundTop - Math.sin(Math.PI * t) * height); });
+            await tween(200, t => { spin += direction * 6; put(bounceX + direction * 14 * t, groundTop - Math.sin(Math.PI * t) * height); });
           }
           const roll = async (distance: number, duration: number) => {
             const fromX = signX;
             await tween(duration, t => { spin += direction * 9; put(fromX + direction * distance * (1 - (1 - t) * (1 - t)), groundTop); });
           };
-          await roll(130, 900);
+          void skip.current?.laugh().catch(() => {});
+          await roll(130, 600);
           const alarm = over(member.element, 'stage-mark stage-mark-alert', '!!');
-          await pause(500);
+          await pause(350);
           alarm.remove();
           // First try: it runs over, and the "@" rolls off again right under its nose.
           await member.walk(signX - direction * 30, RUN_SPEED);
-          await roll(80, 600);
+          await roll(80, 450);
           const huff = over(member.element, 'stage-mark stage-mark-alert', '!');
-          await pause(300);
+          await pause(200);
           huff.remove();
           // Second try: it leaps onto it.
           const leapFrom = member.x;
           const target = signX - direction * 4;
-          await tween(420, t => member.place(leapFrom + (target - leapFrom) * t, Math.sin(Math.PI * t) * 22));
+          await tween(350, t => member.place(leapFrom + (target - leapFrom) * t, Math.sin(Math.PI * t) * 22));
           member.pose({ facing: direction });
-          await pause(200);
+          await pause(100);
           // Back into the e-mail with a click and a twinkle.
           const back = gap ? boxOf(gap) : boxOf(carried);
           const from = { x: signX, y: groundTop };
-          await tween(420, t => { spin = 0; put(from.x + (back.x - from.x) * t, from.y + (back.y - from.y) * t - Math.sin(Math.PI * t) * 30); });
+          await tween(350, t => { spin = 0; put(from.x + (back.x - from.x) * t, from.y + (back.y - from.y) * t - Math.sin(Math.PI * t) * 30); });
           sign.remove();
           gap?.classList.remove('carried-gap');
           const click = spawn('fight-twinkle stage-click', actors, '✦');
           Object.assign(click.style, { left: `${back.x}px`, top: `${back.y}px` });
           click.addEventListener('animationend', () => click.remove());
-          await pause(450);
+          await pause(250);
         }
       }
 
@@ -804,10 +868,10 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       // A little hop to put some strength into the throw; the piece goes up past its place and drops into it.
       const standX = member.x;
       const standLift = member.lift;
-      const hop = tween(300, t => member.place(standX, standLift + Math.sin(Math.PI * t) * 10));
+      const hop = tween(250, t => member.place(standX, standLift + Math.sin(Math.PI * t) * 10));
       const peak = Math.min(start.y, target.y) - 70;
       const control = 2 * peak - (start.y + target.y) / 2;
-      await tween(850, t => {
+      await tween(650, t => {
         const x = start.x + (target.x - start.x) * t;
         const y = (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * control + t * t * target.y;
         flyer.style.transform = `translate(${x}px, ${y}px) scale(${scale + (1 - scale) * t}) rotate(${Math.sin(Math.PI * t) * -6}deg)`;
@@ -825,17 +889,28 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const rows = [...stageEl.querySelectorAll<HTMLElement>('.contact-row')];
       const footerTexts = [...stageEl.querySelectorAll<HTMLElement>('.section-footer > *')];
       const crew = [...team].sort((a, b) => a.x - b.x);
-      const partsOf = (row: HTMLElement) => [...row.children] as HTMLElement[];
-      const valueOf = (row: HTMLElement) => row.querySelector<HTMLElement>('.contact-value') ?? row;
+      // A row's three pieces (label, value, action) thrown by one robot, one after the other; only the first throw
+      // needs a few steps first. The e-mail's value is the one whose "@" falls off.
+      const throwRow = async (member: Member, row: HTMLElement, dropAt = false) => {
+        const parts = [...row.children] as HTMLElement[];
+        for (const [index, part] of parts.entries()) {
+          await deliver(member, part, [part], dropAt && part.classList.contains('contact-value'), index === 0);
+        }
+      };
       const [email, ...others] = rows;
       const jobs: (() => Promise<void>)[] = [];
       if (status) jobs.push(() => deliver(crew[0], status, [status]));
-      others.forEach((row, index) => jobs.push(() => deliver(crew[(index + 2) % crew.length], valueOf(row), partsOf(row))));
-      await Promise.all(jobs.map(async (job, index) => { await pause(index * 550); await job(); }));
-      // The footer's two notes, one after the other.
-      for (const note of footerTexts) await deliver(crew[crew.length - 1], note, [note]);
-      // The e-mail comes last, on its own, so its dropped "@" gets all the attention.
-      if (email) await deliver(crew[1], valueOf(email), partsOf(email), true);
+      others.forEach((row, index) => jobs.push(() => throwRow(crew[(index + 2) % crew.length], row)));
+      await Promise.all(jobs.map(async (job, index) => { await pause(index * 300); await job(); }));
+      // The e-mail comes last; while its robot is busy chasing the "@" it dropped, another one quietly throws the
+      // footer's two notes into place.
+      await Promise.all([
+        email ? throwRow(crew[1], email, true) : Promise.resolve(),
+        (async () => {
+          await pause(FOOTER_AFTER);
+          for (const note of footerTexts) await deliver(crew[crew.length - 1], note, [note]);
+        })(),
+      ]);
     }
 
     // ——— The park: every piece of the happy ending is brought in by the crew, many at once. ———
@@ -881,11 +956,14 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const width = stageEl.clientWidth;
       const pullers = [helper(box.x + 30), helper(box.x + box.w - CREW_W - 30)];
       pullers.forEach(member => member.pose({ arms: true }));
-      const sky = showPart(part('.ending-sky'), { y: -box.h });
+      // The backdrop unrolls downwards from the top of the park.
+      const sky = showPart(part('.ending-sky'));
+      if (sky) sky.style.clipPath = 'inset(0 0 100% 0)';
       await tween(1300, t => {
-        if (sky) movePart(sky, { y: -box.h * (1 - smooth(t)) });
+        if (sky) sky.style.clipPath = `inset(0 0 ${100 * (1 - smooth(t))}% 0)`;
         pullers.forEach(member => member.place(member.x, GRASS + Math.abs(Math.sin(t * Math.PI * 3)) * 4));
       });
+      if (sky) sky.style.clipPath = '';
       pullers.forEach(member => member.pose({ arms: false }));
       const leaving = Promise.all(pullers.map((member, index) => leave(member, index ? width + 40 : -CREW_W - 40)));
 
@@ -920,8 +998,9 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         rider.element.remove();
       })();
 
-      const hills = showPart(part('.ending-hills'), { y: 50 });
-      const rising = hills ? tween(900, t => movePart(hills, { y: 50 * (1 - smooth(t)) })) : Promise.resolve();
+      const hills = showPart(part('.ending-hills'), { y: 20 });
+      if (hills) hills.style.clipPath = 'inset(100% 0 0 0)';
+      const rising = hills ? tween(900, t => { movePart(hills, { y: 20 * (1 - smooth(t)) }); hills.style.clipPath = `inset(${100 * (1 - smooth(t))}% 0 0 0)`; }).then(() => { hills.style.clipPath = ''; }) : Promise.resolve();
 
       await pause(500);
       for (const star of stageEl.querySelectorAll<HTMLElement>('.ending-star')) {
@@ -939,10 +1018,22 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         const lakeBox = boxOf(lake);
         lake.style.transformOrigin = 'left center';
         showPart(lake, { scale: '0 1' });
-        const roller = helper(lakeBox.x - CREW_W);
-        await walkOnGrass(roller, lakeBox.x + lakeBox.w - CREW_W / 2, 260, x => { lake.style.scale = `${Math.min(1, Math.max(0, (x + CREW_W / 2 - lakeBox.x) / lakeBox.w))} 1`; });
+        // Walking along the lake's far edge, at its height.
+        const edge = groundY() - lakeBox.y;
+        const roller = crew();
+        roller.place(lakeBox.x - CREW_W, edge);
+        roller.pose({ facing: 1 });
+        roller.legs(true);
+        const fromX = roller.x;
+        const toX = lakeBox.x + lakeBox.w - CREW_W / 2;
+        await tween((toX - fromX) / 260 * 1000, t => {
+          const x = fromX + (toX - fromX) * t;
+          roller.place(x, edge);
+          lake.style.scale = `${Math.min(1, Math.max(0, (x + CREW_W / 2 - lakeBox.x) / lakeBox.w))} 1`;
+        });
+        roller.legs(false);
         lake.style.scale = '1 1';
-        void leave(roller, width + 40);
+        void (async () => { await leap(roller, roller.x + 40, GRASS, 450, 16); await leave(roller, width + 40); })().catch(() => {});
       }
       await Promise.all([lowering, rising, leaving]);
     }
@@ -1013,16 +1104,18 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const spreader = helper(blanketBox.x - CREW_W - 10);
       await walkOnGrass(spreader, blanketBox.x + blanketBox.w - CREW_W / 2, 200, x => { blanket.style.scale = `${Math.min(1, Math.max(0, (x + CREW_W / 2 - blanketBox.x) / blanketBox.w))} 1`; });
       blanket.style.scale = '1 1';
-      // The same one goes back for the basket and sets it down.
+      const spreaderOff = leave(spreader, stageEl.clientWidth + 40);
+      // Someone else brings the basket in from the right and sets it down.
       const basketBox = boxOf(basket);
-      spreader.pose({ arms: true });
+      const bringer = helper(stageEl.clientWidth + 40);
+      bringer.pose({ arms: true });
       showPart(basket);
       const hold = (x: number) => movePart(basket, { x: x + CREW_W / 2 - (basketBox.x + basketBox.w / 2), y: -CREW_H + 4 });
-      hold(spreader.x);
-      await walkOnGrass(spreader, basketBox.x + basketBox.w / 2 - CREW_W / 2, CREW_WALK, hold);
+      hold(bringer.x);
+      await walkOnGrass(bringer, basketBox.x + basketBox.w / 2 - CREW_W / 2, CREW_WALK, hold);
       await tween(250, t => movePart(basket, { y: (-CREW_H + 4) * (1 - t) }));
-      spreader.pose({ arms: false });
-      await leave(spreader, stageEl.clientWidth + 40);
+      bringer.pose({ arms: false });
+      await Promise.all([spreaderOff, leave(bringer, stageEl.clientWidth + 40)]);
     }
 
     // The bench comes last: the boss taps its foot until two of the crew bring it, then sits down with a sigh and the
@@ -1030,12 +1123,19 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     async function bench(boss: ReturnType<typeof robot>, waiting: Promise<unknown>) {
       const seat = part('.ending-bench');
       if (!seat) return;
+      // While it waits, now and then a short fit of impatience: tapping its foot, huffing, rolling its eyes up.
       let tapping = true;
       const impatience = (async () => {
+        const fits = [
+          async () => { const dots = over(boss.element, 'stage-mark', '…'); for (let tap = 0; tap < 3; tap++) await boss.hop(3, 220); dots.remove(); },
+          async () => { boss.draw('idle', 'angry'); puff(boss.element, 'left'); await pause(500); boss.draw('idle', 'normal'); },
+          async () => { boss.draw('blink', 'normal'); await pause(600); boss.draw('idle', 'normal', 'right'); await pause(400); boss.draw('idle', 'normal'); },
+        ];
+        for (let fit = 0; tapping; fit++) {
+          await fits[fit % fits.length]();
+          for (let wait = 0; wait < 8 && tapping; wait++) await pause(200);
+        }
         boss.draw('idle', 'normal');
-        const dots = over(boss.element, 'stage-mark', '…');
-        while (tapping) await boss.hop(3, 260);
-        dots.remove();
       })();
       await waiting;
       const seatBox = boxOf(seat);
@@ -1061,6 +1161,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const fromY = boss.y;
       await tween(500, t => boss.place(fromX + (spot.x - fromX) * t, fromY + (spot.y - fromY) * t - Math.sin(Math.PI * t) * 24));
       boss.element.remove();
+      showPart(sitting);
       const sigh = spawn('stage-grumble stage-sigh font-mono', actors, lines.sigh);
       Object.assign(sigh.style, { left: `${spot.x + spot.w + 6}px`, top: `${spot.y - 18}px` });
 
@@ -1114,8 +1215,27 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     }
 
     async function buildPark(boss: ReturnType<typeof robot>, team: Member[]) {
-      // The crew still standing move down onto the grass.
-      team.forEach(member => member.place(member.x, GRASS));
+      // Everyone steps up onto the grass; the crew clear the stage to watch from two gaps in the park (clapping now and
+      // then: a little hop with their arms up) until it's time for their hats.
+      const width = stageEl.clientWidth;
+      const bossY = boss.y;
+      void tween(250, t => boss.place(boss.x, bossY - GRASS * t - Math.sin(Math.PI * t) * 8)).catch(() => {});
+      const seats = [.3, .34, .38, .68, .72];
+      await Promise.all(team.map(async (member, index) => {
+        await leap(member, member.x, GRASS, 250, 8);
+        await walkOnGrass(member, width * seats[index % seats.length]);
+        member.pose({ facing: index < 3 ? -1 : 1 });
+      }));
+      let watching = true;
+      const cheering = (async () => {
+        for (let round = 0; watching; round++) {
+          const fan = team[round % team.length];
+          fan.pose({ arms: true });
+          await tween(260, t => fan.place(fan.x, GRASS + Math.sin(Math.PI * t) * 5));
+          fan.pose({ arms: false });
+          for (let wait = 0; wait < 5 && watching; wait++) await pause(200);
+        }
+      })();
       const scenery = (async () => {
         const sky = backdrop();
         await pause(900);
@@ -1127,6 +1247,8 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         await Promise.all([sky, lawn, woods, blanket]);
       })();
       await bench(boss, scenery);
+      watching = false;
+      await cheering;
       await celebrate(team);
     }
 
@@ -1135,28 +1257,132 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const { boss, team } = await arrive();
       await pause(200);
       const { puddle, dropper } = await paintHoles(team);
-      await pause(300);
+      await pause(200);
       const lining = runLines();
-      await slipAndFight(team, boss, puddle?.x ?? stageEl.clientWidth * .3);
+      await slipAndFight(team, boss, puddle);
       await lining;
       await pause(200);
-      await mop(dropper, puddle);
-      await pause(300);
+      // The title's writer (the leftmost of the others) sets off half a second after the one with the mop.
+      const mopping = mop(dropper, puddle);
+      await pause(500);
       const crew = team;
-      await writeTitle([...crew].sort((a, b) => a.x - b.x)[0]);
+      await Promise.all([mopping, writeTitle(crew.filter(member => member !== dropper).sort((a, b) => a.x - b.x)[0])]);
       await pause(300);
       await placeWords(crew);
       await pause(400);
+      parkStarted = true;
+      void skipFinale().catch(() => {});
       await buildPark(boss, crew);
-      // The happy ending stays; the stage is handed over to the finished section.
+      // The happy ending stays; the stage is handed over to the finished section, and since the visitor watched it all,
+      // the WhatsApp button's gag is armed for its first click.
       await pause(600);
+      armZapGag();
       setStage('done');
     }
 
     const viewObserver = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; resume(); }, { threshold: .3 });
     viewObserver.observe(stageEl);
     document.addEventListener('visibilitychange', resume);
+    // The skip robot, hanging on its rope at the top of the section. Its face is redrawn by hand (blinks, looks, moods);
+    // it waves at first, then hangs back calmly with popcorn watching the show, reacts to it (flinches at the boss's
+    // order, can't watch the brawl, laughs at the runaway "@"), and every so often comes down on its rope
+    // with a joke on its sign, making the matching face; before the park it throws its sign away.
+    let parkStarted = false;
+    let skipFace: { pose: RobotPose; mood: RobotMood } = { pose: 'idle', mood: 'happy' };
+    let skipBusy = false;
+    const skipDraw = (pose: RobotPose, mood: RobotMood, look?: 'left' | 'right') => {
+      const body = skipBodyRef.current;
+      if (body) body.innerHTML = robotMarkup(pose, mood, look);
+    };
+    const skipSet = (pose: RobotPose, mood: RobotMood) => { skipFace = { pose, mood }; skipDraw(pose, mood); };
+    const skipClass = (name: string, on: boolean) => skipRef.current?.classList.toggle(name, on);
+    // While hanging back it blinks now and then and its eyes follow the action.
+    async function skipIdle() {
+      const looks: ('left' | 'right' | undefined)[] = ['left', undefined, 'left', 'right', 'left', undefined];
+      for (let index = 0; ; index++) {
+        await pause(900 + (index % 3) * 400);
+        if (skipBusy) continue;
+        skipDraw(skipFace.pose, skipFace.mood, looks[index % looks.length]);
+        if (index % 3 === 2) {
+          skipDraw('blink', 'normal');
+          await pause(130);
+          skipDraw(skipFace.pose, skipFace.mood, looks[index % looks.length]);
+        }
+      }
+    }
+    skip.current = {
+      flinch: async () => {
+        if (skipBusy) return;
+        skipBusy = true;
+        skipDraw('blink', 'normal');
+        skipClass('skip-flinch', true);
+        await pause(700);
+        skipClass('skip-flinch', false);
+        skipDraw(skipFace.pose, skipFace.mood);
+        skipBusy = false;
+      },
+      coverEyes: (on: boolean) => {
+        if (skipBusy && on) return;
+        skipBusy = on;
+        // Hands up to its head, eyes droopy: it can't watch.
+        if (on) skipDraw('carry', 'sad'); else skipDraw(skipFace.pose, skipFace.mood);
+        skipClass('skip-covering', on);
+      },
+      laugh: async () => {
+        if (skipBusy) return;
+        skipBusy = true;
+        skipDraw('idle', 'happy');
+        skipClass('skip-laughing', true);
+        await pause(1200);
+        skipClass('skip-laughing', false);
+        skipDraw(skipFace.pose, skipFace.mood);
+        skipBusy = false;
+      },
+    };
+    // Down the rope with a joke and the face that goes with it, then back up.
+    const JOKE_FACES: { mood: RobotMood; wink?: boolean; nervous?: boolean }[] = [{ mood: 'sad' }, { mood: 'happy', wink: true }, { mood: 'normal', nervous: true }];
+    async function peek(line: string, face: { mood: RobotMood; wink?: boolean; nervous?: boolean }) {
+      skipBusy = true;
+      setSkipMode('peek');
+      setSkipLine(line);
+      skipDraw('idle', face.mood);
+      await pause(500);
+      if (face.wink) {
+        for (let wink = 0; wink < 2; wink++) { skipDraw('blink', 'normal'); await pause(150); skipDraw('idle', face.mood); await pause(350); }
+      } else if (face.nervous) {
+        skipClass('skip-nervous', true);
+        for (let look = 0; look < 4; look++) { skipDraw('idle', face.mood, look % 2 ? 'right' : 'left'); await pause(250); }
+        skipClass('skip-nervous', false);
+        skipDraw('idle', face.mood);
+      } else {
+        await pause(1000);
+      }
+      await pause(500);
+      setSkipLine(null);
+      setSkipMode('quiet');
+      skipDraw(skipFace.pose, skipFace.mood);
+      skipBusy = false;
+    }
+    async function skipRobot() {
+      // A few seconds swinging on its rope, waving its sign, in full view.
+      skipSet('idle', 'happy');
+      await pause(3000);
+      setSkipMode('quiet');
+      skipSet('idle', 'normal');
+      void skipIdle().catch(() => {});
+      for (const [index, joke] of lines.jokes.entries()) {
+        await pause(SKIP_PEEK_EVERY);
+        if (parkStarted) return;
+        await peek(joke, JOKE_FACES[index % JOKE_FACES.length]);
+      }
+    }
+    // Just before the park: one last joke, and away goes the sign; then it settles back with its popcorn.
+    async function skipFinale() {
+      await peek(lines.finale, { mood: 'happy' });
+      skipClass('skip-no-sign', true);
+    }
     run().catch(error => { if (!(error instanceof Cancelled)) throw error; });
+    skipRobot().catch(error => { if (!(error instanceof Cancelled)) throw error; });
 
     return () => {
       cancelled = true;
@@ -1166,6 +1392,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       viewObserver.disconnect();
       document.removeEventListener('visibilitychange', resume);
       actors.replaceChildren();
+      skip.current = null;
       // Pieces placed by the robots were shown without their fade; give them their normal transitions back.
       stageEl.querySelectorAll<HTMLElement>('.is-built').forEach(element => element.style.removeProperty('transition'));
       // A skip in the middle of the park leaves no piece half way in.
@@ -1194,10 +1421,25 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       <div className="contact-built">{children}</div>
       <div ref={actorsRef} className="stage-actors" aria-hidden="true" />
       {stage !== 'done' && (
-        // Peeking in from the top right corner of the window, half of it showing, tilted, sign held out to the side.
-        <button type="button" className="skip-robot" onClick={() => setStage('done')}>
-          <span className="robot-sign skip-sign font-mono">{skipLabel}</span>
-          <span className="skip-peek"><RobotSprite pose="carry" mood="normal" /></span>
+        // Hanging on a rope from a pulley at the end of the line above, just past the section's right edge, its sign
+        // hanging under its seat on two strings (and some popcorn while it watches). Hovering brings it down.
+        <button ref={skipRef} type="button" className="skip-robot" data-mode={skipMode} aria-label={skipLabel} onClick={() => { skipZapGag(sectionRef.current); setStage('done'); }}>
+          <span className="skip-pulley" aria-hidden="true" />
+          <span className="skip-swing" aria-hidden="true">
+            <span className="skip-rope" />
+            <span className="skip-rider">
+              {/* A bosun's chair: the rope splits above its head into two lines down to a little plank it sits on. */}
+              <svg className="skip-bridle" viewBox="0 0 41 50" preserveAspectRatio="none"><path d="M20.5 0 L1 50 M20.5 0 L40 50" /></svg>
+              <span className="skip-seat" />
+              <span ref={skipBodyRef} className="skip-body" />
+              <span className="skip-popcorn" />
+              <span className="skip-strings" />
+              <span className="skip-sign font-mono">
+                <span className="skip-label">{skipLabel}</span>
+                {skipLine && <span className="skip-joke">{skipLine}</span>}
+              </span>
+            </span>
+          </span>
         </button>
       )}
     </section>
