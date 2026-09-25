@@ -76,7 +76,7 @@ export const content = {
       { label: 'Infra e DevOps', items: ['Docker', 'Caddy', 'Oracle Cloud', 'Neon', 'Vercel', 'Git e GitHub'] },
     ],
     // Clicking a crate sends it to the office counter, where a robot takes out what is inside.
-    counter: { hint: 'clique num caixote para ver o que tem dentro', projects: 'Projetos', used: 'Usei', close: 'Guardar caixote' },
+    counter: { hint: 'clique num caixote para ver o que tem dentro', projects: 'Projetos', used: 'Usei' },
     languages: {
       label: 'Idiomas',
       items: [{ name: 'Português', level: 'nativo' }, { name: 'Inglês', level: 'intermediário-avançado' }],
@@ -86,7 +86,7 @@ export const content = {
   } as {
     section: string; title: string; countLabel: string;
     shelves: readonly { label: string; items: readonly (string | { name: string; projects: readonly string[]; used?: readonly string[] })[] }[];
-    counter: { hint: string; projects: string; used: string; close: string };
+    counter: { hint: string; projects: string; used: string };
     languages: { label: string; items: readonly { name: string; level: string }[]; chat: readonly [string, string] };
   },
   projects: {

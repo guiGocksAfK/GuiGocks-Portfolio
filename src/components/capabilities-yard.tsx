@@ -7,22 +7,22 @@ import { RobotSprite, crewMarkup, forkliftMarkup } from '@/components/robot-spri
 type Crate = string | { name: string; projects: readonly string[]; used?: readonly string[] };
 type Shelf = { label: string; items: readonly Crate[] };
 type Languages = { label: string; items: readonly { name: string; level: string }[]; chat: readonly [string, string] };
-type CounterLabels = { hint: string; projects: string; used: string; close: string };
+type CounterLabels = { hint: string; projects: string; used: string };
 type ProjectLink = { name: string; href: string };
 type Opened = { name: string; projects: readonly string[]; used?: readonly string[]; shelf: string };
-type Controller = { toggle: (button: HTMLButtonElement, opened: Opened) => void; close: () => void };
+type Controller = { toggle: (button: HTMLButtonElement, opened: Opened) => void };
 
 // The stock-taker is drawn bigger here (3px pixels instead of 2: 24×27, see .ladder-clerk).
 const CLERK_HEIGHT = 27;
 const RUNG_SPACING = 17;
 const FORKLIFT_SPEED = 120;
-const PIPE_Y = 10; // centre line of the pneumatic pipe, in the strip above the rack
 const HOSE_SPEED = 300; // px per second, the suction hose reaching down to a crate
 const SUCK_SPEED = 420;
 const PIPE_SPEED = 380; // the crate's bulge travelling inside the pipe
 const LID_TIME = 380; // matches the lid transition in CSS
 const HAND_OUT = 350; // ms per thing taken out of the crate; matches the stagger of .crate-details-list items
 const RETURN_FACTOR = 1.6; // putting a crate back is quicker than fetching it
+const FALL_GRAVITY = 900; // px/s², the crate dropping from the nozzle onto the desk
 
 class Cancelled extends Error {}
 const ignoreCancelled = (error: unknown) => { if (!(error instanceof Cancelled)) throw error; };
@@ -37,16 +37,13 @@ function flashCard(href: string) {
   card.classList.add('project-card-flash');
 }
 
-function CrateDetails({ opened, labels, projectLinks, onClose }: { opened: Opened; labels: CounterLabels; projectLinks: readonly ProjectLink[]; onClose: () => void }) {
+// No title: the crate's name is on the crate lying on the desk right below.
+function CrateDetails({ opened, labels, projectLinks }: { opened: Opened; labels: CounterLabels; projectLinks: readonly ProjectLink[] }) {
   const used = opened.used ?? [];
   // Each thing comes out of the crate one after the other (CSS stagger by --i), projects first.
   const order = (index: number) => ({ '--i': index }) as CSSProperties;
   return (
     <div className="crate-details" role="region" aria-label={opened.name}>
-      <p className="crate-details-head font-mono">
-        <span>{opened.name}</span>
-        <button type="button" className="crate-details-close" onClick={onClose} aria-label={labels.close} title={labels.close}>×</button>
-      </p>
       <p className="crate-details-label font-mono">{labels.projects}</p>
       <ul className="crate-details-list">
         {opened.projects.map((project, index) => {
@@ -80,17 +77,17 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
   const rackRef = useRef<HTMLDivElement>(null);
   const ladderRef = useRef<HTMLSpanElement>(null);
   const officeRef = useRef<HTMLElement>(null);
-  const sceneRef = useRef<HTMLDivElement>(null);
   const deskRef = useRef<HTMLSpanElement>(null);
   const pipeRef = useRef<SVGSVGElement>(null);
   const fxRef = useRef<HTMLDivElement>(null);
+  const pumpRef = useRef<HTMLSpanElement>(null);
   const controllerRef = useRef<Controller | null>(null);
   const [opened, setOpened] = useState<Opened | null>(null);
 
   useEffect(() => {
-    const refs = [yardRef.current, gridRef.current, rackRef.current, ladderRef.current, officeRef.current, sceneRef.current, deskRef.current, pipeRef.current, fxRef.current] as const;
+    const refs = [yardRef.current, gridRef.current, rackRef.current, ladderRef.current, officeRef.current, deskRef.current, pipeRef.current, fxRef.current, pumpRef.current] as const;
     if (refs.some(ref => !ref)) return;
-    const [area, grid, rack, ladder, office, scene, desk, pipe, fx] = refs as unknown as [HTMLDivElement, HTMLDivElement, HTMLDivElement, HTMLSpanElement, HTMLElement, HTMLDivElement, HTMLSpanElement, SVGSVGElement, HTMLDivElement];
+    const [area, grid, rack, ladder, office, desk, pipe, fx, pump] = refs as unknown as [HTMLDivElement, HTMLDivElement, HTMLDivElement, HTMLSpanElement, HTMLElement, HTMLSpanElement, SVGSVGElement, HTMLDivElement, HTMLSpanElement];
     const motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const narrow = window.matchMedia('(max-width: 900px)');
     let cancelled = false;
@@ -129,31 +126,68 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       return { x: box.left - origin.left, y: box.top - origin.top, w: box.width, h: box.height };
     };
 
-    // The pipe runs along the top of the rack, down the gap next to the office and into the office scene, ending in a
-    // nozzle right above the desk.
+    let pipeY = 18; // centre line of the pneumatic pipe, in the strip above the rack; measured in drawPipe
+    // The pipe runs straight along the top of the rack and the office, ending in a nozzle right above the desk: the crate
+    // drops from up there onto it.
     function pipeRoute() {
-      const rackBox = boxIn(rack);
-      const officeBox = boxIn(office);
       const deskBox = boxIn(desk);
-      return { startX: rackBox.x + 14, gapX: (rackBox.x + rackBox.w + officeBox.x) / 2, nozzleY: boxIn(scene).y + 14, deskX: deskBox.x + deskBox.w / 2 };
+      return { deskX: deskBox.x + deskBox.w / 2, mouthY: pipeY + 14 };
     }
     function drawPipe() {
       if (narrow.matches) return;
-      const route = pipeRoute();
-      const path = `M ${route.startX} ${PIPE_Y} H ${route.gapX} V ${route.nozzleY} H ${route.deskX + 4}`;
-      pipe.querySelectorAll('path').forEach(element => element.setAttribute('d', path));
-      const [elbow, mouth] = pipe.querySelectorAll('rect');
-      Object.entries({ x: route.deskX - 4, y: route.nozzleY, width: 8, height: 8 }).forEach(([key, value]) => elbow.setAttribute(key, String(value)));
-      Object.entries({ x: route.deskX - 8, y: route.nozzleY + 7, width: 16, height: 5 }).forEach(([key, value]) => mouth.setAttribute(key, String(value)));
+      const rackBox = boxIn(rack);
+      const officeBox = boxIn(office);
+      const { deskX } = pipeRoute();
+      // The pump sits on the rack's top-left corner and the pipe leaves from its side.
+      pump.style.left = `${rackBox.x + 6}px`;
+      // The pipe's centre line is level with the middle of the pump's body (offsets ignore the pump's shake).
+      const body = pump.querySelector<HTMLElement>('.pump-body');
+      if (body) pipeY = pump.offsetTop + body.offsetTop + body.offsetHeight / 2;
+      const startX = rackBox.x + 6 + pump.offsetWidth - 2;
+      const set = (element: Element | null, attributes: Record<string, string | number>) => Object.entries(attributes).forEach(([key, value]) => element?.setAttribute(key, String(value)));
+      set(pipe.querySelector('.pipe-body'), { d: `M ${startX} ${pipeY} H ${deskX - 6} Q ${deskX} ${pipeY} ${deskX} ${pipeY + 6} V ${pipeY + 8}` });
+      set(pipe.querySelector('.pipe-shine'), { d: `M ${startX} ${pipeY - 2} H ${deskX - 6}` });
+      set(pipe.querySelector('.pipe-nozzle'), { d: `M ${deskX - 4} ${pipeY + 8} L ${deskX - 8} ${pipeY + 14} H ${deskX + 8} L ${deskX + 4} ${pipeY + 8} Z` });
+      // Supports standing on the rack and the office, with a band around the pipe and a foot on the top edge.
+      const supports = pipe.querySelector('.pipe-supports');
+      if (supports) {
+        const top = pipeY + 4;
+        // Evenly spaced between the pump and the nozzle; one landing in the gap between the cards moves onto the rack.
+        const count = Math.max(1, Math.round((deskX - startX) / 400));
+        const xs = Array.from({ length: count }, (_, index) => {
+          const x = startX + (deskX - startX) * (index + 1) / (count + 1);
+          return x > rackBox.x + rackBox.w - 8 && x < officeBox.x + 8 ? rackBox.x + rackBox.w - 8 : x;
+        });
+        supports.innerHTML = xs.map(x => {
+          const floor = x > officeBox.x ? officeBox.y : rackBox.y;
+          return `<rect x="${x - 1.5}" y="${top}" width="3" height="${floor - top}" /><rect x="${x - 4.5}" y="${floor - 2}" width="9" height="2" /><rect x="${x - 3}" y="${pipeY - 5}" width="6" height="10" />`;
+        }).join('');
+      }
     }
 
     // Suction hose dropping from the pipe down to a crate.
+    // With a coupling ring clamped on the pipe where it hangs from.
+    const joints = new Map<HTMLElement, HTMLElement>();
     function makeHose(x: number, bottom: number) {
+      const joint = document.createElement('span');
+      joint.className = 'hose-joint';
+      Object.assign(joint.style, { left: `${x}px`, top: `${pipeY}px` });
       const hose = document.createElement('span');
       hose.className = 'hose';
-      Object.assign(hose.style, { left: `${x - 4}px`, top: `${PIPE_Y}px`, height: `${bottom - PIPE_Y}px`, transform: 'scaleY(0)' });
-      fx.appendChild(hose);
+      Object.assign(hose.style, { left: `${x - 4}px`, top: `${pipeY}px`, height: `${bottom - pipeY}px`, transform: 'scaleY(0)' });
+      fx.append(hose, joint);
+      joints.set(hose, joint);
       return hose;
+    }
+    const dropHose = (hose: HTMLElement) => { joints.get(hose)?.remove(); joints.delete(hose); hose.remove(); };
+
+    // The pump starts with a puff from its exhaust and runs (light on, needle up, shaking) until switched off.
+    function startPump() {
+      pump.classList.add('pump-on');
+      const puff = document.createElement('span');
+      puff.className = 'pump-puff';
+      puff.addEventListener('animationend', () => puff.remove());
+      pump.appendChild(puff);
     }
     const stretch = (hose: HTMLElement, from: number, to: number, speed: number) =>
       tween(hose.offsetHeight * Math.abs(to - from) / speed * 1000, t => { hose.style.transform = `scaleY(${from + (to - from) * smooth(t)})`; });
@@ -198,10 +232,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
         bulge.remove();
       }
     }
-    const pipePath = (crateX: number): [number, number][] => {
-      const route = pipeRoute();
-      return [[crateX, PIPE_Y], [route.gapX, PIPE_Y], [route.gapX, route.nozzleY], [route.deskX, route.nozzleY]];
-    };
+    const pipePath = (crateX: number): [number, number][] => [[crateX, pipeY], [pipeRoute().deskX, pipeY]];
 
     // The robot that lives in the crate: it rises out of it, hands things out with its arms up, and sinks back in.
     function popRobot(host: HTMLElement) {
@@ -230,6 +261,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       const crateX = crate.x + crate.w / 2;
       const crateY = crate.y + crate.h / 2;
       // Suck the crate up the hose.
+      startPump();
       const hose = makeHose(crateX, crate.y);
       const ghost = makeGhost(button);
       ghost.style.visibility = 'hidden';
@@ -239,20 +271,20 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
         placeGhost(ghost, crateX, crateY, 1);
         ghost.style.visibility = 'visible';
         button.classList.add('crate-away');
-        await tween((crateY - PIPE_Y) / SUCK_SPEED * 1000, t => { const e = t * t; placeGhost(ghost, crateX, crateY + (PIPE_Y - crateY) * e, 1 - .8 * e); });
+        await tween((crateY - pipeY) / SUCK_SPEED * 1000, t => { const e = t * t; placeGhost(ghost, crateX, crateY + (pipeY - crateY) * e, 1 - .8 * e); });
         ghost.style.visibility = 'hidden';
         await stretch(hose, 1, 0, HOSE_SPEED);
       } finally {
-        hose.remove();
+        dropHose(hose);
       }
-      // Through the pipe and out of the nozzle onto the desk, with a small bounce.
+      // Through the pipe and out of the nozzle, falling from the top of the office onto the desk with a small bounce.
       await travel(pipePath(crateX), PIPE_SPEED);
-      const route = pipeRoute();
-      const mouthY = route.nozzleY + 12;
+      const { deskX, mouthY } = pipeRoute();
       const land = deskLanding(ghost);
       ghost.style.visibility = 'visible';
-      await tween(550, t => placeGhost(ghost, route.deskX, mouthY + (land.y - mouthY) * t * t, .2 + (land.scale - .2) * Math.min(1, t * 1.6)));
+      await tween(Math.sqrt((land.y - mouthY) / FALL_GRAVITY) * 1000, t => placeGhost(ghost, deskX, mouthY + (land.y - mouthY) * t * t, .2 + (land.scale - .2) * Math.min(1, t * 2.5)));
       await tween(220, t => placeGhost(ghost, land.x, land.y - Math.sin(Math.PI * t) * 4, land.scale));
+      pump.classList.remove('pump-on');
       job.landed = true;
       // Lid open, robot out, contents on the counter.
       ghost.classList.add('crate-opened');
@@ -274,10 +306,10 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       await wait(LID_TIME);
       // Back up the nozzle, through the pipe and down the hose into its slot.
       job.landed = false;
-      const route = pipeRoute();
-      const mouthY = route.nozzleY + 12;
+      startPump();
+      const { mouthY } = pipeRoute();
       const land = deskLanding(ghost);
-      await tween(450, t => { const e = smooth(t); placeGhost(ghost, land.x, land.y + (mouthY - land.y) * e, land.scale + (.2 - land.scale) * e); });
+      await tween(650, t => { const e = smooth(t); placeGhost(ghost, land.x, land.y + (mouthY - land.y) * e, land.scale + (.2 - land.scale) * e); });
       ghost.style.visibility = 'hidden';
       const crate = boxIn(button);
       const crateX = crate.x + crate.w / 2;
@@ -287,12 +319,13 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       try {
         await stretch(hose, 0, 1, HOSE_SPEED * RETURN_FACTOR);
         ghost.style.visibility = 'visible';
-        await tween((crateY - PIPE_Y) / (SUCK_SPEED * RETURN_FACTOR) * 1000, t => { const e = smooth(t); placeGhost(ghost, crateX, PIPE_Y + (crateY - PIPE_Y) * e, .2 + .8 * e); });
+        await tween((crateY - pipeY) / (SUCK_SPEED * RETURN_FACTOR) * 1000, t => { const e = smooth(t); placeGhost(ghost, crateX, pipeY + (crateY - pipeY) * e, .2 + .8 * e); });
         ghost.remove();
         button.classList.remove('crate-away');
         await stretch(hose, 1, 0, HOSE_SPEED * RETURN_FACTOR);
       } finally {
-        hose.remove();
+        dropHose(hose);
+        pump.classList.remove('pump-on');
       }
     }
 
@@ -346,7 +379,6 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
         const same = current?.button === button;
         (async () => { await close(); if (!same) await open(button, data); })().catch(ignoreCancelled);
       },
-      close: () => { close().catch(ignoreCancelled); },
     };
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') close().catch(ignoreCancelled); };
     const onClick = (event: MouseEvent) => {
@@ -443,12 +475,13 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       document.removeEventListener('click', onClick);
       window.removeEventListener('resize', onResizeClerk);
       fx.replaceChildren();
+      pump.classList.remove('pump-on');
       area.querySelectorAll('.ladder-clerk, .forklift, .crate-popper').forEach(element => element.remove());
       area.querySelectorAll('.crate-away, .crate-opened').forEach(element => element.classList.remove('crate-away', 'crate-opened'));
     };
   }, []);
 
-  const details = opened && <CrateDetails opened={opened} labels={counter} projectLinks={projectLinks} onClose={() => controllerRef.current?.close()} />;
+  const details = opened && <CrateDetails opened={opened} labels={counter} projectLinks={projectLinks} />;
 
   return (
     <div ref={yardRef} className="yard">
@@ -485,31 +518,44 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
           <span ref={ladderRef} className="rack-ladder" aria-hidden="true" />
         </div>
         <aside ref={officeRef} className="office" aria-label={languages.label}>
-          <h3 className="rack-tag font-mono">{languages.label}</h3>
-          <ul className="languages">
-            {languages.items.map(item => (
-              <li key={item.name}><strong>{item.name}</strong><span className="language-level font-mono">{item.level}</span></li>
-            ))}
-          </ul>
-          {/* The counter: what came out of the crate lying on the desk. */}
-          {opened && <div className="office-counter">{details}</div>}
-          <div ref={sceneRef} className="office-scene" aria-hidden="true">
-            {languages.chat.map((line, index) => (
-              <span key={line} className={`office-robot office-robot-${index}`}>
-                <span className="office-bubble font-mono">{line}</span>
-                <RobotSprite pose="idle" mood="happy" />
-              </span>
-            ))}
-            <span ref={deskRef} className="office-desk" />
+          {/* The room, wall from the top down to the desk: a crate drops through its free space and what is inside rises into it. */}
+          <div className="office-room">
+            <div className="office-space">
+              {opened && <div className="office-counter">{details}</div>}
+            </div>
+            <div className="office-scene" aria-hidden="true">
+              {languages.chat.map((line, index) => (
+                <span key={line} className={`office-robot office-robot-${index}`}>
+                  <span className="office-bubble font-mono">{line}</span>
+                  <RobotSprite pose="idle" mood="happy" />
+                </span>
+              ))}
+              <span ref={deskRef} className="office-desk" />
+            </div>
+          </div>
+          <div className="office-languages">
+            <h3 className="rack-tag font-mono">{languages.label}</h3>
+            <ul className="languages">
+              {languages.items.map(item => (
+                <li key={item.name}><strong>{item.name}</strong><span className="language-level font-mono">{item.level}</span></li>
+              ))}
+            </ul>
           </div>
         </aside>
         {/* Pneumatic pipe from the rack to the office desk, and the layer where the travelling pieces are drawn. */}
         <svg ref={pipeRef} className="yard-pipe" aria-hidden="true">
           <path className="pipe-body" />
-          <path className="pipe-core" />
-          <rect className="pipe-nozzle" />
-          <rect className="pipe-nozzle" />
+          <path className="pipe-shine" />
+          <g className="pipe-supports" />
+          <path className="pipe-nozzle" />
         </svg>
+        {/* Suction pump driving the pipe: motor with its power cable, pressure gauge, light and exhaust stack. */}
+        <span ref={pumpRef} className="pump" aria-hidden="true">
+          <span className="pump-cable" />
+          <span className="pump-motor" />
+          <span className="pump-body"><span className="pump-gauge"><span className="pump-needle" /></span><span className="pump-light" /></span>
+          <span className="pump-stack" />
+        </span>
         <div ref={fxRef} className="yard-fx" aria-hidden="true" />
       </div>
     </div>
