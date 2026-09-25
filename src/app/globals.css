@@ -345,6 +345,8 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .crate-details-list li { padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: #151a24; font-size: 13px; animation: detail-in .35s ease-out both; animation-delay: calc(var(--i) * 350ms); }
 .crate-details-used { color: var(--foreground); font-size: 12px; line-height: 1.7; }
 .crate-details-used > span { display: inline-block; animation: detail-in .35s ease-out both; animation-delay: calc(var(--i) * 350ms); }
+/* Skipping a move: the lid snaps open or shut. */
+.yard-skip .crate-lid { transition: none; }
 .crate-details-dot { margin: 0 7px; color: var(--accent); }
 .crate-details-list a { color: var(--foreground); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
 @keyframes detail-in { from { opacity: 0; transform: translateY(8px) scale(.9); } }

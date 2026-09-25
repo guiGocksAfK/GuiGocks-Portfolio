@@ -7,7 +7,7 @@ import { RobotSprite, crewMarkup, forkliftMarkup } from '@/components/robot-spri
 type Crate = string | { name: string; projects: readonly string[]; used?: readonly string[] };
 type Shelf = { label: string; items: readonly Crate[] };
 type Languages = { label: string; items: readonly { name: string; level: string }[]; chat: readonly [string, string] };
-type CounterLabels = { hint: string; projects: string; used: string };
+type CounterLabels = { hint: string; skip: string; projects: string; used: string };
 type ProjectLink = { name: string; href: string };
 type Opened = { name: string; projects: readonly string[]; used?: readonly string[]; shelf: string };
 type Controller = { toggle: (button: HTMLButtonElement, opened: Opened) => void };
@@ -88,6 +88,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
   const pumpRef = useRef<HTMLSpanElement>(null);
   const controllerRef = useRef<Controller | null>(null);
   const [opened, setOpened] = useState<Opened | null>(null);
+  const [moving, setMoving] = useState(false);
 
   useEffect(() => {
     const refs = [yardRef.current, gridRef.current, rackRef.current, ladderRef.current, officeRef.current, deskRef.current, pipeRef.current, fxRef.current, pumpRef.current] as const;
@@ -102,7 +103,12 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
     let waiters: (() => void)[] = [];
     const timers = new Set<ReturnType<typeof setTimeout>>();
 
-    const wait = (ms: number) => new Promise<void>(resolve => { const timer = setTimeout(() => { timers.delete(timer); resolve(); }, ms); timers.add(timer); });
+    // Clicking again while a crate travels skips to the end: every wait and tween finishes at once.
+    let skipping = false;
+    const skip = () => { skipping = true; area.classList.add('yard-skip'); };
+    const endSkip = () => { skipping = false; area.classList.remove('yard-skip'); };
+
+    const wait = (ms: number) => skipping ? Promise.resolve() : new Promise<void>(resolve => { const timer = setTimeout(() => { timers.delete(timer); resolve(); }, ms); timers.add(timer); });
 
     // The background jobs also hold while a crate is out.
     async function pause(ms: number) {
@@ -116,7 +122,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       const start = performance.now();
       const step = (now: number) => {
         if (cancelled) return reject(new Cancelled());
-        const t = Math.min(1, (now - start) / Math.max(duration, 1));
+        const t = skipping ? 1 : Math.min(1, (now - start) / Math.max(duration, 1));
         onFrame(t);
         if (t < 1) requestAnimationFrame(step); else resolve();
       };
@@ -366,35 +372,66 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       area.querySelectorAll('.office-bubble-on').forEach(element => element.classList.remove('office-bubble-on'));
       const job = { button, data, mode: !motion ? 'still' as const : narrow.matches ? 'inline' as const : 'desk' as const };
       current = job;
+      if (job.mode !== 'still') setMoving(true);
       if (job.mode === 'desk') await openAtDesk(job);
       else if (job.mode === 'inline') await openInPlace(job);
       else { button.classList.add('crate-opened'); setOpened(data); }
       phase = 'open';
+      setMoving(false);
+      // A skipped opening shows everything taken out of the crate at once.
+      if (skipping) area.querySelectorAll('.crate-details *').forEach(element => element.getAnimations().forEach(animation => animation.finish()));
+      endSkip();
     }
 
     async function close() {
       if (phase !== 'open' || !current) return;
       phase = 'closing';
       const job = current;
+      if (job.mode !== 'still') setMoving(true);
       if (job.mode === 'desk') await closeAtDesk(job);
       else if (job.mode === 'inline') await closeInPlace(job);
       else { job.button.classList.remove('crate-opened'); setOpened(null); }
       current = null;
       phase = 'idle';
+      setMoving(false);
+      endSkip();
       resume();
+    }
+
+    // Runs one move, then whatever was asked for meanwhile: a crate still open is put back at once, then the next one opens.
+    let queued: { button: HTMLButtonElement; data: Opened } | 'close' | null = null;
+    async function drive(first: () => Promise<void>) {
+      await first();
+      while (queued) {
+        const next = queued;
+        queued = null;
+        if (phase === 'open') { skip(); await close(); }
+        if (next !== 'close') await open(next.button, next.data);
+      }
+    }
+    // Esc, or a click outside, puts the crate back; during a move it skips to the end and then puts it back at once.
+    function putBack() {
+      if (phase === 'open') drive(close).catch(ignoreCancelled);
+      else if (phase === 'opening') { skip(); queued = 'close'; }
+      else if (phase === 'closing') skip();
     }
 
     controllerRef.current = {
       // Clicking the open crate puts it back; clicking another one puts the open one back first.
       toggle: (button, data) => {
-        if (phase === 'opening' || phase === 'closing') return;
+        // During a move a click skips it; a click on another crate also opens that one right after.
+        if (phase === 'opening' || phase === 'closing') {
+          skip();
+          if (current?.button !== button) queued = { button, data };
+          return;
+        }
         const same = current?.button === button;
-        (async () => { await close(); if (!same) await open(button, data); })().catch(ignoreCancelled);
+        drive(async () => { await close(); if (!same) await open(button, data); }).catch(ignoreCancelled);
       },
     };
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') close().catch(ignoreCancelled); };
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') putBack(); };
     const onClick = (event: MouseEvent) => {
-      if (phase === 'open' && !(event.target as Element).closest('.crate-button, .crate-details')) close().catch(ignoreCancelled);
+      if (phase === 'open' && !(event.target as Element).closest('.crate-button, .crate-details')) putBack();
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('click', onClick);
@@ -489,6 +526,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       fx.replaceChildren();
       pump.classList.remove('pump-on');
       area.querySelectorAll('.ladder-clerk, .forklift, .crate-popper').forEach(element => element.remove());
+      area.classList.remove('yard-skip');
       area.querySelectorAll('.crate-away, .crate-opened').forEach(element => element.classList.remove('crate-away', 'crate-opened'));
     };
   }, []);
@@ -497,7 +535,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
 
   return (
     <div ref={yardRef} className="yard">
-      <p className="yard-hint font-mono">{counter.hint}</p>
+      <p className="yard-hint font-mono" aria-live="polite">{moving ? counter.skip : counter.hint}</p>
       <div ref={gridRef} className="yard-grid">
         <div ref={rackRef} className="rack">
           <span className="rack-post rack-post-left" aria-hidden="true" />

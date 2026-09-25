@@ -107,17 +107,17 @@ export const content = {
       ] },
     ],
     // Clicking a crate sends it to the office counter, where a robot takes out what is inside.
-    counter: { hint: 'clique num caixote para ver o que tem dentro', projects: 'Projetos', used: 'Usei' },
+    counter: { hint: 'Clique num caixote para ver o que tem dentro', skip: 'Clique de novo para pular', projects: 'Projetos', used: 'Usei' },
     languages: {
       label: 'Idiomas',
-      items: [{ name: 'Português', level: 'nativo' }, { name: 'Inglês', level: 'intermediário-avançado' }],
+      items: [{ name: 'Português', level: 'Nativo' }, { name: 'Inglês', level: 'Avançado' }],
       // What the two robots say to each other on the languages shelf.
       chat: ['Olá!', 'Hello!'],
     },
   } as {
     section: string; title: string; countLabel: string;
     shelves: readonly { label: string; items: readonly (string | { name: string; projects: readonly string[]; used?: readonly string[] })[] }[];
-    counter: { hint: string; projects: string; used: string };
+    counter: { hint: string; skip: string; projects: string; used: string };
     languages: { label: string; items: readonly { name: string; level: string }[]; chat: readonly [string, string] };
   },
   projects: {
