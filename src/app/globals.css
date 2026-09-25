@@ -415,9 +415,15 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
    whole width, only the skip robot on it, the content in the page but out of sight. */
 .contact-section { position: relative; }
 .contact-canvas, .skip-robot { display: none; }
-html[data-build='pending'] .contact-built { opacity: 0; pointer-events: none; }
+/* While pending, every piece of the section is out of sight on its own, so the robots can bring them in one by one:
+   a piece shows once it gets .is-built; the list's and the footer's lines are drawn on stage instead. */
+html[data-build='pending'] .contact-built { pointer-events: none; }
+html[data-build='pending'] .contact-built :is(.contact-status, h2, .contact-row > *, .ending, .section-footer > *):not(.is-built) { opacity: 0; }
+html[data-build='pending'] .contact-built :is(.contact-list, .contact-list > li) { border-color: transparent; }
+html[data-build='pending'] .contact-built .section-footer { border-top-color: transparent; }
+.contact-built :is(.contact-status, h2, .contact-row > *, .ending, .section-footer > *) { transition: opacity .6s ease; }
 html[data-build='pending'] .contact-canvas { position: absolute; top: 0; bottom: 0; left: 50%; z-index: 0; display: block; width: 100vw; margin-left: -50vw; background: #e4e7ee; }
-.contact-built { position: relative; z-index: 1; transition: opacity .6s ease; }
+.contact-built { position: relative; z-index: 1; }
 /* Skip robot: stands at the bottom right, where the section's last line will be, holding up its sign. */
 html[data-build='pending'] .skip-robot { position: absolute; right: 4%; bottom: 66px; z-index: 3; display: block; width: 33px; height: 36px; cursor: pointer; }
 .skip-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
@@ -460,6 +466,27 @@ html[data-build='pending'] .contact-paint { position: absolute; top: 0; bottom: 
 .giant-roller { position: absolute; left: 0; top: 0; width: 22px; }
 .roller-drum { position: absolute; left: 0; top: 0; bottom: 0; width: 22px; border-radius: 6px; background: linear-gradient(90deg, #07090d, #1c2130 45%, #07090d); box-shadow: 0 0 0 2px #5d6678; }
 .roller-pole { position: absolute; left: -44px; bottom: 18px; width: 3px; height: 110px; background: #8f9bb3; transform: rotate(22deg); transform-origin: 50% 100%; }
+/* Lines drawn on stage by the crew, and the dust of the boss's stomp. */
+.stage-line { position: absolute; width: 0; height: 1px; background: var(--border); }
+.stage-dust { top: -10px; }
+.stage-dust-left { --drift: -14px; }
+.stage-dust-right { --drift: 14px; }
+/* The title being written: a copy of the heading with the pencil's text so far. */
+.stage-title { position: absolute; display: inline-block; margin: 0; white-space: nowrap; }
+/* Giant pencil held up from the hand, leaning back: graphite tip at the top, pink eraser at the bottom; turned around
+   (.giant-pencil-erasing) the eraser is on top. */
+.giant-pencil { position: absolute; left: 2px; bottom: 20px; width: 7px; border-radius: 2px; background: linear-gradient(to bottom, #151a24 0 4px, #d9b48a 4px 11px, #e9c46a 11px calc(100% - 9px), #8f9bb3 calc(100% - 9px) calc(100% - 6px), #e79aa8 calc(100% - 6px)); transform: rotate(-24deg); transform-origin: 50% 100%; }
+.giant-pencil-erasing { background: linear-gradient(to bottom, #e79aa8 0 6px, #8f9bb3 6px 9px, #e9c46a 9px calc(100% - 11px), #d9b48a calc(100% - 11px) calc(100% - 4px), #151a24 calc(100% - 4px)); }
+.eraser-crumb { position: absolute; width: 3px; height: 3px; border-radius: 1px; background: #e79aa8; animation: crumb-fall .6s ease-in forwards; }
+@keyframes crumb-fall { to { opacity: 0; transform: translate(4px, 26px); } }
+/* Pieces carried over a head (a small copy), thrown along an arc, and landing in place with a bounce. */
+.carried-piece { position: absolute; left: 50%; bottom: calc(100% + 3px); margin: 0; white-space: nowrap; transform: translateX(-50%) scale(.6); transform-origin: 50% 100%; transition: none; }
+.flying-piece { position: absolute; left: 0; top: 0; z-index: 5; margin: 0; white-space: nowrap; transform-origin: 0 0; transition: none; }
+.carried-gap { visibility: hidden; }
+.fallen-at { position: absolute; left: 0; top: 0; color: var(--foreground); font-size: 15px; font-weight: 700; line-height: 1; }
+.stage-click { z-index: 6; }
+.just-built { animation: piece-land .35s ease-out; }
+@keyframes piece-land { 0% { transform: translateY(-6px); } 60% { transform: translateY(2px); } 100% { transform: none; } }
 /* The light streak left in the wet paint by the slip, and the painter's hand roller. */
 .paint-streak { position: absolute; top: -7px; width: 0; height: 5px; border-radius: 2px; background: #e4e7ee; }
 .hand-roller { position: absolute; left: -13px; bottom: 7px; width: 13px; height: 6px; border-radius: 2px; background: #1c2130; box-shadow: 0 0 0 1px #5d6678; }
