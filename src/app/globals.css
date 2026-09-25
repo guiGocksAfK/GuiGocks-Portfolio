@@ -402,21 +402,22 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
    then burnt into the site's colours, with a note that it works now. */
 .zap-icon { position: relative; display: inline-block; width: 22px; height: 22px; }
 .zap-icon svg { position: absolute; inset: 0; display: block; width: 22px; height: 22px; fill: #25d366; }
-.zap-half, .zap-shard, .zap-tape { display: none; }
+.zap-icon :is(.zap-half, .zap-shard, .zap-tape) { display: none; }
 .zap-broken .zap-whole { visibility: hidden; }
-.zap-broken :is(.zap-half, .zap-shard) { display: block; }
-.zap-half-left { clip-path: polygon(0 0, 55% 0, 42% 45%, 58% 60%, 45% 100%, 0 100%); rotate: -14deg; translate: -3px 2px; }
-.zap-half-right { clip-path: polygon(55% 0, 100% 0, 100% 100%, 45% 100%, 58% 60%, 42% 45%); rotate: 12deg; translate: 3px 4px; }
+.zap-icon.zap-broken :is(.zap-half, .zap-shard) { display: block; }
+.zap-shaking { animation: zap-shake-icon .08s linear infinite alternate; }
+@keyframes zap-shake-icon { from { translate: -1.5px 0; rotate: -4deg; } to { translate: 1.5px 0; rotate: 4deg; } }
+.zap-jolt { animation: zap-shake-icon .06s linear 3 alternate; }
+.zap-half-left { clip-path: polygon(0 0, 55% 0, 42% 45%, 58% 60%, 45% 100%, 0 100%); rotate: -24deg; translate: -7px 4px; }
+.zap-half-right { clip-path: polygon(55% 0, 100% 0, 100% 100%, 45% 100%, 58% 60%, 42% 45%); rotate: 20deg; translate: 7px 7px; }
 .zap-shard { position: absolute; left: 10px; top: 10px; width: 4px; height: 4px; background: #25d366; animation: zap-shard .7s ease-in forwards; }
 .zap-shard-0 { --dx: 6px; }
 .zap-shard-1 { --dx: -10px; animation-delay: .05s; }
 .zap-shard-2 { --dx: 14px; animation-delay: .1s; }
 @keyframes zap-shard { to { translate: var(--dx, 0) 34px; rotate: 200deg; opacity: 0; } }
-.zap-taped .zap-tape { position: absolute; left: -5px; top: 8px; display: block; width: 32px; height: 6px; background: #e2cf9a; opacity: .92; rotate: -22deg; }
+.zap-icon.zap-taped .zap-tape { position: absolute; left: -5px; top: 8px; display: block; width: 32px; height: 6px; background: #e2cf9a; opacity: .92; rotate: -22deg; }
 .zap-icon:is(.zap-burnt, .zap-ready, .zap-done) svg { fill: var(--muted); }
 .contact-row:hover .zap-icon:is(.zap-burnt, .zap-ready, .zap-done) svg { fill: var(--accent); }
-.zap-ready { position: absolute; right: calc(100% + 12px); top: 50%; color: var(--accent); font-size: 12px; white-space: nowrap; translate: 0 -50%; animation: zap-ready 1s ease-in-out infinite alternate; }
-@keyframes zap-ready { to { translate: -4px -50%; } }
 /* The robot who fixes it: its toolbox, the sparks of its whacks, the blast (a flash, smoke, the tape flying off), and
    how it (and later its seat at the picnic) look afterwards. */
 .zap-toolbox { position: absolute; left: -9px; bottom: 6px; width: 10px; height: 7px; border-radius: 1px; background: #8f9bb3; box-shadow: inset 0 2px 0 #5d6678; }
@@ -428,7 +429,24 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .zap-tape-flying { position: absolute; z-index: 5; width: 32px; height: 6px; margin: -3px 0 0 -16px; background: #e2cf9a; animation: zap-tape .9s ease-out forwards; }
 @keyframes zap-tape { from { rotate: -22deg; } to { translate: 30px -70px; rotate: 380deg; opacity: 0; } }
 .zap-puff { --drift: 5px; z-index: 5; }
-.zap-charred { filter: brightness(.28) contrast(1.3); }
+.zap-charred { filter: grayscale(1) brightness(.42) contrast(1.4) drop-shadow(1px 0 0 #8f9bb3) drop-shadow(-1px 0 0 #8f9bb3) drop-shadow(0 1px 0 #8f9bb3) drop-shadow(0 -1px 0 #8f9bb3); }
+/* Wide white eyes on the charred robot (over its visor), blinking now and then. */
+.zap-eyes { position: absolute; left: 5px; top: 8px; width: 14px; height: 4px; background: linear-gradient(90deg, #fff 0 4px, transparent 4px 10px, #fff 10px); animation: zap-blink 2.4s steps(1) infinite; }
+@keyframes zap-blink { 92% { scale: 1 .15; } }
+/* The hammer, swung down onto the button on each whack; the arm reaching out to press it; the dropped sandwich; the
+   section shaking with the blast; marks over the robot's head; the "now it works" sign it holds up. */
+.zap-hammer { position: absolute; left: 20px; top: 2px; width: 4px; height: 16px; background: #8a6a4c; transform-origin: 50% 100%; rotate: -50deg; }
+.zap-hammer::before { content: ''; position: absolute; left: -4px; top: -3px; width: 12px; height: 6px; border-radius: 1px; background: #8f9bb3; }
+.zap-hammer-hit { animation: zap-whack .22s ease-in forwards; }
+@keyframes zap-whack { from { rotate: -50deg; } to { rotate: 70deg; } }
+.zap-arm { position: absolute; left: 20px; top: 14px; width: 8px; height: 3px; background: #8f9bb3; }
+.zap-arm::after { content: ''; position: absolute; right: -2px; top: -1px; width: 4px; height: 5px; background: #dfe5f1; }
+.zap-sandwich { position: absolute; z-index: 3; width: 8px; height: 5px; border-radius: 2px; background: #c9a07a; box-shadow: inset 0 2px 0 #7fb069; }
+.zap-shake { animation: zap-section-shake .35s linear; }
+@keyframes zap-section-shake { 20% { translate: -3px 1px; } 40% { translate: 3px -1px; } 60% { translate: -2px 0; } 80% { translate: 2px 1px; } }
+.zap-mark { z-index: 6; }
+/* Held out to its left side at chest height, clear of the button, the arrow pointing past the robot at it. */
+.robot-sign.zap-sign { left: auto; right: calc(100% + 4px); bottom: 6px; font-size: 11px; transform: none; animation: none; }
 /* Hovering a row leaves it still: only its action (text and icon) turns blue. */
 .contact-row:hover .contact-action, .contact-row:focus-visible .contact-action { color: var(--accent); }
 .contact-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
