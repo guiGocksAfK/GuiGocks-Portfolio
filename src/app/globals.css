@@ -247,11 +247,9 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 }
 /* Capabilities: the tool store. A single shelving unit (a shelf per area, crates standing on metal planks, uprights on
    both sides, a floor strip for the forklift and a rolling ladder parked on the right) next to the storekeeper's office
-   with the languages. Solid crates were used in production; dashed ones in projects. */
+   with the languages. */
 .capabilities-section { padding: 90px 0 0; }
 .capabilities-section .section-footer { margin-top: 90px; }
-.yard-legend { display: flex; flex-wrap: wrap; gap: 18px; margin: -24px 0 22px; color: var(--muted); font-size: 11px; }
-.legend-item { display: inline-flex; align-items: center; gap: 8px; }
 .yard-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: 20px; align-items: stretch; }
 .rack { position: relative; overflow-x: clip; padding: 6px 60px 0 22px; border: 1px solid var(--border); border-radius: 8px; background: #11151b; }
 .rack-post { position: absolute; top: 0; bottom: 0; width: 6px; background: repeating-linear-gradient(to bottom, #3a404c 0 10px, #2c313b 10px 12px); }
@@ -262,16 +260,10 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .rack-tag { align-self: center; justify-self: start; padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: #151a24; color: var(--accent); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
 .rack-crates { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
 /* A crate: a box with a lid line, standing on the plank. */
-.crate { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px 8px; border: 1px solid #3a4a6b; border-top-width: 3px; border-radius: 3px 3px 0 0; background: #151a24; color: var(--foreground); font-size: 12px; }
-.crate-project { border-style: dashed; border-color: #4a5160; color: var(--muted); }
-.crate-mark { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex: none; }
-.crate-mark-production { background: var(--accent); }
-.crate-mark-project { border: 1.5px solid var(--muted); }
-.crate-checked::after { content: '✓'; position: absolute; right: -6px; top: -9px; width: 15px; height: 15px; border-radius: 50%; background: var(--accent); color: var(--background); font-size: 9px; line-height: 15px; text-align: center; animation: crate-check 1.6s ease-out forwards; }
-@keyframes crate-check { 0% { transform: scale(0); opacity: 1; } 15% { transform: scale(1.25); } 25% { transform: none; } 80% { opacity: 1; } 100% { transform: none; opacity: 0; } }
+.crate { position: relative; display: inline-flex; align-items: center; padding: 9px 12px 8px; border: 1px solid #3a4a6b; border-top-width: 3px; border-radius: 3px 3px 0 0; background: #151a24; color: var(--foreground); font-size: 12px; }
 .rack-floor { position: relative; height: 40px; margin: 0 -60px 0 -22px; border-top: 1px solid var(--border); background: repeating-linear-gradient(90deg, transparent 0 38px, #161b24 38px 40px); }
 /* Rolling library ladder: two rails with rungs, full height, riding on the floor. */
-.rack-ladder { position: absolute; z-index: 2; left: 0; top: 0; bottom: 6px; width: 22px; border-inline: 3px solid #8f9bb3; background: repeating-linear-gradient(to bottom, transparent 0 14px, #8f9bb3 14px 17px); pointer-events: none; }
+.rack-ladder { position: absolute; z-index: 2; right: 14px; top: 0; bottom: 6px; width: 22px; border-inline: 3px solid #8f9bb3; background: repeating-linear-gradient(to bottom, transparent 0 14px, #8f9bb3 14px 17px); pointer-events: none; }
 .rack-ladder::after { content: ''; position: absolute; left: -6px; right: -6px; bottom: -6px; height: 6px; background: radial-gradient(circle at 4px 3px, #5d6678 3px, transparent 3.5px) left / 8px 6px no-repeat, radial-gradient(circle at 4px 3px, #5d6678 3px, transparent 3.5px) right / 8px 6px no-repeat; }
 .ladder-clerk { position: absolute; left: 0; top: 0; width: 24px; height: 27px; opacity: 0; }
 .ladder-clerk svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }

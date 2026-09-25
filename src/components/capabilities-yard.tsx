@@ -3,27 +3,21 @@
 import { useEffect, useRef } from 'react';
 import { RobotSprite, crewMarkup, forkliftMarkup } from '@/components/robot-sprite';
 
-type Use = 'production' | 'project';
-type Shelf = { label: string; items: readonly { name: string; use: Use }[] };
+type Shelf = { label: string; items: readonly string[] };
 type Languages = { label: string; items: readonly { name: string; level: string }[]; chat: readonly [string, string] };
 
 // The stock-taker is drawn bigger here (3px pixels instead of 2: 24×27, see .ladder-clerk).
 const CLERK_HEIGHT = 27;
-const LADDER_WIDTH = 22;
-const SLIDE_SPEED = 160; // px per second, the ladder rolling along its rail
-const CHECK_SPEED = 80; // px per second while checking crates: an unhurried stock take
-const CLIMB_SPEED = 110;
+const RUNG_SPACING = 17;
 const FORKLIFT_SPEED = 120;
-const STEP_INTERVAL = 140;
 
 class Cancelled extends Error {}
 
-// The tool store ("almoxarifado"): one shelving unit with a shelf per area and the tools as crates standing on it,
-// marked by where they have been used, next to the storekeeper's office with the languages. The robots only work, one
-// job at a time: a stock-taker rides a rolling library ladder to a shelf and ticks its crates as the ladder slides past
-// them; then either a forklift drives across the floor with a pallet or the office robots greet each other. Runs only
-// while the section is on screen; without motion everything is static.
-export function CapabilitiesYard({ shelves, languages, legend }: { shelves: readonly Shelf[]; languages: Languages; legend: { production: string; project: string } }) {
+// The tool store ("almoxarifado"): one shelving unit with a shelf per area and the tools as crates standing on it, next
+// to the storekeeper's office with the languages. A stock-taker stands still on the parked library ladder; the other
+// robots only work, one job at a time: a forklift drives across the floor with a pallet, then the office robots greet
+// each other. Runs only while the section is on screen; without motion everything is static.
+export function CapabilitiesYard({ shelves, languages }: { shelves: readonly Shelf[]; languages: Languages }) {
   const yardRef = useRef<HTMLDivElement>(null);
   const rackRef = useRef<HTMLDivElement>(null);
   const ladderRef = useRef<HTMLSpanElement>(null);
@@ -40,7 +34,6 @@ export function CapabilitiesYard({ shelves, languages, legend }: { shelves: read
     let inView = false;
     let waiters: (() => void)[] = [];
     const timers = new Set<ReturnType<typeof setTimeout>>();
-    const intervals = new Set<ReturnType<typeof setInterval>>();
 
     async function pause(ms: number) {
       await new Promise<void>(resolve => { const timer = setTimeout(() => { timers.delete(timer); resolve(); }, ms); timers.add(timer); });
@@ -58,81 +51,20 @@ export function CapabilitiesYard({ shelves, languages, legend }: { shelves: read
       };
       requestAnimationFrame(step);
     });
-    const smooth = (t: number) => t * t * (3 - 2 * t);
 
-    // Parking spot of the ladder: the free strip on the right of the rack.
-    const parkX = () => rack.clientWidth - LADDER_WIDTH - 14;
-    let ladderX = parkX();
-    const placeLadder = (x: number) => { ladderX = x; ladder.style.transform = `translateX(${x}px)`; };
-    placeLadder(ladderX);
-
-    // A crew member drawn from markup, with alternating legs while it moves.
-    function crewMember(className: string) {
-      const el = document.createElement('span');
-      el.className = className;
-      let step = 0;
-      let legs: ReturnType<typeof setInterval> | undefined;
-      const draw = () => { el.innerHTML = crewMarkup(false, step); };
-      draw();
-      return {
-        el,
-        move: (on: boolean) => { clearInterval(legs); if (legs) intervals.delete(legs); if (on) { legs = setInterval(() => { step += 1; draw(); }, STEP_INTERVAL); intervals.add(legs); } },
-        stop: () => { clearInterval(legs); if (legs) intervals.delete(legs); },
-      };
-    }
-
-    // Stock take of one shelf: the clerk climbs the ladder to the shelf, rides it along the crates ticking each one,
-    // rides back to the parking spot and climbs down.
-    async function inspect(shelf: HTMLElement) {
-      const crates = [...shelf.querySelectorAll<HTMLElement>('.crate')];
-      if (!crates.length) return;
-      const clerk = crewMember('ladder-clerk');
-      ladder.appendChild(clerk.el);
-      const floorY = ladder.clientHeight - CLERK_HEIGHT;
-      // Feet on the shelf's plank line, i.e. level with the crates' bottoms.
-      const shelfY = shelf.offsetTop + shelf.offsetHeight - CLERK_HEIGHT - 6;
-      const setClerk = (y: number, bob = 0) => { clerk.el.style.transform = `translate(-8px, ${y - bob}px)`; };
-      const rackBox = rack.getBoundingClientRect();
-      const centerOf = (crate: HTMLElement) => { const box = crate.getBoundingClientRect(); return box.left - rackBox.left + box.width / 2; };
-      try {
-        setClerk(floorY);
-        await tween(250, t => { clerk.el.style.opacity = String(t); });
-        // Climb up.
-        clerk.move(true);
-        await tween(Math.abs(floorY - shelfY) / CLIMB_SPEED * 1000, t => setClerk(floorY + (shelfY - floorY) * t));
-        clerk.move(false);
-        await pause(250);
-        // Roll to the first crate, then along the row, ticking crates as the ladder passes their middle.
-        const firstX = Math.min(...crates.map(crate => centerOf(crate))) - LADDER_WIDTH / 2 - 10;
-        const lastX = Math.max(...crates.map(crate => centerOf(crate))) - LADDER_WIDTH / 2 + 10;
-        const from = ladderX;
-        await tween(Math.abs(from - firstX) / SLIDE_SPEED * 1000, t => placeLadder(from + (firstX - from) * smooth(t)));
-        const pending = new Set(crates);
-        await tween(Math.abs(lastX - firstX) / CHECK_SPEED * 1000, t => {
-          placeLadder(firstX + (lastX - firstX) * t);
-          for (const crate of pending) {
-            if (centerOf(crate) <= ladderX + LADDER_WIDTH / 2) {
-              pending.delete(crate);
-              crate.classList.remove('crate-checked');
-              void crate.offsetWidth;
-              crate.classList.add('crate-checked');
-            }
-          }
-        });
-        await pause(300);
-        const back = ladderX;
-        const park = parkX();
-        await tween(Math.abs(park - back) / SLIDE_SPEED * 1000, t => placeLadder(back + (park - back) * smooth(t)));
-        // Climb down and leave.
-        clerk.move(true);
-        await tween(Math.abs(floorY - shelfY) / CLIMB_SPEED * 1000, t => setClerk(shelfY + (floorY - shelfY) * t));
-        clerk.move(false);
-        await tween(250, t => { clerk.el.style.opacity = String(1 - t); });
-      } finally {
-        clerk.stop();
-        clerk.el.remove();
-      }
-    }
+    // The ladder stays parked in the free strip on the right (CSS) and the clerk stands still on one of its rungs, so
+    // nothing ever passes over the text.
+    const clerk = document.createElement('span');
+    clerk.className = 'ladder-clerk';
+    clerk.innerHTML = crewMarkup(false, 0);
+    ladder.appendChild(clerk);
+    const placeClerk = () => {
+      // Feet on the rung nearest to the middle of the ladder (rungs every 17px, the first at 14px).
+      const rung = 14 + Math.round((ladder.clientHeight * .55 - 14) / RUNG_SPACING) * RUNG_SPACING;
+      clerk.style.transform = `translate(-8px, ${rung - CLERK_HEIGHT}px)`;
+    };
+    placeClerk();
+    clerk.style.opacity = '1';
 
     // A forklift drives across the floor in front of the rack carrying a pallet with a crate, and out the other side.
     async function forklift() {
@@ -164,15 +96,12 @@ export function CapabilitiesYard({ shelves, languages, legend }: { shelves: read
     }
 
     async function run() {
-      const shelfElements = [...rack.querySelectorAll<HTMLElement>('.rack-shelf')];
+      // One job at a time, alternating so the scene keeps varying.
       for (;;) {
-        for (let index = 0; index < shelfElements.length; index++) {
-          await pause(1800);
-          await inspect(shelfElements[index]);
-          await pause(900);
-          // Alternate the in-between job so the scene keeps varying.
-          if (index % 2 === 0) await forklift(); else await chat();
-        }
+        await pause(3000);
+        await forklift();
+        await pause(3000);
+        await chat();
       }
     }
 
@@ -180,28 +109,22 @@ export function CapabilitiesYard({ shelves, languages, legend }: { shelves: read
     const observer = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; resume(); }, { threshold: .2 });
     observer.observe(area);
     document.addEventListener('visibilitychange', resume);
-    const onResize = () => { if (ladderX > parkX()) placeLadder(parkX()); };
-    window.addEventListener('resize', onResize);
+    window.addEventListener('resize', placeClerk);
     run().catch(error => { if (!(error instanceof Cancelled)) throw error; });
 
     return () => {
       cancelled = true;
       timers.forEach(clearTimeout);
-      intervals.forEach(clearInterval);
       waiters.forEach(resolve => resolve());
       observer.disconnect();
       document.removeEventListener('visibilitychange', resume);
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener('resize', placeClerk);
       area.querySelectorAll('.ladder-clerk, .forklift').forEach(element => element.remove());
     };
   }, []);
 
   return (
     <div ref={yardRef} className="yard">
-      <p className="yard-legend font-mono">
-        <span className="legend-item"><span className="crate-mark crate-mark-production" aria-hidden="true" />{legend.production}</span>
-        <span className="legend-item"><span className="crate-mark crate-mark-project" aria-hidden="true" />{legend.project}</span>
-      </p>
       <div className="yard-grid">
         <div ref={rackRef} className="rack">
           <span className="rack-post rack-post-left" aria-hidden="true" />
@@ -210,18 +133,12 @@ export function CapabilitiesYard({ shelves, languages, legend }: { shelves: read
             <section key={shelf.label} className="rack-shelf" aria-label={shelf.label}>
               <h3 className="rack-tag font-mono">{shelf.label}</h3>
               <ul className="rack-crates">
-                {shelf.items.map(item => (
-                  <li key={item.name} className={`crate crate-${item.use} font-mono`}>
-                    <span className={`crate-mark crate-mark-${item.use}`} aria-hidden="true" />
-                    {item.name}
-                    <span className="sr-only"> ({legend[item.use]})</span>
-                  </li>
-                ))}
+                {shelf.items.map(item => <li key={item} className="crate font-mono">{item}</li>)}
               </ul>
             </section>
           ))}
           <div className="rack-floor" aria-hidden="true" />
-          {/* Rolling library ladder on its rail; parked on the right when idle. */}
+          {/* Library ladder parked on the right, with the stock-taker standing on it. */}
           <span ref={ladderRef} className="rack-ladder" aria-hidden="true" />
         </div>
         <aside className="office" aria-label={languages.label}>

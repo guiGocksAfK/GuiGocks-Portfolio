@@ -125,7 +125,7 @@ export default function Home() {
       </section>
       <section id="capacidades" aria-labelledby="capabilities-title" className="capabilities-section">
         <h2 id="capabilities-title">{capabilities.title}</h2>
-        <CapabilitiesYard shelves={capabilities.shelves} languages={capabilities.languages} legend={capabilities.legend} />
+        <CapabilitiesYard shelves={capabilities.shelves} languages={capabilities.languages} />
         <div className="section-footer font-mono">
           <span>{capabilities.section}</span>
           <span>{capabilities.shelves.reduce((total, shelf) => total + shelf.items.length, 0)} {capabilities.countLabel}</span>

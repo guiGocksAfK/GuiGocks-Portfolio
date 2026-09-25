@@ -61,18 +61,16 @@ export const content = {
     avatarLabel: 'Avatar em pixel art de Guilherme com capacete de obra',
   },
   // The tool store ("almoxarifado"): every tool on a shelf per area, marked by where it has really been used.
-  // use: 'production' = in a system that is live and in use (MyRank, Escola Imaculada); 'project' = academic or in-progress work.
   capabilities: {
     section: '04 — Capacidades',
     title: 'Capacidades.',
     countLabel: 'ferramentas',
-    legend: { production: 'em produção', project: 'em projeto' },
     shelves: [
-      { label: 'Linguagens', items: [{ name: 'Java', use: 'production' }, { name: 'TypeScript', use: 'production' }, { name: 'JavaScript', use: 'production' }, { name: 'SQL', use: 'production' }, { name: 'Python', use: 'project' }] },
-      { label: 'Backend', items: [{ name: 'Spring Boot', use: 'production' }, { name: 'Node.js', use: 'production' }, { name: 'NestJS', use: 'production' }, { name: 'Prisma', use: 'production' }, { name: 'Flyway', use: 'production' }, { name: 'Spring Security', use: 'project' }] },
-      { label: 'Frontend', items: [{ name: 'React', use: 'production' }, { name: 'Angular', use: 'production' }, { name: 'Tailwind CSS', use: 'production' }, { name: 'Vite', use: 'production' }, { name: 'Next.js', use: 'project' }] },
-      { label: 'Banco de dados', items: [{ name: 'PostgreSQL', use: 'production' }, { name: 'Neon', use: 'production' }] },
-      { label: 'Infra e DevOps', items: [{ name: 'Docker', use: 'production' }, { name: 'Docker Compose', use: 'production' }, { name: 'Caddy', use: 'production' }, { name: 'Oracle Cloud', use: 'production' }, { name: 'Vercel', use: 'production' }, { name: 'Git e GitHub', use: 'production' }] },
+      { label: 'Linguagens', items: ['Java', 'TypeScript', 'JavaScript', 'SQL', 'Python'] },
+      { label: 'Backend', items: ['Spring Boot', 'Node.js', 'NestJS', 'Prisma', 'Flyway', 'Spring Security'] },
+      { label: 'Frontend', items: ['React', 'Angular', 'Tailwind CSS', 'Vite', 'Next.js'] },
+      { label: 'Banco de dados', items: ['PostgreSQL', 'Neon'] },
+      { label: 'Infra e DevOps', items: ['Docker', 'Docker Compose', 'Caddy', 'Oracle Cloud', 'Vercel', 'Git e GitHub'] },
     ],
     languages: {
       label: 'Idiomas',
@@ -81,8 +79,8 @@ export const content = {
       chat: ['Olá!', 'Hello!'],
     },
   } as {
-    section: string; title: string; countLabel: string; legend: { production: string; project: string };
-    shelves: readonly { label: string; items: readonly { name: string; use: 'production' | 'project' }[] }[];
+    section: string; title: string; countLabel: string;
+    shelves: readonly { label: string; items: readonly string[] }[];
     languages: { label: string; items: readonly { name: string; level: string }[]; chat: readonly [string, string] };
   },
   projects: {
