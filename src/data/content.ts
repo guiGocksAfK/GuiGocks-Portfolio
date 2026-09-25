@@ -24,7 +24,7 @@ export const content = {
     technologies: [
       { label: 'backend', items: ['Java', 'Spring Boot', 'Node.js', 'Python'] },
       { label: 'frontend', items: ['TypeScript', 'JavaScript', 'React', 'Next.js', 'Angular'] },
-      { label: 'infra', items: ['Docker', 'Oracle Cloud', 'Vercel', 'Neon'] },
+      { label: 'infra', items: ['Docker', 'Oracle Cloud', 'Neon', 'Vercel', 'Neon'] },
     ],
     section: '01 — Apresentação',
     location: 'Foz do Iguaçu, PR',
@@ -66,12 +66,17 @@ export const content = {
     title: 'Capacidades.',
     countLabel: 'ferramentas',
     shelves: [
-      { label: 'Linguagens', items: ['Java', 'TypeScript', 'JavaScript', 'SQL', 'Python'] },
-      { label: 'Backend', items: ['Spring Boot', 'Node.js', 'NestJS', 'Prisma', 'Flyway', 'Spring Security'] },
+      { label: 'Linguagens', items: ['Java', 'TypeScript', 'JavaScript', 'Python'] },
+      { label: 'Backend', items: [
+        // Test data for the crate opening; the real contents come later.
+        { name: 'Spring Boot', projects: ['MyRank', 'Projeto exemplo'], used: ['Módulo exemplo 1', 'Módulo exemplo 2'] },
+        'Node.js', 'Prisma', 'Flyway'] },
       { label: 'Frontend', items: ['React', 'Angular', 'Tailwind CSS', 'Vite', 'Next.js'] },
-      { label: 'Banco de dados', items: ['PostgreSQL', 'Neon'] },
-      { label: 'Infra e DevOps', items: ['Docker', 'Docker Compose', 'Caddy', 'Oracle Cloud', 'Vercel', 'Git e GitHub'] },
+      { label: 'Banco de dados', items: ['SQL', 'PostgreSQL'] },
+      { label: 'Infra e DevOps', items: ['Docker', 'Caddy', 'Oracle Cloud', 'Neon', 'Vercel', 'Git e GitHub'] },
     ],
+    // Clicking a crate sends it to the office counter, where a robot takes out what is inside.
+    counter: { hint: 'clique num caixote para ver o que tem dentro', projects: 'Projetos', used: 'Usei', close: 'Guardar caixote' },
     languages: {
       label: 'Idiomas',
       items: [{ name: 'Português', level: 'nativo' }, { name: 'Inglês', level: 'intermediário-avançado' }],
@@ -80,7 +85,8 @@ export const content = {
     },
   } as {
     section: string; title: string; countLabel: string;
-    shelves: readonly { label: string; items: readonly string[] }[];
+    shelves: readonly { label: string; items: readonly (string | { name: string; projects: readonly string[]; used?: readonly string[] })[] }[];
+    counter: { hint: string; projects: string; used: string; close: string };
     languages: { label: string; items: readonly { name: string; level: string }[]; chat: readonly [string, string] };
   },
   projects: {

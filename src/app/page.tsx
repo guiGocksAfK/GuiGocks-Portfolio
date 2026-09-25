@@ -125,7 +125,10 @@ export default function Home() {
       </section>
       <section id="capacidades" aria-labelledby="capabilities-title" className="capabilities-section">
         <h2 id="capabilities-title">{capabilities.title}</h2>
-        <CapabilitiesYard shelves={capabilities.shelves} languages={capabilities.languages} />
+        <CapabilitiesYard
+          shelves={capabilities.shelves} languages={capabilities.languages} counter={capabilities.counter}
+          projectLinks={projects.items.map((project, index) => ({ name: project.name, href: `#project-${index}` }))}
+        />
         <div className="section-footer font-mono">
           <span>{capabilities.section}</span>
           <span>{capabilities.shelves.reduce((total, shelf) => total + shelf.items.length, 0)} {capabilities.countLabel}</span>

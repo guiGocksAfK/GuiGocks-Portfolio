@@ -250,8 +250,9 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
    with the languages. */
 .capabilities-section { padding: 90px 0 0; }
 .capabilities-section .section-footer { margin-top: 90px; }
-.yard-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: 20px; align-items: stretch; }
-.rack { position: relative; overflow-x: clip; padding: 6px 60px 0 22px; border: 1px solid var(--border); border-radius: 8px; background: #11151b; }
+.yard-hint { margin: -26px 0 6px; color: var(--muted); font-size: 11px; }
+.yard-grid { position: relative; padding-top: 26px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: 20px; align-items: stretch; }
+.rack { position: relative; display: flex; flex-direction: column; overflow-x: clip; padding: 6px 60px 0 22px; border: 1px solid var(--border); border-radius: 8px; background: #11151b; }
 .rack-post { position: absolute; top: 0; bottom: 0; width: 6px; background: repeating-linear-gradient(to bottom, #3a404c 0 10px, #2c313b 10px 12px); }
 .rack-post-left { left: 8px; }
 .rack-post-right { right: 8px; }
@@ -259,9 +260,10 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .rack-shelf + .rack-shelf { margin-top: 6px; }
 .rack-tag { align-self: center; justify-self: start; padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: #151a24; color: var(--accent); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
 .rack-crates { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.rack-crates > li { display: flex; }
 /* A crate: a box with a lid line, standing on the plank. */
 .crate { position: relative; display: inline-flex; align-items: center; padding: 9px 12px 8px; border: 1px solid #3a4a6b; border-top-width: 3px; border-radius: 3px 3px 0 0; background: #151a24; color: var(--foreground); font-size: 12px; }
-.rack-floor { position: relative; height: 40px; margin: 0 -60px 0 -22px; border-top: 1px solid var(--border); background: repeating-linear-gradient(90deg, transparent 0 38px, #161b24 38px 40px); }
+.rack-floor { position: relative; height: 40px; margin: auto -60px 0 -22px; border-top: 1px solid var(--border); background: repeating-linear-gradient(90deg, transparent 0 38px, #161b24 38px 40px); }
 /* Rolling library ladder: two rails with rungs, full height, riding on the floor. */
 .rack-ladder { position: absolute; z-index: 2; right: 14px; top: 0; bottom: 6px; width: 22px; border-inline: 3px solid #8f9bb3; background: repeating-linear-gradient(to bottom, transparent 0 14px, #8f9bb3 14px 17px); pointer-events: none; }
 .rack-ladder::after { content: ''; position: absolute; left: -6px; right: -6px; bottom: -6px; height: 6px; background: radial-gradient(circle at 4px 3px, #5d6678 3px, transparent 3.5px) left / 8px 6px no-repeat, radial-gradient(circle at 4px 3px, #5d6678 3px, transparent 3.5px) right / 8px 6px no-repeat; }
@@ -279,17 +281,57 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .languages li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); font-size: 15px; }
 .languages li:last-child { border-bottom: 0; }
 .language-level { color: var(--muted); font-size: 12px; }
-.office-scene { position: relative; display: flex; align-items: flex-end; justify-content: space-around; min-height: 120px; margin: auto -20px 0; padding: 0 20px; border-top: 1px solid var(--border); background: repeating-linear-gradient(90deg, transparent 0 38px, #161b24 38px 40px); }
+.office-scene { position: relative; display: flex; align-items: flex-end; justify-content: space-around; min-height: 140px; margin: auto -20px 0; padding: 0 20px; border-top: 1px solid var(--border); background: repeating-linear-gradient(90deg, transparent 0 38px, #161b24 38px 40px); }
 .office-robot { position: relative; z-index: 1; display: block; width: 33px; height: 36px; margin-bottom: 14px; }
 .office-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-.office-desk { position: absolute; left: 50%; bottom: 14px; width: 70px; height: 20px; margin-left: -35px; border: 2px solid #3a404c; border-radius: 2px; background: #151a24; }
+.office-desk { position: absolute; left: 50%; bottom: 14px; width: 90px; height: 20px; margin-left: -45px; border: 2px solid #3a404c; border-radius: 2px; background: #151a24; }
 .office-desk::before { content: ''; position: absolute; left: 10px; top: -8px; width: 14px; height: 7px; border-radius: 3px 3px 0 0; background: #8f9bb3; }
 .office-bubble { position: absolute; bottom: calc(100% + 6px); left: 50%; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; opacity: 0; transform: translate(-50%, 4px) scale(.6); transition: opacity .2s, transform .2s ease-out; }
 .office-bubble-on { opacity: 1; transform: translate(-50%, 0); }
+/* Crates with something inside are buttons; their lid is a separate piece so it can open. */
+.crate-button { border-top-width: 1px; margin-top: 3px; cursor: pointer; text-align: left; }
+.crate-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.crate-lid { position: absolute; left: -1px; right: -1px; top: -4px; height: 3px; border-radius: 3px 3px 0 0; background: #3a4a6b; transform-origin: 0 100%; transition: transform .38s ease; }
+.crate-button:hover .crate-lid, .crate-button:focus-visible .crate-lid { transform: translateY(-3px) rotate(-8deg); }
+.crate-opened .crate-lid, .crate-opened:hover .crate-lid { transform: rotate(-105deg); }
+/* The empty slot a crate leaves while it is at the office. */
+.crate-away { border-style: dashed; border-color: #3a404c; background: transparent; color: transparent; }
+.crate-away .crate-lid { opacity: 0; }
+/* The robot living in a crate, rising out of it. */
+.crate-popper { position: absolute; left: 50%; bottom: 100%; width: 24px; height: 30px; margin-left: -12px; overflow: hidden; pointer-events: none; }
+.crate-popper-robot { position: absolute; left: 0; bottom: 0; width: 24px; height: 27px; transform: translateY(100%); }
+.crate-popper-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+/* Pneumatic pipe from the rack to the office desk, the suction hose and the pieces travelling through them. */
+.yard-pipe { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.pipe-body { fill: none; stroke: #3a404c; stroke-width: 8; stroke-linejoin: round; }
+.pipe-core { fill: none; stroke: #2c313b; stroke-width: 2; stroke-linejoin: round; }
+.pipe-nozzle { fill: #3a404c; }
+.yard-fx { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.hose { position: absolute; width: 8px; border-inline: 2px solid #3a404c; background: #5d6678; transform-origin: 50% 0; }
+.hose::after { content: ''; position: absolute; left: -7px; right: -7px; bottom: -3px; height: 5px; border-radius: 2px; background: #8f9bb3; }
+.pipe-bulge { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #5d6678; box-shadow: 0 0 0 2px #3a404c; }
+.crate-ghost { position: absolute; left: 0; top: 0; margin: 0; transform-origin: 50% 50%; pointer-events: none; }
+/* The counter in the office, and what came out of the crate. */
+.office-counter { margin-top: 16px; padding: 14px 0 16px; border-top: 1px dashed var(--border); animation: counter-in .3s ease-out both; }
+.crate-inline { display: none; }
+.crate-details-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; color: var(--accent); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.crate-details-close { width: 24px; height: 24px; border: 1px solid var(--border); border-radius: 3px; color: var(--muted); font-size: 14px; line-height: 1; cursor: pointer; transition: color .2s, border-color .2s; }
+.crate-details-close:hover, .crate-details-close:focus-visible { border-color: var(--muted); color: var(--foreground); }
+.crate-details-label { margin-bottom: 6px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.crate-details-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.crate-details-list:last-child { margin-bottom: 0; }
+.crate-details-list li { padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; background: #151a24; font-size: 13px; animation: detail-in .35s ease-out both; animation-delay: calc(var(--i) * 350ms); }
+.crate-details-list a { color: var(--foreground); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+@keyframes detail-in { from { opacity: 0; transform: translateY(8px) scale(.9); } }
+@keyframes counter-in { from { opacity: 0; } }
+.project-card-flash { animation: card-flash 1.8s ease-out; }
+@keyframes card-flash { 0%, 35% { box-shadow: 0 0 0 2px var(--accent); } 100% { box-shadow: 0 0 0 2px transparent; } }
 @media (max-width: 900px) {
   .yard-grid { grid-template-columns: minmax(0, 1fr); }
   .rack-shelf { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .rack-tag { align-self: start; }
+  .yard-pipe, .office-counter { display: none; }
+  .crate-inline { display: block; padding: 4px 0 6px; }
 }
 /* Mail robot: pops up next to the email with an envelope over its head and a "copied" bubble, then drops back down. */
 .email-wrap { position: relative; display: inline-block; }
