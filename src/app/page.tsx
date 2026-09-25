@@ -138,7 +138,7 @@ export default function Home() {
           <PatrolRobot />
         </div>
       </section>
-      <ContactStage skipLabel={contactSection.skipLabel} shout={contactSection.shout}>
+      <ContactStage skipLabel={contactSection.skipLabel} lines={contactSection.lines}>
         <p className="status contact-status font-mono">
           <span aria-hidden="true" />
           {contactSection.status.map((item, index) => <em key={item}>{index > 0 && <i aria-hidden="true">·</i>}{item}</em>)}

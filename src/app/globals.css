@@ -447,6 +447,25 @@ html[data-build='pending'] .skip-robot { position: absolute; right: 4%; bottom: 
 .steam-left { left: 2px; --drift: -8px; }
 .steam-right { right: 2px; --drift: 8px; }
 @keyframes steam-rise { 0% { opacity: .8; transform: none; } 100% { opacity: 0; transform: translate(var(--drift), -22px) scale(2); } }
+/* The dark paint the giant roller spreads over the blank canvas: revealed from the left by clip-path as it rolls. */
+.contact-paint { display: none; }
+html[data-build='pending'] .contact-paint { position: absolute; top: 0; bottom: 0; left: 50%; z-index: 0; display: block; width: 100vw; margin-left: -50vw; background: var(--background); clip-path: inset(0 100% 0 0); }
+/* Crew on stage, the ground strip and what happens on it. */
+.crew-actor { width: 24px; height: 27px; }
+.actor-body { transform-origin: 50% 100%; }
+.stage-ground { position: absolute; left: 0; right: 0; height: 0; }
+.sweat { position: absolute; top: 6px; width: 4px; height: 6px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%; background: #6994ff; animation: sweat-drop .6s ease-in forwards; }
+@keyframes sweat-drop { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(14px); } }
+/* Giant roller: a drum as tall as the section, pushed by a painter at the end of a long pole. */
+.giant-roller { position: absolute; left: 0; top: 0; width: 22px; }
+.roller-drum { position: absolute; left: 0; top: 0; bottom: 0; width: 22px; border-radius: 6px; background: linear-gradient(90deg, #07090d, #1c2130 45%, #07090d); box-shadow: 0 0 0 2px #5d6678; }
+.roller-pole { position: absolute; left: -44px; bottom: 18px; width: 3px; height: 110px; background: #8f9bb3; transform: rotate(22deg); transform-origin: 50% 100%; }
+/* The light streak left in the wet paint by the slip, and the painter's hand roller. */
+.paint-streak { position: absolute; top: -7px; width: 0; height: 5px; border-radius: 2px; background: #e4e7ee; }
+.hand-roller { position: absolute; left: -13px; bottom: 7px; width: 13px; height: 6px; border-radius: 2px; background: #1c2130; box-shadow: 0 0 0 1px #5d6678; }
+.hand-roller::after { content: ''; position: absolute; left: 11px; top: -5px; width: 2px; height: 8px; background: #8f9bb3; transform: rotate(-35deg); }
+/* The painter's grumble: small and grey, on the side it faces. */
+.stage-grumble { position: absolute; right: calc(100% + 6px); bottom: calc(100% - 4px); padding: 2px 8px; border: 1px solid #8f9bb3; border-radius: 4px; background: #f7f8fb; color: #5d6678; font-size: 12px; white-space: nowrap; animation: bubble-pop .25s ease-out both; }
 /* Happy ending: a park at dusk standing on the footer's line. Sky fading into the page, a pale sun setting behind the
    hills and the lake, grass on the ground, and the pixel sprites placed along it. Calm idle loops only. */
 .ending { position: relative; height: 180px; margin-top: 28px; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); }

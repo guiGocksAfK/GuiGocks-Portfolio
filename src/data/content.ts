@@ -205,8 +205,8 @@ export const content = {
     footerNote: 'Obrigado pela visita',
     // Sign held by the robot that lets the visitor skip the robots building the section.
     skipLabel: 'Pular animação ⏭',
-    // What the boss shouts to call the crew when it finds the section unbuilt.
-    shout: 'EQUIPE!!',
+    // What the robots say while building: the boss calling the crew, the boss stopping the fight, the painter grumbling.
+    lines: { call: 'EQUIPE!!', stop: 'CHEGA!!', grumble: 'affs…' },
     copiedLabel: 'copiado!',
     pendingLabel: 'em breve',
     rows: [
@@ -217,7 +217,7 @@ export const content = {
       { label: 'Currículo', value: 'Baixar em PDF', action: 'baixar', kind: 'download', href: null },
     ],
   } as {
-    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; shout: string; copiedLabel: string; pendingLabel: string;
+    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; grumble: string }; copiedLabel: string; pendingLabel: string;
     rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null }[];
   },
   contact: {
