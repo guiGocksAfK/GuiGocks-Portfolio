@@ -27,7 +27,7 @@ const RUN_SPEED = 220;
 const DASH_SPEED = 520;
 const COVER_RUN = 245; // the crew rushing to hide the patches
 const CARRY_WALK = 260; // the ones bringing in the picnic basket and the bench, so the park doesn't wait on them
-const TO_SEATS = 750; // ms for the crew to walk over to where they watch the park being built
+const PARK_AFTER = 1000; // ms after the crew head for their watching spots when the park starts going up
 const FOOTER_AFTER = 1600; // ms into the e-mail's delivery (the "@" rolling off) when the footer's notes get thrown
 const SKIP_PEEK_EVERY = 15000; // ms between the skip robot's peeks with a joke
 const COVER_GAP = 550; // ms between one disguise's trick and the next
@@ -1125,12 +1125,11 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     async function bench(boss: ReturnType<typeof robot>, waiting: Promise<unknown>) {
       const seat = part('.ending-bench');
       if (!seat) return;
-      // While it waits, now and then a short fit of impatience: tapping its foot, huffing, rolling its eyes up.
+      // While it waits, now and then a short fit of impatience: tapping its foot, rolling its eyes up.
       let tapping = true;
       const impatience = (async () => {
         const fits = [
           async () => { const dots = over(boss.element, 'stage-mark', '…'); for (let tap = 0; tap < 3; tap++) await boss.hop(3, 220); dots.remove(); },
-          async () => { boss.draw('idle', 'angry'); puff(boss.element, 'left'); await pause(500); boss.draw('idle', 'normal'); },
           async () => { boss.draw('blink', 'normal'); await pause(600); boss.draw('idle', 'normal', 'right'); await pause(400); boss.draw('idle', 'normal'); },
         ];
         for (let fit = 0; tapping; fit++) {
@@ -1232,21 +1231,25 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
     async function buildPark(boss: ReturnType<typeof robot>, team: Member[]) {
       // Everyone steps up onto the grass; the crew clear the stage to watch from two gaps in the park (clapping now and
-      // then: a little hop with their arms up) until it's time for their hats.
+      // then: a little hop with their arms up) until it's time for their hats. The park starts going up while they're
+      // still walking over; each one joins the cheering once it gets there.
       const width = stageEl.clientWidth;
       const bossY = boss.y;
       void tween(250, t => boss.place(boss.x, bossY - GRASS * t - Math.sin(Math.PI * t) * 8)).catch(() => {});
       const seats = [.3, .34, .38, .68, .72];
-      await Promise.all(team.map(async (member, index) => {
+      const seated: Member[] = [];
+      const arriving = Promise.all(team.map(async (member, index) => {
         await leap(member, member.x, GRASS, 250, 8);
-        const seatX = width * seats[index % seats.length];
-        await walkOnGrass(member, seatX, Math.max(CREW_WALK, Math.abs(seatX - member.x) / TO_SEATS * 1000));
+        await walkOnGrass(member, width * seats[index % seats.length]);
         member.pose({ facing: index < 3 ? -1 : 1 });
+        seated.push(member);
       }));
+      await pause(PARK_AFTER);
       let watching = true;
       const cheering = (async () => {
         for (let round = 0; watching; round++) {
-          const fan = team[round % team.length];
+          if (!seated.length) { await pause(200); continue; }
+          const fan = seated[round % seated.length];
           fan.pose({ arms: true });
           await tween(260, t => fan.place(fan.x, GRASS + Math.sin(Math.PI * t) * 5));
           fan.pose({ arms: false });
@@ -1264,6 +1267,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         await Promise.all([sky, lawn, woods, blanket]);
       })();
       await bench(boss, scenery);
+      await arriving;
       watching = false;
       await cheering;
       await celebrate(team);
