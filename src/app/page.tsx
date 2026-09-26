@@ -17,6 +17,7 @@ import { ContactList } from '@/components/contact-list';
 import { EndingScene } from '@/components/ending-scene';
 import { ContactStage } from '@/components/contact-stage';
 import { SiteFooter } from '@/components/site-footer';
+import { Teleporter } from '@/components/teleport';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -152,6 +153,7 @@ export default function Home() {
       </ContactStage>
       </main>
       <SiteFooter footer={content.footer} />
+      <Teleporter />
     </div>
   );
 }
