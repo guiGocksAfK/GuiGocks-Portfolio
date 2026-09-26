@@ -615,10 +615,10 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
           </span>
           <span className="pump-stack" aria-hidden="true" />
         </span>
-        {/* The robot that holds up the note about the lever, standing on the pipe right after the pump. */}
+        {/* The robot that holds up the note about the lever: standing on the pipe behind it, head and hands over its top. */}
         <span className="pump-helper" aria-hidden="true">
+          <span className="pump-helper-robot" dangerouslySetInnerHTML={{ __html: crewMarkup(true, 0) }} />
           <span className="pump-note font-mono">{counter.nudge}</span>
-          <span className="pump-helper-robot" dangerouslySetInnerHTML={{ __html: crewMarkup(false, 0) }} />
         </span>
         <div ref={fxRef} className="yard-fx" aria-hidden="true" />
       </div>

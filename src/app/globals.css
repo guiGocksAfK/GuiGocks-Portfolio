@@ -336,15 +336,17 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* Hover label next to the pump, over the free strip above the rack. */
 .pump-tip { position: absolute; left: calc(100% + 34px); top: 50%; padding: 3px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--background); color: var(--foreground); font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transform: translate(-4px, -50%); transition: opacity .2s, transform .2s; }
 .pump-switch:hover .pump-tip, .pump-switch:focus-visible .pump-tip { opacity: 1; transform: translate(0, -50%); }
-/* Shown once, as the first crate goes into the pipe: a robot standing on the pipe right after the pump holds up a note
-   pointing at the lever, which wiggles meanwhile. It hops up from behind the pipe and back down when it's done. */
-.pump-helper { position: absolute; left: 84px; top: -13px; z-index: 4; display: flex; align-items: flex-end; gap: 1px; height: 27px; pointer-events: none; }
-.pump-helper-robot { position: relative; z-index: 1; width: 24px; height: 27px; opacity: 0; transform: translateY(14px) scaleX(-1); transition: opacity .25s, transform .35s ease-out; }
+/* Shown once, as the first crate goes into the pipe: a note pointing at the lever (which wiggles meanwhile), held up by
+   a robot standing on the pipe behind it, only its head and hands showing over the note's top edge. The two come up
+   together and go back down when it's done; now and then the robot gives the note a little shake. */
+.pump-helper { position: absolute; left: 84px; top: 4px; z-index: 4; display: block; pointer-events: none; transform-origin: 0 50%; }
+.pump-helper-robot { position: absolute; right: 22px; top: -13px; width: 24px; height: 27px; }
 .pump-helper-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-.pump-note { position: relative; margin-bottom: -14px; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; opacity: 0; transform: translateY(14px); transition: opacity .25s, transform .35s ease-out; }
+.pump-note { position: relative; z-index: 1; display: block; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; }
 .pump-note::before { content: ''; position: absolute; right: 100%; top: 50%; margin-top: -4px; border: 4px solid transparent; border-right-color: var(--accent); }
-.pump-nudge .pump-helper-robot { opacity: 1; transform: scaleX(-1); }
-.pump-nudge .pump-note { opacity: 1; transform: none; transition-delay: .15s; }
+.pump-helper { opacity: 0; translate: 0 12px; transition: opacity .25s, translate .35s ease-out; }
+.pump-nudge .pump-helper { opacity: 1; translate: 0 0; animation: helper-shake 3s ease-in-out .6s infinite; }
+@keyframes helper-shake { 0%, 72%, 100% { rotate: 0deg; } 78% { rotate: -2deg; } 86% { rotate: 1.5deg; } 93% { rotate: -.5deg; } }
 .pump-nudge .pump-tip { opacity: 0; }
 .pump-nudge .pump-lever { animation: lever-wiggle .5s ease-in-out infinite; }
 .pump-on .pump-needle { transform: rotate(55deg); }
