@@ -652,6 +652,20 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .ending-picnic-crew-2 { left: 84px; transform: scaleX(-1); }
 .ending-basket { position: absolute; left: 50px; bottom: 7px; width: 24px; height: 18px; }
 .ending-flyer { left: 77%; bottom: 16px; width: 24px; height: 30px; }
+/* Fishing from the grass: the rod reaches back over the lake and the float sits on the water, bobbing. */
+.ending-fisher { left: 33%; bottom: 16px; width: 24px; height: 30px; }
+.ending-rod-rig { position: absolute; left: 21px; bottom: 11px; width: 60px; height: 60px; transform-origin: 0 100%; animation: rod-tug 7s ease-in-out infinite; }
+.ending-rod { left: 0; top: 0; overflow: visible; }
+.ending-rod-pole { fill: none; stroke: #8a6a4c; stroke-width: 1.5; }
+.ending-rod-line { fill: none; stroke: #8f9bb3; stroke-width: 1; opacity: .6; }
+.ending-float { position: absolute; display: block; left: 46px; top: 24px; width: 4px; height: 4px; border-radius: 50%; background: #ffb347; animation: float-bob 2.4s ease-in-out infinite alternate; }
+@keyframes rod-tug { 0%, 86%, 100% { transform: none; } 90% { transform: rotate(-6deg); } 94% { transform: rotate(-2deg); } }
+@keyframes float-bob { to { translate: 0 1.5px; } }
+/* Napping on its back, a "z" drifting up from it now and then. */
+.ending-napper { left: 45%; bottom: 16px; width: 36px; height: 12px; }
+.ending-z { position: absolute; left: 6px; top: -6px; color: #8f9bb3; font-size: 10px; line-height: 1; opacity: 0; animation: nap-z 4s ease-out infinite; }
+.ending-z-2 { animation-delay: 2s; }
+@keyframes nap-z { 0% { translate: 0 0; opacity: 0; } 15% { opacity: .8; } 100% { translate: 10px -22px; opacity: 0; } }
 .ending-kite-rig { position: absolute; left: 22px; bottom: 16px; width: 110px; height: 130px; transform-origin: 0 100%; animation: kite-swing 5s ease-in-out infinite alternate; }
 .ending-string { left: 0; top: 0; overflow: visible; }
 .ending-string path { fill: none; stroke: #8f9bb3; stroke-width: 1; opacity: .6; }
@@ -662,7 +676,7 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .ending-bush { right: 2%; bottom: 16px; width: 40px; height: 16px; }
 @media (max-width: 700px) {
   .ending { height: 180px; margin-top: 44px; }
-  .ending-tree, .ending-picnic, .ending-bush, .ending-pigeon-1 { display: none; }
+  .ending-tree, .ending-picnic, .ending-fisher, .ending-napper, .ending-bush, .ending-pigeon-1 { display: none; }
   .ending-bench { left: 5%; }
   .ending-pigeon-2 { left: 34%; }
   .ending-lake { left: 22%; right: 22%; }

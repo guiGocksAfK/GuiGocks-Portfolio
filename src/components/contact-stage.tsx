@@ -382,8 +382,9 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       // Right after the shout the order sinks in: "!!" over the crew one after the other, and the disguise falls apart
       // as they leave their posts: the sign drops, the one stuck to the wall slides down, arms go up.
       await pause(ORDER_SINKS_IN);
+      // (Not the first one, the boss's shout is right over its head.)
       const alarms: HTMLElement[] = [];
-      for (const member of team) {
+      for (const member of team.slice(1)) {
         alarms.push(over(member.element, 'stage-mark stage-mark-alert', '!!'));
         await pause(70);
       }
@@ -1177,7 +1178,8 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await leaving;
     }
 
-    // Job done: the crew throw their hard hats in the air, two sit down for the picnic and one goes to fly the kite.
+    // Job done: the crew throw their hard hats in the air and each takes a place in the park: one fishes, one naps, two sit
+    // down for the picnic and one goes to fly the kite.
     async function celebrate(crewLeft: Member[]) {
       const width = stageEl.clientWidth;
       for (const member of crewLeft) {
@@ -1190,8 +1192,8 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await tween(600, t => crewLeft.forEach(member => member.place(member.x, GRASS + Math.sin(Math.PI * t) * 6)));
       crewLeft.forEach(member => member.pose({ arms: false }));
       await pause(500);
-      const spots = ['.ending-picnic-crew-1', '.ending-picnic-crew-2', '.ending-flyer'].map(part);
-      // From left to right: the two nearest the blanket sit down, the next one takes the kite.
+      const spots = ['.ending-fisher', '.ending-napper', '.ending-picnic-crew-1', '.ending-picnic-crew-2', '.ending-flyer'].map(part);
+      // From left to right, each goes to the nearest place.
       const byDistance = [...crewLeft].sort((a, b) => a.x - b.x);
       await Promise.all(spots.map(async (spot, index) => {
         const member = byDistance[index];
@@ -1199,8 +1201,24 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         if (!spot) { await leave(member, width + 40); return; }
         const spotBox = boxOf(spot);
         await walkOnGrass(member, spotBox.x);
+        // The napper has a good stretch before lying down.
+        if (spot.classList.contains('ending-napper')) {
+          member.pose({ arms: true });
+          await tween(700, t => member.place(member.x, GRASS + Math.sin(Math.PI * t) * 3));
+        }
         member.element.remove();
         showPart(spot);
+        // The fisher casts: the rod swings forward from over its shoulder and the float lands on the lake.
+        if (spot.classList.contains('ending-fisher')) {
+          const rig = spot.querySelector<HTMLElement>('.ending-rod-rig');
+          const float = spot.querySelector<HTMLElement>('.ending-float');
+          if (rig && float) {
+            float.style.opacity = '0';
+            await tween(700, t => { rig.style.rotate = `${-70 * (1 - smooth(t))}deg`; });
+            rig.style.rotate = '';
+            float.style.opacity = '';
+          }
+        }
         if (spot.classList.contains('ending-flyer')) {
           const rig = spot.querySelector<HTMLElement>('.ending-kite-rig');
           if (rig) {
