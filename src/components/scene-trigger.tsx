@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { sceneSteps, setSceneRunning } from '@/components/scene';
+import { sceneFinished, sceneSteps, setSceneRunning, whenSceneFinished } from '@/components/scene';
 
 const GAP = 300;
 
@@ -19,14 +19,17 @@ export function SceneTrigger({ name }: { name: string }) {
     let waiters: (() => void)[] = [];
     const inViewNow = () => new Promise<void>(resolve => { if (inView) resolve(); else waiters.push(resolve); });
 
+    // Finishing the scene on the spot (teleport.tsx) stops it wherever it is.
     async function play() {
+      if (sceneFinished(name)) return;
       setSceneRunning(name, true);
+      const finished = whenSceneFinished(name);
       try {
         for (const step of sceneSteps(name)) {
-          await inViewNow();
-          if (stopped) return;
-          await step.run();
-          if (stopped) return;
+          await Promise.race([inViewNow(), finished]);
+          if (stopped || sceneFinished(name)) return;
+          await Promise.race([step.run(), finished]);
+          if (stopped || sceneFinished(name)) return;
           await new Promise(resolve => setTimeout(resolve, GAP));
         }
       } catch {

@@ -261,11 +261,26 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       }
     }
 
+    // Finished on the spot: whatever is moving stops and the building stands complete, scaffolding gone.
+    const finish = () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+      intervals.forEach(clearInterval);
+      area.getAnimations({ subtree: true }).forEach(animation => { if (!(animation instanceof CSSAnimation) && !(animation instanceof CSSTransition)) animation.cancel(); });
+      area.querySelectorAll('.site-crew, .spray-mist, .crane-smoke, .hammer-pam, .hammer-spark').forEach(element => element.remove());
+      floors.forEach(floor => floor.classList.remove('floor-hanging'));
+      area.querySelector<HTMLElement>('.floor-next')?.style.removeProperty('clip-path');
+      crane.style.removeProperty('height');
+      setOperatorOut(false);
+      setOperatorMood('normal');
+      setPhase('done');
+    };
+
     // Steps 2 to 4 of the About scene: floors, the sprayed next floor, then the scaffolding comes down.
     const unregister = [
-      registerStep('about', 2, async () => { setPhase('building'); await raiseFloors(); }),
-      registerStep('about', 3, sprayNextFloor),
-      registerStep('about', 4, async () => { await dismantle(); setPhase('done'); }),
+      registerStep('about', 2, async () => { setPhase('building'); await raiseFloors(); }, finish),
+      registerStep('about', 3, sprayNextFloor, finish),
+      registerStep('about', 4, async () => { await dismantle(); setPhase('done'); }, finish),
     ];
 
     return () => {
