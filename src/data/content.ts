@@ -207,7 +207,7 @@ export const content = {
     skipLabel: 'Pular animação ⏭',
     // What the robots say while building: the boss ordering paint, the boss stopping the fight.
     // typo: how the title gets misspelt at first; keep: what stays when the typo is erased (both must start the title).
-    lines: { call: 'TINTA, JÁ!!', stop: 'CHEGA!!', typo: 'Vamos contruir', keep: 'Vamos con', sigh: 'ufa…', nothing: 'NADA AQUI :)',
+    lines: { call: 'TINTA, JÁ!!', stop: 'CHEGA!!', typo: 'Vamos contruir', keep: 'Vamos con', nothing: 'NADA AQUI :)',
       // The skip robot's lines: its jokes as it peeks out, the last one before the park.
       jokes: ['Tá longo, né?', 'Pode pular, eu não conto', 'Ainda dá tempo!'], finale: 'Ok, agora vale ver o final',
     },
@@ -223,7 +223,7 @@ export const content = {
       { label: 'Currículo', value: 'Baixar em PDF', action: 'Baixar currículo', kind: 'download', href: '/curriculo-guilherme-gocks.pdf' },
     ],
   } as {
-    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; typo: string; keep: string; sigh: string; nothing: string; jokes: readonly string[]; finale: string }; copiedLabel: string; pendingLabel: string; zapReady: string;
+    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; typo: string; keep: string; nothing: string; jokes: readonly string[]; finale: string }; copiedLabel: string; pendingLabel: string; zapReady: string;
     rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null; icon?: 'whatsapp' }[];
   },
   contact: {

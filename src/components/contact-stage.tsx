@@ -5,9 +5,9 @@ import { armZapGag, skipZapGag } from '@/components/zap-gag';
 import { crewMarkup, pixelMarkup, robotMarkup, type CrewFace, type RobotMood, type RobotPose } from '@/components/robot-sprite';
 
 type Stage = 'blank' | 'playing' | 'done';
-// What the robots say or show: the boss calling the crew and stopping the fight, the title's typo, the boss's sigh, the sign.
+// What the robots say or show: the boss calling the crew and stopping the fight, the title's typo, the sign.
 type StageLines = {
-  call: string; stop: string; typo: string; keep: string; sigh: string; nothing: string;
+  call: string; stop: string; typo: string; keep: string; nothing: string;
   // The skip robot: its jokes when it peeks out, and its last one before the park.
   jokes: readonly string[]; finale: string;
 };
@@ -26,6 +26,8 @@ const ANNOYED_WALK = 200; // a brisk walk: off to mop up the puddle, stepping up
 const RUN_SPEED = 220;
 const DASH_SPEED = 520;
 const COVER_RUN = 245; // the crew rushing to hide the patches
+const CARRY_WALK = 260; // the ones bringing in the picnic basket and the bench, so the park doesn't wait on them
+const TO_SEATS = 750; // ms for the crew to walk over to where they watch the park being built
 const FOOTER_AFTER = 1600; // ms into the e-mail's delivery (the "@" rolling off) when the footer's notes get thrown
 const SKIP_PEEK_EVERY = 15000; // ms between the skip robot's peeks with a joke
 const COVER_GAP = 550; // ms between one disguise's trick and the next
@@ -943,8 +945,8 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await tween(Math.abs(toX - fromX) / speed * 1000, t => { const x = fromX + (toX - fromX) * t; member.place(x, GRASS); onStep?.(x); });
       member.legs(false);
     }
-    async function leave(member: Member, toX: number) {
-      await walkOnGrass(member, toX);
+    async function leave(member: Member, toX: number, speed = CREW_WALK) {
+      await walkOnGrass(member, toX, speed);
       member.element.remove();
     }
 
@@ -1113,14 +1115,13 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       showPart(basket);
       const hold = (x: number) => movePart(basket, { x: x + CREW_W / 2 - (basketBox.x + basketBox.w / 2), y: -CREW_H + 4 });
       hold(bringer.x);
-      await walkOnGrass(bringer, basketBox.x + basketBox.w / 2 - CREW_W / 2, CREW_WALK, hold);
+      await walkOnGrass(bringer, basketBox.x + basketBox.w / 2 - CREW_W / 2, CARRY_WALK, hold);
       await tween(250, t => movePart(basket, { y: (-CREW_H + 4) * (1 - t) }));
       bringer.pose({ arms: false });
-      await Promise.all([spreaderOff, leave(bringer, stageEl.clientWidth + 40)]);
+      await Promise.all([spreaderOff, leave(bringer, stageEl.clientWidth + 40, CARRY_WALK)]);
     }
 
-    // The bench comes last: the boss taps its foot until two of the crew bring it, then sits down with a sigh and the
-    // pigeons fly in.
+    // The bench comes last: the boss taps its foot until two of the crew bring it, then sits down and the pigeons fly in.
     async function bench(boss: ReturnType<typeof robot>, waiting: Promise<unknown>) {
       const seat = part('.ending-bench');
       if (!seat) return;
@@ -1147,11 +1148,11 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       showPart(seat);
       const hold = (x: number) => movePart(seat, { x: x - (seatBox.x + 6), y: -CREW_H + 2 });
       hold(-CREW_W - 100);
-      await Promise.all(carriers.map((member, index) => walkOnGrass(member, seatBox.x + 6 + index * 40, CREW_WALK, index ? undefined : hold)));
+      await Promise.all(carriers.map((member, index) => walkOnGrass(member, seatBox.x + 6 + index * 40, CARRY_WALK, index ? undefined : hold)));
       await tween(300, t => movePart(seat, { y: (-CREW_H + 2) * (1 - t) }));
       movePart(seat, {});
       carriers.forEach(member => member.pose({ arms: false }));
-      const leaving = Promise.all(carriers.map(member => leave(member, -CREW_W - 40)));
+      const leaving = Promise.all(carriers.map(member => leave(member, -CREW_W - 40, CARRY_WALK)));
       tapping = false;
       await impatience;
       // Hop onto the bench: the sitting boss of the scene takes over.
@@ -1163,8 +1164,6 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await tween(500, t => boss.place(fromX + (spot.x - fromX) * t, fromY + (spot.y - fromY) * t - Math.sin(Math.PI * t) * 24));
       boss.element.remove();
       showPart(sitting);
-      const sigh = spawn('stage-grumble stage-sigh font-mono', actors, lines.sigh);
-      Object.assign(sigh.style, { left: `${spot.x + spot.w + 6}px`, top: `${spot.y - 18}px` });
 
       // The pigeons fly in from the sky and land in front of it.
       await Promise.all([...stageEl.querySelectorAll<HTMLElement>('.ending-pigeon')].map(async (pigeon, index) => {
@@ -1174,7 +1173,6 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         movePart(pigeon, {});
       }));
       await pause(600);
-      sigh.remove();
       await leaving;
     }
 
@@ -1241,7 +1239,8 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       const seats = [.3, .34, .38, .68, .72];
       await Promise.all(team.map(async (member, index) => {
         await leap(member, member.x, GRASS, 250, 8);
-        await walkOnGrass(member, width * seats[index % seats.length]);
+        const seatX = width * seats[index % seats.length];
+        await walkOnGrass(member, seatX, Math.max(CREW_WALK, Math.abs(seatX - member.x) / TO_SEATS * 1000));
         member.pose({ facing: index < 3 ? -1 : 1 });
       }));
       let watching = true;
@@ -1287,7 +1286,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await Promise.all([mopping, writeTitle(crew.filter(member => member !== dropper).sort((a, b) => a.x - b.x)[0])]);
       await pause(300);
       await placeWords(crew);
-      await pause(400);
+      await pause(200);
       parkStarted = true;
       void skipFinale().catch(() => {});
       await buildPark(boss, crew);

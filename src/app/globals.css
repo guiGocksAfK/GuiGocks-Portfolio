@@ -608,16 +608,13 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .stage-click { z-index: 6; }
 .just-built { animation: piece-land .35s ease-out; }
 @keyframes piece-land { 0% { transform: translateY(-6px); } 60% { transform: translateY(2px); } 100% { transform: none; } }
-/* The park being built: the rope the sun comes down on, the green roller, the hats thrown in the air, the boss's sigh. */
+/* The park being built: the rope the sun comes down on, the green roller, the hats thrown in the air. */
 .stage-rope { position: absolute; width: 2px; height: 0; background: #8f9bb3; }
 .rope-rider { z-index: 3; }
 .grass-roller { background: #1d3028; box-shadow: 0 0 0 1px #2a4d3c; }
 .flying-hat { position: absolute; left: 0; top: 0; width: 14px; height: 6px; border-radius: 6px 6px 1px 1px; background: #ffb347; }
-.stage-sigh { right: auto; bottom: auto; }
 .hand-roller { position: absolute; left: -13px; bottom: 7px; width: 13px; height: 6px; border-radius: 2px; background: #1c2130; box-shadow: 0 0 0 1px #5d6678; }
 .hand-roller::after { content: ''; position: absolute; left: 11px; top: -5px; width: 2px; height: 8px; background: #8f9bb3; transform: rotate(-35deg); }
-/* A small grey speech bubble on the side a robot faces (the boss's sigh). */
-.stage-grumble { position: absolute; right: calc(100% + 6px); bottom: calc(100% - 4px); padding: 2px 8px; border: 1px solid #8f9bb3; border-radius: 4px; background: #f7f8fb; color: #5d6678; font-size: 12px; white-space: nowrap; animation: bubble-pop .25s ease-out both; }
 /* Happy ending: a park at dusk standing on the footer's line. Sky fading into the page, a pale sun setting behind the
    hills and the lake, grass on the ground, and the pixel sprites placed along it. Calm idle loops only. */
 .ending { position: relative; height: 180px; margin-top: 28px; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); }
