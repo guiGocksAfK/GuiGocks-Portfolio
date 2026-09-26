@@ -210,6 +210,7 @@ export async function playZapGag(icon: HTMLElement, readyLabel: string, setStep:
     stage.classList.add('zap-shake');
     const center = { x: iconBox.x + iconBox.w / 2, y: iconBox.y + iconBox.h / 2 };
     for (const className of ['zap-flash', 'zap-smoke', 'zap-tape-flying']) Object.assign(spawn(className).style, { left: `${center.x}px`, top: `${center.y}px` });
+    burst('sfx sfx-big', { x: center.x, y: center.y - 30 }, 'KABUM!');
     // Charred: dark, outlined, eyes wide and white, smoking from its antenna from now on.
     robot.element.classList.add('zap-charred');
     const eyes = spawn('zap-eyes', robot.element);
@@ -224,7 +225,7 @@ export async function playZapGag(icon: HTMLElement, readyLabel: string, setStep:
     await robot.walk(stand.x - 12, WALK);
     robot.turn(1);
     robot.draw(true, 'tired');
-    const sign = spawn('robot-sign zap-sign font-mono', robot.element, readyLabel);
+    const sign = spawn('robot-sign zap-sign', robot.element, readyLabel);
     sign.setAttribute('aria-hidden', 'true');
     onReady();
     await wait(2000);
@@ -237,7 +238,7 @@ export async function playZapGag(icon: HTMLElement, readyLabel: string, setStep:
     const alarm = robot.mark('!!');
     const signBox = boxOf(sign);
     sign.remove();
-    const flying = spawn('robot-sign zap-sign-flying font-mono', actors, readyLabel);
+    const flying = spawn('robot-sign zap-sign-flying', actors, readyLabel);
     flying.setAttribute('aria-hidden', 'true');
     void tween(900, t => {
       flying.style.transform = `translate(${signBox.x - 30 * t}px, ${signBox.y - 90 * Math.sin(Math.PI * t * .8) + 60 * t * t}px) rotate(${-300 * t}deg)`;
@@ -261,6 +262,7 @@ export async function playZapGag(icon: HTMLElement, readyLabel: string, setStep:
     clearInterval(smoking);
     for (let drop = 0; drop < 7; drop++) burst('zap-drop', { x: dive.x + CREW_W / 2, y: water }, '', { '--dx': `${(drop - 3) * 7}px`, '--dy': `${-18 - (drop % 3) * 8}px` });
     puff({ x: dive.x + 8, y: water - 10 });
+    burst('sfx sfx-water', { x: dive.x + CREW_W / 2, y: water - 34 }, 'TCHIBUM!');
     const sink = (depth: number) => { robot.element.style.clipPath = `inset(-60px -60px ${depth}px -60px)`; robot.place(dive.x, dive.y + depth); };
     await tween(600, t => sink((CREW_H - 7) * (1 - (1 - t) * (1 - t))));
 
@@ -272,7 +274,7 @@ export async function playZapGag(icon: HTMLElement, readyLabel: string, setStep:
       burst('zap-spark zap-spark-blue', { x: dive.x + 4 + spark * 7, y: water - 12 - (spark % 2) * 6 }, '✦');
       await wait(180);
     }
-    const bzzt = robot.mark('bzzt', 'stage-mark zap-mark zap-bzzt');
+    const bzzt = robot.mark('BZZT!', 'stage-mark zap-mark zap-bzzt');
     await wait(800);
     bzzt.remove();
     clearInterval(bubbling);
@@ -340,6 +342,7 @@ export async function playZapGag(icon: HTMLElement, readyLabel: string, setStep:
     fisher.draw(true);
     await fisher.hop(12, 260);
     burst('fight-twinkle stage-click', { x: lieX + 18, y: grassY + 10 }, '✦');
+    burst('sfx', { x: lieX + 22, y: grassY - 12 }, 'PÁ!');
     await tween(220, t => robot.place(lieX + Math.sin(t * Math.PI * 6) * 2, grassY));
     fisher.draw(false);
     await wait(500);

@@ -336,7 +336,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         }
         if (cover.how === 'sign') {
           // Arms up, holding a little sign over its head.
-          sign = spawn('robot-sign nothing-sign font-mono', member.element, lines.nothing);
+          sign = spawn('robot-sign nothing-sign', member.element, lines.nothing);
           member.pose({ arms: true, facing: 1 });
         }
       })));
@@ -374,7 +374,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       boss.draw('idle', 'angry');
       for (let index = 0; index < 2; index++) { puff(boss.element, index % 2 ? 'right' : 'left'); await pause(150); }
       boss.draw('jump', 'angry');
-      const call = over(boss.element, 'stage-shout font-mono', lines.call);
+      const call = over(boss.element, 'stage-shout', lines.call);
       void skip.current?.flinch().catch(() => {});
       const stomping = (async () => {
         for (let jump = 0; jump < 2; jump++) await boss.hop(12, 250);
@@ -606,7 +606,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await pause(1200);
 
       boss.draw('jump', 'angry');
-      const stop = over(boss.element, 'stage-shout font-mono', lines.stop);
+      const stop = over(boss.element, 'stage-shout', lines.stop);
       skip.current?.coverEyes(false);
       // One big stomp, and the ground line spreads out from where it lands.
       await boss.hop(22, 460);
@@ -1455,7 +1455,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
               <span ref={skipBodyRef} className="skip-body" />
               <span className="skip-popcorn" />
               <span className="skip-strings" />
-              <span className="skip-sign font-mono">
+              <span className="skip-sign">
                 <span className="skip-label">{skipLabel}</span>
                 {skipLine && <span className="skip-joke">{skipLine}</span>}
               </span>

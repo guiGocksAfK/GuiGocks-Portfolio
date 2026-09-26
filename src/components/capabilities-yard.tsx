@@ -573,7 +573,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
             <div className="office-scene" aria-hidden="true">
               {languages.chat.map((line, index) => (
                 <span key={line} className={`office-robot office-robot-${index}`}>
-                  <span className="office-bubble font-mono">{line}</span>
+                  <span className="office-bubble">{line}</span>
                   <RobotSprite pose="idle" mood="happy" />
                 </span>
               ))}
@@ -618,7 +618,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
         {/* The robot that holds up the note about the lever: standing on the pipe behind it, head and hands over its top. */}
         <span className="pump-helper" aria-hidden="true">
           <span className="pump-helper-robot" dangerouslySetInnerHTML={{ __html: crewMarkup(true, 0) }} />
-          <span className="pump-note font-mono">{counter.nudge}</span>
+          <span className="pump-note">{counter.nudge}</span>
         </span>
         <div ref={fxRef} className="yard-fx" aria-hidden="true" />
       </div>

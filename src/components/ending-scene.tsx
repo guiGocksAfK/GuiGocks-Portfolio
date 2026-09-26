@@ -85,8 +85,8 @@ export function EndingScene() {
 
       <span className="ending-napper">
         <Pixels rows={CREW_NAPPING} />
-        <span className="ending-z ending-z-1 font-mono">z</span>
-        <span className="ending-z ending-z-2 font-mono">z</span>
+        <span className="ending-z ending-z-1">z</span>
+        <span className="ending-z ending-z-2">z</span>
       </span>
 
       <span className="ending-picnic">

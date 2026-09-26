@@ -30,7 +30,7 @@ export const content = {
     technologies: [
       { label: 'backend', items: ['Java', 'Spring Boot', 'Node.js', 'Python'] },
       { label: 'frontend', items: ['TypeScript', 'JavaScript', 'React', 'Next.js', 'Angular'] },
-      { label: 'infra', items: ['Docker', 'Oracle Cloud', 'Neon', 'Vercel', 'Neon'] },
+      { label: 'infra', items: ['Docker', 'Oracle Cloud', 'Neon', 'Vercel'] },
     ],
     section: '01 — Apresentação',
     location: 'Foz do Iguaçu, PR',
@@ -211,7 +211,7 @@ export const content = {
       // The skip robot's lines: its jokes as it peeks out, the last one before the park.
       jokes: ['Tá longo, né?', 'Pode pular, eu não conto', 'Ainda dá tempo!'], finale: 'Ok, agora vale ver o final',
     },
-    copiedLabel: 'copiado!',
+    copiedLabel: 'Copiado!',
     pendingLabel: 'em breve',
     // Shown by the WhatsApp button once the robot has (sort of) fixed it.
     zapReady: 'Agora funciona →',
@@ -228,7 +228,7 @@ export const content = {
   },
   contact: {
     email: 'guigocks@gmail.com',
-    copiedLabel: 'copiado!',
+    copiedLabel: 'Copiado!',
     copyHint: 'Clique para copiar o e-mail',
     links: [
       { label: 'GitHub', href: 'https://github.com/guiGocksAfK', style: 'primary' },

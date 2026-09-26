@@ -118,7 +118,7 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
             await play(hammer, [{ transform: 'rotate(-70deg)' }, { transform: 'rotate(25deg)' }], { duration: 170, easing: 'cubic-bezier(.6, 0, .9, .4)' });
             // Impact: "PAM!", sparks and the whole crane shaking.
             const pam = document.createElement('span');
-            pam.className = 'hammer-pam font-mono';
+            pam.className = 'hammer-pam';
             pam.textContent = 'PAM!';
             pam.style.left = `${mastX + 6 - blow * 4}px`;
             pam.style.top = `${groundY - 20 - blow * 6}px`;

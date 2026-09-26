@@ -368,7 +368,7 @@ export function TechnologyTyping({ groups }: { groups: readonly TechnologyGroup[
           </ul>
           <div className="crew-layer" ref={crewRef} />
           <div className="robot" ref={robotRef}>
-            {sign && <span className="robot-sign font-mono">{sign}</span>}
+            {sign && <span className="robot-sign">{sign}</span>}
             <div className="robot-body" ref={bodyRef}><RobotSprite pose={pose} mood={mood} /></div>
           </div>
         </div>
