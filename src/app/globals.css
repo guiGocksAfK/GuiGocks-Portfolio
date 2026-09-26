@@ -336,10 +336,15 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* Hover label next to the pump, over the free strip above the rack. */
 .pump-tip { position: absolute; left: calc(100% + 34px); top: 50%; padding: 3px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--background); color: var(--foreground); font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transform: translate(-4px, -50%); transition: opacity .2s, transform .2s; }
 .pump-switch:hover .pump-tip, .pump-switch:focus-visible .pump-tip { opacity: 1; transform: translate(0, -50%); }
-/* Note shown once, after the first full trip: points at the lever, which wiggles meanwhile. */
-.pump-note { position: absolute; left: calc(100% + 34px); top: 50%; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transform: translate(-4px, -50%); transition: opacity .3s, transform .3s; }
+/* Shown once, as the first crate goes into the pipe: a robot standing on the pipe right after the pump holds up a note
+   pointing at the lever, which wiggles meanwhile. It hops up from behind the pipe and back down when it's done. */
+.pump-helper { position: absolute; left: 84px; top: -13px; z-index: 4; display: flex; align-items: flex-end; gap: 1px; height: 27px; pointer-events: none; }
+.pump-helper-robot { position: relative; z-index: 1; width: 24px; height: 27px; opacity: 0; transform: translateY(14px) scaleX(-1); transition: opacity .25s, transform .35s ease-out; }
+.pump-helper-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.pump-note { position: relative; margin-bottom: -14px; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; opacity: 0; transform: translateY(14px); transition: opacity .25s, transform .35s ease-out; }
 .pump-note::before { content: ''; position: absolute; right: 100%; top: 50%; margin-top: -4px; border: 4px solid transparent; border-right-color: var(--accent); }
-.pump-nudge .pump-note { opacity: 1; transform: translate(0, -50%); }
+.pump-nudge .pump-helper-robot { opacity: 1; transform: scaleX(-1); }
+.pump-nudge .pump-note { opacity: 1; transform: none; transition-delay: .15s; }
 .pump-nudge .pump-tip { opacity: 0; }
 .pump-nudge .pump-lever { animation: lever-wiggle .5s ease-in-out infinite; }
 .pump-on .pump-needle { transform: rotate(55deg); }
@@ -449,6 +454,21 @@ html[data-zap-gag='skipped'] .contact-row:hover .zap-icon svg { fill: var(--acce
 .zap-mark { z-index: 6; }
 /* Held out to its left side at chest height, clear of the button, the arrow pointing past the robot at it. */
 .robot-sign.zap-sign { left: auto; right: calc(100% + 4px); bottom: 6px; font-size: 11px; transform: none; animation: none; }
+/* Then the panic and the lake: the ember that flares up on it, the sign thrown away, the splash, the bubbles and blue
+   sparks as it shorts out, the fisher's rod and line, and the robot's "bzzt". */
+.zap-ember { position: absolute; left: 3px; top: 12px; width: 4px; height: 4px; border-radius: 1px; background: #ff8a3d; box-shadow: 0 0 6px 2px rgba(255, 138, 61, .7); animation: zap-ember .3s ease-in-out infinite alternate; }
+@keyframes zap-ember { to { scale: 1.5; background: #ffd76a; } }
+.robot-sign.zap-sign-flying { left: 0; top: 0; bottom: auto; z-index: 5; font-size: 11px; transform: none; animation: none; }
+.zap-drop { position: absolute; z-index: 5; width: 3px; height: 4px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: #a3bcff; animation: zap-drop .6s ease-out forwards; }
+@keyframes zap-drop { 50% { translate: calc(var(--dx) * .6) var(--dy); } to { translate: var(--dx) 6px; opacity: 0; } }
+.zap-bubble { position: absolute; z-index: 5; width: 4px; height: 4px; border: 1px solid #a3bcff; border-radius: 50%; animation: zap-bubble .8s ease-out forwards; }
+@keyframes zap-bubble { to { translate: 0 -14px; opacity: 0; } }
+.zap-spark-blue { color: #6994ff; }
+.zap-bzzt { font-size: 13px; }
+.zap-rod-layer { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.zap-rod-layer svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; }
+.zap-rod { fill: none; stroke: #8a6a4c; stroke-width: 1.5; }
+.zap-line { fill: none; stroke: #8f9bb3; stroke-width: 1; opacity: .7; }
 /* Hovering a row leaves it still: only its action (text and icon) turns blue. */
 .contact-row:hover .contact-action, .contact-row:focus-visible .contact-action { color: var(--accent); }
 .contact-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }

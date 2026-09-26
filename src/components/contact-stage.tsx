@@ -1444,7 +1444,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       {stage !== 'done' && (
         // Hanging on a rope from a pulley at the end of the line above, just past the section's right edge, its sign
         // hanging under its seat on two strings (and some popcorn while it watches). Hovering brings it down.
-        <button ref={skipRef} type="button" className="skip-robot" data-mode={skipMode} aria-label={skipLabel} onClick={() => { skipZapGag(sectionRef.current); setStage('done'); }}>
+        <button ref={skipRef} type="button" className="skip-robot" data-mode={skipMode} aria-label={skipLabel} onClick={() => { skipZapGag(); setStage('done'); }}>
           <span className="skip-pulley" aria-hidden="true" />
           <span className="skip-swing" aria-hidden="true">
             <span className="skip-rope" />
