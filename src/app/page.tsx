@@ -16,6 +16,7 @@ import { CapabilitiesYard } from '@/components/capabilities-yard';
 import { ContactList } from '@/components/contact-list';
 import { EndingScene } from '@/components/ending-scene';
 import { ContactStage } from '@/components/contact-stage';
+import { SiteFooter } from '@/components/site-footer';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -150,6 +151,7 @@ export default function Home() {
         <div className="section-footer font-mono"><span>{contactSection.section}</span><span>{contactSection.footerNote}</span></div>
       </ContactStage>
       </main>
+      <SiteFooter footer={content.footer} links={contact.links} email={contact.email} />
     </div>
   );
 }

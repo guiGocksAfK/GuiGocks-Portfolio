@@ -235,4 +235,22 @@ export const content = {
       { label: 'LinkedIn', href: 'https://www.linkedin.com/in/guilherme-gabriel-gocks-023846352', style: 'outline' },
     ],
   },
+  // The page's footer: the site at night, closed for the day, with the building site's sign (the "placa de obra") and
+  // a builders' lift that takes the visitor back to the top.
+  footer: {
+    label: 'Placa da obra',
+    kicker: 'Obra',
+    title: 'Portfólio gocks.dev',
+    rows: [
+      { label: 'Responsável técnico', value: 'Guilherme Gabriel Gocks, Eng. de Software (UniAmérica)' },
+      { label: 'Execução', value: 'Next.js · TypeScript · Tailwind, montado por robôs' },
+      { label: 'Início', value: '2026' },
+      { label: 'Previsão de término', value: 'Nunca, sempre em manutenção' },
+    ],
+    contactLabel: 'Contato',
+    emailLabel: 'E-mail',
+    topLabel: 'Voltar ao topo',
+    owner: 'Guilherme Gabriel Gocks',
+    disclaimer: 'Nenhum robô foi ferido na construção deste site. (Um pifou no lago, mas passa bem.)',
+  },
 } as const;
