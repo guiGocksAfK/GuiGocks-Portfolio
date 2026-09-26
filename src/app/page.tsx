@@ -151,7 +151,7 @@ export default function Home() {
         <div className="section-footer font-mono"><span>{contactSection.section}</span><span>{contactSection.footerNote}</span></div>
       </ContactStage>
       </main>
-      <SiteFooter footer={content.footer} links={contact.links} email={contact.email} />
+      <SiteFooter footer={content.footer} />
     </div>
   );
 }

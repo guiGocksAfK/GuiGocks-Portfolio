@@ -235,22 +235,12 @@ export const content = {
       { label: 'LinkedIn', href: 'https://www.linkedin.com/in/guilherme-gabriel-gocks-023846352', style: 'outline' },
     ],
   },
-  // The page's footer: the site at night, closed for the day, with the building site's sign (the "placa de obra") and
-  // a builders' lift that takes the visitor back to the top.
+  // The page's footer: one thin line like the ones closing each section, with the building site's sign (the "placa
+  // de obra") summed up in a line, a tiny builders' lift back to the top and the small print.
   footer: {
-    label: 'Placa da obra',
-    kicker: 'Obra',
-    title: 'Portfólio gocks.dev',
-    rows: [
-      { label: 'Responsável técnico', value: 'Guilherme Gabriel Gocks, Eng. de Software (UniAmérica)' },
-      { label: 'Execução', value: 'Next.js · TypeScript · Tailwind, montado por robôs' },
-      { label: 'Início', value: '2026' },
-      { label: 'Previsão de término', value: 'Nunca, sempre em manutenção' },
-    ],
-    contactLabel: 'Contato',
-    emailLabel: 'E-mail',
-    topLabel: 'Voltar ao topo',
-    owner: 'Guilherme Gabriel Gocks',
+    sign: ['gocks.dev', 'Resp. técnico Guilherme Gabriel Gocks', 'Início 2026', 'Término: nunca, sempre em manutenção'],
+    topLabel: 'Topo',
+    topAction: 'Voltar ao topo',
     disclaimer: 'Nenhum robô foi ferido na construção deste site. (Um pifou no lago, mas passa bem.)',
   },
 } as const;
