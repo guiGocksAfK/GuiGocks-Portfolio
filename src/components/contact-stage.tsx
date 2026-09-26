@@ -93,6 +93,17 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     }
   }, []);
 
+  // Teleporting into the section (teleport.tsx) lands on it finished, as if the visitor had skipped the show.
+  useEffect(() => {
+    const onFinish = (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== 'contato' || document.documentElement.dataset.build !== 'pending') return;
+      skipZapGag();
+      setStage('done');
+    };
+    window.addEventListener('site:finish-build', onFinish);
+    return () => window.removeEventListener('site:finish-build', onFinish);
+  }, []);
+
   useEffect(() => {
     const section = sectionRef.current;
     if (!section || document.documentElement.dataset.build !== 'pending') return;
