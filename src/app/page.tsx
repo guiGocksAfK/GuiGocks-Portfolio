@@ -153,7 +153,7 @@ export default function Home() {
       </ContactStage>
       </main>
       <SiteFooter footer={content.footer} />
-      <Teleporter />
+      <Teleporter homeLabel={content.teleport.home} />
     </div>
   );
 }

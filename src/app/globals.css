@@ -945,3 +945,5 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .tp-lever::before { content: ''; position: absolute; left: -1px; top: -3px; width: 5px; height: 4px; border-radius: 1px; background: #e24c4c; }
 .tp-lever::after { content: ''; position: absolute; left: -3px; bottom: -2px; width: 9px; height: 3px; background: #5d6678; }
 .tp-lever-pulled { rotate: 35deg; }
+.tp-press { display: inline-block; animation: tp-press .14s ease-out; }
+@keyframes tp-press { 50% { scale: .9; } }

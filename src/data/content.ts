@@ -235,6 +235,8 @@ export const content = {
       { label: 'LinkedIn', href: 'https://www.linkedin.com/in/guilherme-gabriel-gocks-023846352', style: 'outline' },
     ],
   },
+  // What the teleport's trip screen calls the top of the page (the other destinations use the menu's names).
+  teleport: { home: 'Início' },
   // The page's footer: one thin line like the ones closing each section, with the building site's sign (the "placa
   // de obra") summed up in a line, a tiny builders' lift back to the top and the small print.
   footer: {

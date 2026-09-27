@@ -5,19 +5,27 @@ import { crewMarkup } from '@/components/robot-sprite';
 import { finishScene } from '@/components/scene';
 
 // Teleporting around the page. Clicking one of the site's shortcuts (the menu, the logo, a project link in a crate, the
-// footer's lift) doesn't scroll: the screen breaks up into pixels spreading out from where the visitor clicked, the page
-// jumps to the destination behind them, and the pixels clear away from the top down, "assembling" it. A section that
+// footer's lift) doesn't scroll: the link sinks in with a spark, the screen breaks up into pixels bubbling out from
+// where the visitor clicked, a short trip screen shows where they're going (with speed lines rushing the right way)
+// while the page jumps behind it, and the pixels clear away from the destination's title outwards. A section that
 // is built by robots (About, Contact) is delivered already built. Then a robot materializes next to the destination's
 // title, looks around, points at it and walks off; about one time in seven the teleport glitches (it arrives upside
 // down, twice, in two halves or charred). On the visit's first teleport from the menu, an operator robot pops up behind
 // the link and pulls a lever first. The skip link, links opened straight from the address bar and reduced motion keep
 // plain scrolling.
 
-const CELL = 24; // px, the size of the pixels the screen breaks into
-const COVER = 260; // ms for the pixels to spread over the whole screen (plus a little jitter)
-const REVEAL = 300; // ms for them to clear from top to bottom
-const JITTER = 90;
-const FLASH = 70; // ms a pixel shows in the accent colour as it appears or goes
+// About 1.1s in all: out (~.42s), the trip (~.22s), in (~.44s), with the arriving robot starting before the end.
+const CELL = 20; // px, the size of the pixels the screen breaks into
+const COVER = 220; // ms for the wave of pixels to reach the far corner (it starts slowly and speeds up)
+const GROW = 150; // ms for a pixel to grow in, overshooting a little
+const TRAIL = 150; // ms of colour behind the wave's front, from light blue to the page's colour
+const HOLD = 220; // ms of the trip screen: the destination's name and speed lines
+const REVEAL = 260; // ms for the pixels to clear away from the destination's title (fast at first, then settling)
+const SHRINK = 140; // ms for a pixel to shrink away
+const JITTER = 50;
+const OPEN_AT = .45; // how far into the reveal the robot starts beaming in
+const LIGHT = '#a3bcff';
+const DEEP = '#1d2540';
 const GLITCH_CHANCE = .15;
 const BOT_W = 24;
 const BOT_H = 27;
@@ -30,6 +38,8 @@ let active: Teleport | null = null;
 let operatorDone = false;
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Grows a little past full size and settles back (0..1 → 0..1, peaking about 1.05).
+const overshoot = (t: number) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
 const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
 const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 const tween = (duration: number, onFrame: (t: number) => void) => new Promise<void>(resolve => {
@@ -64,6 +74,22 @@ function focusTitle(title: HTMLElement) {
   title.focus({ preventScroll: true });
 }
 
+// What the trip screen calls a destination: the menu's name for a section, a project's name, "home" for the top.
+function labelFor(href: string, home: string) {
+  if (href === '#main') return home;
+  const menu = document.querySelector(`header a[href="${href}"]`)?.textContent?.trim();
+  return menu || document.getElementById(href.slice(1))?.textContent?.trim() || home;
+}
+
+// Where the robot will beam in next to a title: the end of its last line (in the window's coordinates).
+function titleSpot(title: HTMLElement) {
+  const range = document.createRange();
+  range.selectNodeContents(title);
+  const lines = [...range.getClientRects()].filter(rect => rect.width > 0);
+  const box = lines.length ? lines[lines.length - 1] : title.getBoundingClientRect();
+  return { x: Math.min(box.right, window.innerWidth - 20), y: box.top + box.height / 2 };
+}
+
 // Teleports to a destination on the page ("#projetos", "#main", ...); origin is what was clicked.
 export function teleport(href: string, origin?: Element | null) {
   if (active && !reducedMotion()) return active(href, origin);
@@ -71,59 +97,108 @@ export function teleport(href: string, origin?: Element | null) {
   return Promise.resolve();
 }
 
-export function Teleporter() {
+export function Teleporter({ homeLabel }: { homeLabel: string }) {
   useEffect(() => {
     let busy = false;
     const layer = document.createElement('div');
     layer.className = 'tp-layer';
     layer.setAttribute('aria-hidden', 'true');
     document.body.appendChild(layer);
+    // The trip screen draws the destination's name in the pixel font: load it now so it's ready by the first click.
+    const pixelFont = getComputedStyle(document.body).getPropertyValue('--font-pixel').trim();
+    if (pixelFont) void document.fonts.load(`700 26px ${pixelFont}`).catch(() => {});
 
     // What the pixels are drawn on, over the whole window.
     function screen() {
       const canvas = document.createElement('canvas');
       canvas.className = 'tp-screen';
       canvas.setAttribute('aria-hidden', 'true');
+      const width = window.innerWidth;
+      const height = window.innerHeight;
       const ratio = window.devicePixelRatio || 1;
-      canvas.width = Math.ceil(window.innerWidth * ratio);
-      canvas.height = Math.ceil(window.innerHeight * ratio);
+      canvas.width = Math.ceil(width * ratio);
+      canvas.height = Math.ceil(height * ratio);
       document.body.appendChild(canvas);
       const context = canvas.getContext('2d')!;
       context.scale(ratio, ratio);
       const styles = getComputedStyle(document.documentElement);
-      const colors = { page: styles.getPropertyValue('--background').trim() || '#0d0f12', accent: styles.getPropertyValue('--accent').trim() || '#6994ff' };
-      const cols = Math.ceil(window.innerWidth / CELL);
-      const rows = Math.ceil(window.innerHeight / CELL);
+      const page = styles.getPropertyValue('--background').trim() || '#0d0f12';
+      const accent = styles.getPropertyValue('--accent').trim() || '#6994ff';
+      const font = getComputedStyle(document.body).getPropertyValue('--font-pixel').trim() || 'monospace';
+      const cols = Math.ceil(width / CELL);
+      const rows = Math.ceil(height / CELL);
       const cells = Array.from({ length: cols * rows }, (_, index) => ({ x: (index % cols) * CELL, y: Math.floor(index / cols) * CELL, delay: 0 }));
-      const paint = (visible: (cell: (typeof cells)[number]) => 'page' | 'accent' | null) => {
-        context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-        for (const cell of cells) {
-          const color = visible(cell);
-          if (!color) continue;
-          context.fillStyle = colors[color];
-          context.fillRect(cell.x, cell.y, CELL + .5, CELL + .5);
-        }
+      // How far a wave starting at a point has to travel to reach every corner.
+      const farthest = (from: { x: number; y: number }) => Math.max(...[[0, 0], [width, 0], [0, height], [width, height]].map(([x, y]) => Math.hypot(x - from.x, y - from.y)));
+      const distance = (cell: (typeof cells)[number], from: { x: number; y: number }) => Math.hypot(cell.x + CELL / 2 - from.x, cell.y + CELL / 2 - from.y);
+      // A pixel of the given size (0..1+ of a cell), centred in its cell.
+      const square = (cell: (typeof cells)[number], size: number, color: string) => {
+        if (size <= .02) return;
+        const side = CELL * size + .5;
+        context.fillStyle = color;
+        context.fillRect(cell.x + (CELL - side) / 2, cell.y + (CELL - side) / 2, side, side);
       };
+      // The wave's colours: light blue at its front, the accent just behind, a dark blue, then the page's own colour.
+      const tint = (age: number) => age < TRAIL * .3 ? LIGHT : age < TRAIL * .65 ? accent : age < TRAIL ? DEEP : page;
       return {
-        canvas,
-        // Pixels appear spreading out from a point, each flashing blue for a moment.
+        // Out: pixels bubble up from where the visitor clicked, each growing from nothing to a little more than a
+        // cell and back, in a wave that starts slowly and swallows the screen at the end.
         async cover(from: { x: number; y: number }) {
-          const far = Math.max(...[[0, 0], [window.innerWidth, 0], [0, window.innerHeight], [window.innerWidth, window.innerHeight]].map(([x, y]) => Math.hypot(x - from.x, y - from.y)));
-          cells.forEach(cell => { cell.delay = Math.hypot(cell.x + CELL / 2 - from.x, cell.y + CELL / 2 - from.y) / far * COVER + Math.random() * JITTER; });
-          await tween(COVER + JITTER + FLASH, t => {
-            const now = t * (COVER + JITTER + FLASH);
-            paint(cell => now < cell.delay ? null : now - cell.delay < FLASH ? 'accent' : 'page');
+          const far = farthest(from);
+          cells.forEach(cell => { cell.delay = Math.sqrt(distance(cell, from) / far) * COVER + Math.random() * JITTER; });
+          await tween(COVER + JITTER + TRAIL, t => {
+            const now = t * (COVER + JITTER + TRAIL);
+            context.clearRect(0, 0, width, height);
+            for (const cell of cells) {
+              const age = now - cell.delay;
+              if (age > 0) square(cell, overshoot(Math.min(1, age / GROW)), tint(age));
+            }
           });
-          paint(() => 'page');
         },
-        // And clear away from the top down, flashing blue just before they go.
-        async reveal() {
-          canvas.style.pointerEvents = 'none';
-          cells.forEach(cell => { cell.delay = cell.y / window.innerHeight * REVEAL + Math.random() * JITTER; });
-          await tween(REVEAL + JITTER, t => {
-            const now = t * (REVEAL + JITTER);
-            paint(cell => now >= cell.delay ? null : cell.delay - now < FLASH ? 'accent' : 'page');
+        // The trip: the destination's name in the middle of the screen and speed lines rushing the way the page is going.
+        async travel(label: string, down: boolean) {
+          const streaks = Array.from({ length: 26 }, () => ({ x: Math.random() * width, y: Math.random() * height, length: 40 + Math.random() * 90, speed: 900 + Math.random() * 900, alpha: .15 + Math.random() * .3 }));
+          const text = `${down ? '↓' : '↑'} ${label.toUpperCase()}`;
+          await tween(HOLD, t => {
+            context.fillStyle = page;
+            context.fillRect(0, 0, width, height);
+            context.fillStyle = accent;
+            for (const streak of streaks) {
+              const y = ((streak.y + (down ? -1 : 1) * streak.speed * t * HOLD / 1000) % (height + streak.length) + height + streak.length) % (height + streak.length) - streak.length;
+              context.globalAlpha = streak.alpha;
+              context.fillRect(streak.x, y, 2, streak.length);
+            }
+            context.globalAlpha = Math.min(1, t * 6, (1 - t) * 5);
+            const size = 26 * (.85 + .15 * overshoot(Math.min(1, t * 4)));
+            context.font = `700 ${size}px ${font}`;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = LIGHT;
+            context.fillText(text, width / 2, height / 2);
+            context.globalAlpha = 1;
           });
+          context.fillStyle = page;
+          context.fillRect(0, 0, width, height);
+        },
+        // In: the pixels clear away from the destination's title outwards, fast at first and settling at the end,
+        // each flashing light blue and shrinking to nothing. onOpen fires once the title's surroundings are clear.
+        async reveal(from: { x: number; y: number }, onOpen: () => void) {
+          canvas.style.pointerEvents = 'none';
+          const far = farthest(from);
+          cells.forEach(cell => { cell.delay = (1 - Math.sqrt(1 - Math.min(1, distance(cell, from) / far))) * REVEAL + Math.random() * JITTER; });
+          let opened = false;
+          await tween(REVEAL + JITTER + SHRINK, t => {
+            const now = t * (REVEAL + JITTER + SHRINK);
+            if (!opened && t > OPEN_AT) { opened = true; onOpen(); }
+            context.clearRect(0, 0, width, height);
+            for (const cell of cells) {
+              const age = now - cell.delay;
+              if (age < -TRAIL * .5) square(cell, 1, page);
+              else if (age < 0) square(cell, 1, DEEP);
+              else if (age < SHRINK) { const p = age / SHRINK; square(cell, 1 - p * p, p < .4 ? LIGHT : accent); }
+            }
+          });
+          if (!opened) onOpen();
           canvas.remove();
         },
       };
@@ -301,12 +376,22 @@ export function Teleporter() {
       try {
         const box = origin?.getBoundingClientRect();
         const from = box ? { x: box.left + box.width / 2, y: box.top + box.height / 2 } : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        // The click lands at once: the link sinks in a little, with a spark.
+        if (origin) {
+          origin.classList.remove('tp-press');
+          void (origin as HTMLElement).offsetWidth;
+          origin.classList.add('tp-press');
+          origin.addEventListener('animationend', () => origin.classList.remove('tp-press'), { once: true });
+          effect('tp-spark', from.x + window.scrollX - 4, from.y + window.scrollY - 14, '✦');
+        }
         const helper = !operatorDone && origin?.closest('header') ? (operatorDone = true, await operator(origin)) : null;
+        const down = target.top > window.scrollY;
         const pixels = screen();
         await pixels.cover(from);
         helper?.element.remove();
-        // Behind the pixels: a section built by robots is delivered finished, and the page jumps.
+        // The trip, while behind the pixels a section built by robots is delivered finished and the page jumps.
         const id = href.slice(1);
+        const trip = pixels.travel(labelFor(href, homeLabel), down);
         if (id === 'sobre') finishScene('about');
         if (id === 'contato') window.dispatchEvent(new CustomEvent('site:finish-build', { detail: 'contato' }));
         await frame();
@@ -315,8 +400,9 @@ export function Teleporter() {
         window.scrollTo({ top: landing.top, behavior: 'instant' });
         history.pushState(null, '', href);
         focusTitle(landing.title);
-        await frame();
-        const arriving = pixels.reveal().then(() => arrive(landing.title));
+        await trip;
+        let arriving: Promise<void> = Promise.resolve();
+        await pixels.reveal(titleSpot(landing.title), () => { arriving = arrive(landing.title); });
         await arriving;
       } finally {
         busy = false;
@@ -339,6 +425,6 @@ export function Teleporter() {
       layer.remove();
       document.querySelectorAll('.tp-screen').forEach(element => element.remove());
     };
-  }, []);
+  }, [homeLabel]);
   return null;
 }
