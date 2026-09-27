@@ -34,7 +34,7 @@ const LAND_GAP = 32;
 const GLITCH_CHANCE = .15;
 const BOT_W = 24;
 const BOT_H = 27;
-const SHORTCUTS = '.nav-link[href^="#"], .wordmark[href^="#"], .crate-details a[href^="#"]';
+const SHORTCUTS = '.nav-link[href^="#"], .wordmark[href^="#"], .social-internal[href^="#"], .crate-details a[href^="#"]';
 // Where each destination's title is, for the robot to arrive next to it, and where its content starts, to land on
 // (just below the top of the window, rather than on the section's empty space above its title).
 const TITLES: Record<string, string> = { main: '#hero-title', projetos: '#projects-title', sobre: '#about-title', capacidades: '#capabilities-title', contato: '#contact-title' };

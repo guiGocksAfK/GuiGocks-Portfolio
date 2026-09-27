@@ -39,8 +39,8 @@ export const content = {
     title: 'Sobre mim.',
     footerNote: 'Engenharia de Software · UniAmérica',
     paragraphs: [
-      'Comecei a programar em C++, no Code::Blocks. De lá para cá, troquei os primeiros exercícios por sistemas de verdade, com usuários de verdade, e cada um deles me ensinou algo que nenhuma aula ensinaria.',
-      'Gosto de projetos grandes e bem testados, daqueles em que o usuário descobre um detalhe novo a cada uso. Trabalho melhor com organização: escopo bem definido, tarefas claras e uma equipe alinhada.',
+      'Comecei no C++, no Code::Blocks, resolvendo exercício de faculdade. Hoje escrevo sistemas que professoras abrem toda manhã para fazer a chamada, e isso muda o jogo: quando algo quebra, não é uma nota que cai, é a rotina de alguém que para.',
+      'Por isso gosto de projetos grandes e bem testados, com o tipo de cuidado que o usuário não vê, mas sente, descobrindo um detalhe novo a cada uso. Rendo mais com organização: escopo claro, tarefas bem divididas e todo mundo remando para o mesmo lado.',
     ],
     // Word in the story whose last letter falls off and gets fixed at the end of the About scene (must appear in a paragraph).
     bugWord: 'testados',
@@ -49,7 +49,7 @@ export const content = {
       role: 'Full-stack developer',
       location: 'Foz do Iguaçu, PR',
       lookingLabel: 'Procurando',
-      lookingText: 'Vagas que usem a minha stack, em qualquer formato: presencial em Foz do Iguaçu, remoto ou em outro país.',
+      lookingText: 'Um time onde eu possa entregar desde o primeiro dia: estágio ou júnior, front, back ou full-stack. Presencial em Foz do Iguaçu ou remoto, inclusive para empresas de fora do Brasil.',
     },
     timelineLabel: 'Trajetória',
     // Dashed top floor of the career building.
@@ -173,7 +173,7 @@ export const content = {
       {
         name: AJT,
         category: 'Projeto acadêmico em grupo',
-        description: 'Sistema de gestão de turismo desenvolvido em equipe, com frontend Angular e backend Java/Spring Boot.',
+        description: 'Sistema de gestão para uma agência de turismo, desenvolvido em equipe: transfers, ordens de serviço e passageiros organizados em um só lugar.',
         highlights: [
           { title: 'Documento do passageiro cifrado', text: 'Um `AttributeConverter` cifra o campo com AES-256-GCM sem o service saber. O formato grava `v1:` + IV + texto + tag, então o algoritmo pode mudar sem quebrar dado antigo, e registros legados em texto puro são recifrados na próxima gravação, sem downtime.' },
           { title: 'Testes com banco de verdade', text: 'Testcontainers sobe um PostgreSQL real, não H2, e o WireMock simula a API de câmbio sem sair para a internet: mocks não pegam erro de SQL nem de mapeamento JPA. Os containers sobem uma vez para a suíte inteira, para o JUnit não recriá-los numa porta nova entre as classes.' },
@@ -231,6 +231,8 @@ export const content = {
     email: 'guigocks@gmail.com',
     copiedLabel: 'Copiado!',
     copyHint: 'Clique para copiar o e-mail',
+    // Shortcut next to the social buttons, down to the capabilities section.
+    tools: { label: 'Ver minhas ferramentas', href: '#capacidades' },
     links: [
       { label: 'GitHub', href: 'https://github.com/guiGocksAfK', style: 'primary' },
       { label: 'LinkedIn', href: 'https://www.linkedin.com/in/guilherme-gabriel-gocks-023846352', style: 'outline' },
