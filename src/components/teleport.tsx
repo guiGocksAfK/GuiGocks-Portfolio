@@ -21,6 +21,10 @@ const TRAIL = 150; // ms of colour behind the wave's front, from light blue to t
 const PIXEL = Math.max(GROW, TRAIL); // ms each pixel takes, on the way out and back in
 const HOLD = 220; // ms of the trip screen: the destination's name and speed lines
 const JITTER = 40; // ms of raggedness along the curtain's edge
+const FRONT = 55; // ms a cell shows as two half-size pixels right at the curtain's edge
+const GLOW = 22; // px, half the height of the band of light along the curtain's edge
+const PULL = 24; // px the page slides the way of the trip as it is pulled away (and arrives from the other side)
+const SETTLE = 3; // px the page carries on past its place when it arrives, like a lift stopping
 const LETTER_FONT = 11; // px, the size the destination's name is rendered at before being blown up into pixels
 const LETTER_DOT = 6; // px per pixel of the name
 const LIGHT = '#a3bcff';
@@ -42,6 +46,7 @@ let active: Teleport | null = null;
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Grows a little past full size and settles back (0..1 → 0..1, peaking about 1.05).
 const overshoot = (t: number) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
+const smooth = (t: number) => t * t * (3 - 2 * t);
 // The time (0..1) at which an eased-in-and-out move (smoothstep) reaches a position (0..1).
 const unsmooth = (position: number) => .5 - Math.sin(Math.asin(1 - 2 * position) / 3);
 const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
@@ -140,6 +145,33 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
       };
       // The wave's colours: light blue at its front, the accent just behind, a dark blue, then the page's own colour.
       const tint = (age: number) => age < TRAIL * .3 ? LIGHT : age < TRAIL * .65 ? accent : age < TRAIL ? DEEP : page;
+      // One cell 'age' ms after the curtain's front reached it: right at the front it shows as two half-size pixels in
+      // a checker pattern, then as a whole pixel growing a little past its size, through the wave's colours.
+      const pixel = (cell: (typeof cells)[number], age: number) => {
+        if (age <= 0) return;
+        if (age < FRONT) {
+          const half = CELL / 2;
+          const size = overshoot(age / FRONT);
+          square(cell.x, cell.y, half, size, LIGHT);
+          square(cell.x + half, cell.y + half, half, size, LIGHT);
+          return;
+        }
+        square(cell.x, cell.y, CELL, overshoot(Math.min(1, age / GROW)), tint(age));
+      };
+      // A soft band of light running along the curtain's edge while it crosses the window.
+      const glow = (now: number, down: boolean) => {
+        const progress = now / SWEEP;
+        if (progress <= 0 || progress >= 1) return;
+        const edge = (down ? smooth(progress) : 1 - smooth(progress)) * height;
+        const band = context.createLinearGradient(0, edge - GLOW, 0, edge + GLOW);
+        band.addColorStop(0, 'rgba(163, 188, 255, 0)');
+        band.addColorStop(.5, 'rgba(163, 188, 255, .45)');
+        band.addColorStop(1, 'rgba(163, 188, 255, 0)');
+        context.fillStyle = band;
+        context.fillRect(0, edge - GLOW, width, GLOW * 2);
+      };
+      // The destination's name, in small pixels: shown on the trip screen and taken apart by the curtain on the way in.
+      let letters: { x: number; y: number; delay: number; size: number }[] = [];
       // When the curtain's front reaches a height of the window (0 top .. 1 bottom), going the way of the trip. Its speed
       // eases in and out; each column is a little ragged.
       const ragged = Array.from({ length: cols }, () => Math.random() * JITTER);
@@ -147,15 +179,14 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
       return {
         // Out: the curtain sweeps over the page the way the trip goes, each pixel growing from nothing to a little
         // more than a cell as the wave's colours pass through it.
-        async cover(down: boolean) {
+        async cover(down: boolean, onProgress: (t: number) => void) {
           cells.forEach(cell => { cell.delay = reach(cell.y + CELL / 2, down, SWEEP) + ragged[cell.col]; });
           await tween(SWEEP + JITTER + PIXEL, t => {
             const now = t * (SWEEP + JITTER + PIXEL);
+            onProgress(t);
             context.clearRect(0, 0, width, height);
-            for (const cell of cells) {
-              const age = now - cell.delay;
-              if (age > 0) square(cell.x, cell.y, CELL, overshoot(Math.min(1, age / GROW)), tint(age));
-            }
+            for (const cell of cells) pixel(cell, now - cell.delay);
+            glow(now, down);
           });
         },
         // The trip, drawn with the same pixels: columns of them rushing the way the page is going, and the
@@ -174,13 +205,13 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
           probe.fillStyle = '#fff';
           probe.fillText(text, 1, 2);
           const data = probe.getImageData(0, 0, probe.canvas.width, probe.canvas.height).data;
-          const dots: { x: number; y: number; delay: number }[] = [];
+          const dots: { x: number; y: number; delay: number; size: number }[] = [];
           const scale = Math.min(LETTER_DOT, (width - 48) / textWidth);
           const left = (width - textWidth * scale) / 2;
           const top = (height - probe.canvas.height * scale) / 2;
           for (let y = 0; y < probe.canvas.height; y++) {
             for (let x = 0; x < probe.canvas.width; x++) {
-              if (data[(y * probe.canvas.width + x) * 4 + 3] > 110) dots.push({ x: left + x * scale, y: top + y * scale, delay: x / textWidth * 70 + Math.random() * 40 });
+              if (data[(y * probe.canvas.width + x) * 4 + 3] > 110) dots.push({ x: left + x * scale, y: top + y * scale, delay: x / textWidth * 70 + Math.random() * 40, size: scale });
             }
           }
           await tween(HOLD, t => {
@@ -195,33 +226,36 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
                 square(streak.col * CELL, row * CELL, CELL, .8 - piece * .12, accent);
               }
             }
-            context.globalAlpha = Math.min(1, (HOLD - now) / 50);
+            context.globalAlpha = 1;
             for (const dot of dots) {
               const age = now - dot.delay;
               if (age > 0) square(dot.x, dot.y, scale, overshoot(Math.min(1, age / 90)) * .86, LIGHT);
             }
-            context.globalAlpha = 1;
           });
-          context.fillStyle = page;
-          context.fillRect(0, 0, width, height);
+          // The name stays up: the curtain takes it apart on the way in.
+          letters = dots;
         },
         // In: the curtain carries on the same way and opens the destination behind it, each pixel playing the way out
         // backwards (the page's colour, dark blue, blue, light blue, then shrinking away). onOpen fires as the curtain
         // passes the given height (the destination's title), for the robot to beam in there.
-        async reveal(down: boolean, titleY: number, onOpen: () => void) {
+        async reveal(down: boolean, titleY: number, onOpen: () => void, onProgress: (t: number) => void) {
           canvas.style.pointerEvents = 'none';
           cells.forEach(cell => { cell.delay = reach(cell.y + CELL / 2, down, SWEEP) + ragged[cell.col]; });
+          letters.forEach(dot => { dot.delay = reach(dot.y + dot.size / 2, down, SWEEP) + ragged[Math.min(cols - 1, Math.floor(dot.x / CELL))]; });
           const openAt = reach(titleY, down, SWEEP) + JITTER + PIXEL * .6;
           let opened = false;
           await tween(SWEEP + JITTER + PIXEL, t => {
             const now = t * (SWEEP + JITTER + PIXEL);
+            onProgress(t);
             if (!opened && now > openAt) { opened = true; onOpen(); }
             context.clearRect(0, 0, width, height);
-            for (const cell of cells) {
-              // How far this pixel is from being gone, on the way out's clock.
-              const age = PIXEL - (now - cell.delay);
-              if (age > 0) square(cell.x, cell.y, CELL, overshoot(Math.min(1, age / GROW)), tint(age));
+            // Each pixel plays the way out backwards: how far it is from being gone, on the way out's clock.
+            for (const cell of cells) pixel(cell, PIXEL - (now - cell.delay));
+            for (const dot of letters) {
+              const age = PIXEL - (now - dot.delay);
+              if (age > 0) square(dot.x, dot.y, dot.size, overshoot(Math.min(1, age / GROW)) * .86, LIGHT);
             }
+            glow(now, down);
           });
           if (!opened) onOpen();
           canvas.remove();
@@ -293,7 +327,8 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
       const first = lines.length ? lines[0] : box;
       const right = box.right + 12 + BOT_W < document.documentElement.clientWidth - 8;
       const x = (right ? box.right + 12 : first.left - 12 - BOT_W) + window.scrollX;
-      const y = box.bottom - BOT_H + window.scrollY;
+      // Where the title will be once the page has finished sliding in (the robots' layer slides along with it).
+      const y = box.bottom - BOT_H + window.scrollY - pageShift;
       const towards = right ? -1 : 1;
       const robot = bot(x, y);
       robot.face(towards);
@@ -367,6 +402,21 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
       }
     }
 
+    // The page's own part in the trip: it slides, shrinks or swells a little and dims, as if pulled into another
+    // dimension and put back. The robots' layer slides along with it.
+    const shell = document.querySelector<HTMLElement>('.site-shell');
+    let pageShift = 0;
+    const centre = () => { if (shell) shell.style.transformOrigin = `50% ${window.scrollY + window.innerHeight / 2 - shell.offsetTop}px`; };
+    function shift(y: number, scale: number, opacity: number, clear = false) {
+      pageShift = clear ? 0 : y;
+      layer.style.translate = clear ? '' : `0 ${y}px`;
+      if (!shell) return;
+      shell.style.translate = clear ? '' : `0 ${y}px`;
+      shell.style.scale = clear ? '' : String(scale);
+      shell.style.opacity = clear ? '' : String(opacity);
+      if (clear) shell.style.transformOrigin = '';
+    }
+
     active = async (href, origin) => {
       if (busy) return;
       const target = destination(href);
@@ -384,8 +434,11 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
           effect('tp-spark', from.x + window.scrollX - 4, from.y + window.scrollY - 14, '✦');
         }
         const down = target.top >= window.scrollY;
+        // Going down the page, the page is pulled upwards (and the destination arrives from below), and back.
+        const drift = down ? -1 : 1;
         const pixels = screen();
-        await pixels.cover(down);
+        centre();
+        await pixels.cover(down, t => shift(drift * PULL * t * t, 1 - .03 * t * t, 1 - .45 * t));
         // The trip, while behind the pixels a section built by robots is delivered finished and the page jumps.
         const id = href.slice(1);
         const trip = pixels.travel(labelFor(href, homeLabel), down);
@@ -393,15 +446,26 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
         if (id === 'contato') window.dispatchEvent(new CustomEvent('site:finish-build', { detail: 'contato' }));
         await frame();
         await frame();
+        shift(0, 1, 1);
         const landing = destination(href) ?? target;
         window.scrollTo({ top: landing.top, behavior: 'instant' });
         history.pushState(null, '', href);
         focusTitle(landing.title);
+        const titleY = titleSpot(landing.title).y;
+        centre();
+        shift(-drift * PULL, 1.03, .55);
         await trip;
         let arriving: Promise<void> = Promise.resolve();
-        await pixels.reveal(down, titleSpot(landing.title).y, () => { arriving = arrive(landing.title); });
+        await pixels.reveal(down, titleY, () => { arriving = arrive(landing.title); }, t => {
+          const eased = 1 - (1 - t) * (1 - t);
+          shift(-drift * PULL * (1 - eased), 1 + .03 * (1 - eased), .55 + .45 * eased);
+        });
+        // Landing: it carries on a touch past its place and settles back.
+        await tween(260, t => shift(drift * SETTLE * Math.sin(Math.PI * t), 1, 1));
+        shift(0, 1, 1, true);
         await arriving;
       } finally {
+        shift(0, 1, 1, true);
         busy = false;
       }
     };
