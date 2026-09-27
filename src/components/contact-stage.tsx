@@ -146,7 +146,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         if (cancelled) return reject(new Cancelled());
         if (inView && !document.hidden) elapsed += now - last;
         last = now;
-        const t = Math.min(1, elapsed / Math.max(duration, 1));
+        const t = Math.max(0, Math.min(1, elapsed / Math.max(duration, 1)));
         onFrame(t);
         if (t < 1) requestAnimationFrame(step); else resolve();
       };

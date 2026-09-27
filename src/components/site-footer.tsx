@@ -27,7 +27,7 @@ export function SiteFooter({ footer }: { footer: Footer }) {
     liftBusy.current = true;
     const tween = (duration: number, onFrame: (t: number) => void) => new Promise<void>(resolve => {
       const start = performance.now();
-      const step = (now: number) => { const t = Math.min(1, (now - start) / duration); onFrame(t); if (t < 1) requestAnimationFrame(step); else resolve(); };
+      const step = (now: number) => { const t = Math.max(0, Math.min(1, (now - start) / duration)); onFrame(t); if (t < 1) requestAnimationFrame(step); else resolve(); };
       requestAnimationFrame(step);
     });
     const smooth = (t: number) => t * t * (3 - 2 * t);

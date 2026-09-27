@@ -125,7 +125,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       const start = performance.now();
       const step = (now: number) => {
         if (cancelled) return reject(new Cancelled());
-        const t = skipping ? 1 : Math.min(1, (now - start) / Math.max(duration, 1));
+        const t = skipping ? 1 : Math.max(0, Math.min(1, (now - start) / Math.max(duration, 1)));
         onFrame(t);
         if (t < 1) requestAnimationFrame(step); else resolve();
       };
