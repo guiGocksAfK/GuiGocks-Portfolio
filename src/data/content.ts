@@ -30,7 +30,7 @@ export const content = {
     technologies: [
       { label: 'backend', items: ['Java', 'Spring Boot', 'Node.js', 'Python'] },
       { label: 'frontend', items: ['TypeScript', 'JavaScript', 'React', 'Next.js', 'Angular'] },
-      { label: 'infra', items: ['Docker', 'Oracle Cloud', 'Neon', 'Vercel', 'Neon'] },
+      { label: 'infra', items: ['Docker', 'Oracle Cloud', 'Neon', 'Vercel'] },
     ],
     section: '01 — Apresentação',
     location: 'Foz do Iguaçu, PR',
@@ -207,11 +207,11 @@ export const content = {
     skipLabel: 'Pular animação ⏭',
     // What the robots say while building: the boss ordering paint, the boss stopping the fight.
     // typo: how the title gets misspelt at first; keep: what stays when the typo is erased (both must start the title).
-    lines: { call: 'TINTA, JÁ!!', stop: 'CHEGA!!', typo: 'Vamos contruir', keep: 'Vamos con', sigh: 'ufa…', nothing: 'NADA AQUI :)',
+    lines: { call: 'TINTA, JÁ!!', stop: 'CHEGA!!', typo: 'Vamos contruir', keep: 'Vamos con', nothing: 'NADA AQUI :)',
       // The skip robot's lines: its jokes as it peeks out, the last one before the park.
       jokes: ['Tá longo, né?', 'Pode pular, eu não conto', 'Ainda dá tempo!'], finale: 'Ok, agora vale ver o final',
     },
-    copiedLabel: 'copiado!',
+    copiedLabel: 'Copiado!',
     pendingLabel: 'em breve',
     // Shown by the WhatsApp button once the robot has (sort of) fixed it.
     zapReady: 'Agora funciona →',
@@ -223,16 +223,26 @@ export const content = {
       { label: 'Currículo', value: 'Baixar em PDF', action: 'Baixar currículo', kind: 'download', href: '/curriculo-guilherme-gocks.pdf' },
     ],
   } as {
-    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; typo: string; keep: string; sigh: string; nothing: string; jokes: readonly string[]; finale: string }; copiedLabel: string; pendingLabel: string; zapReady: string;
+    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; typo: string; keep: string; nothing: string; jokes: readonly string[]; finale: string }; copiedLabel: string; pendingLabel: string; zapReady: string;
     rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null; icon?: 'whatsapp' }[];
   },
   contact: {
     email: 'guigocks@gmail.com',
-    copiedLabel: 'copiado!',
+    copiedLabel: 'Copiado!',
     copyHint: 'Clique para copiar o e-mail',
     links: [
       { label: 'GitHub', href: 'https://github.com/guiGocksAfK', style: 'primary' },
       { label: 'LinkedIn', href: 'https://www.linkedin.com/in/guilherme-gabriel-gocks-023846352', style: 'outline' },
     ],
+  },
+  // What the teleport's trip screen calls the top of the page (the other destinations use the menu's names).
+  teleport: { home: 'Início' },
+  // The page's footer: one thin line like the ones closing each section, with the building site's sign (the "placa
+  // de obra") summed up in a line, a tiny builders' lift back to the top and the small print.
+  footer: {
+    sign: ['gocks.dev', 'Resp. técnico Guilherme Gabriel Gocks', 'Início 2026', 'Término: nunca, sempre em manutenção'],
+    topLabel: 'Topo',
+    topAction: 'Voltar ao topo',
+    disclaimer: 'Nenhum robô foi ferido na construção deste site. (Um pifou no lago, mas passa bem.)',
   },
 } as const;

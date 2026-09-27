@@ -30,7 +30,7 @@ export function AboutBadge({ name, role, location, lookingLabel, lookingText, ph
     const unregister = registerStep('about', 1, () => new Promise<void>(resolve => {
       setPhase('delivering');
       timer = setTimeout(() => { setPhase('done'); resolve(); }, SCENE);
-    }));
+    }), () => { clearTimeout(timer); setPhase('done'); });
     return () => { unregister(); clearTimeout(timer); };
   }, []);
 

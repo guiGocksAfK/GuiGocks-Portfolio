@@ -24,7 +24,7 @@ const PIPE: Motion = [200, 300]; // the crate's bulge travelling inside the pipe
 const LIFT: Motion = [100, 600]; // the crate sucked back up from the desk into the nozzle
 const LID_TIME = 380; // matches the lid transition in CSS
 const HAND_OUT = 350; // ms per thing taken out of the crate; matches the stagger of .crate-details-list items
-const NUDGE_TIME = 4000; // how long the note about the pump's lever stays up
+const NUDGE_TIME = 7000; // how long the robot holds up the note about the pump's lever
 const RETURN_FACTOR = 1.6; // putting a crate back is quicker than fetching it
 const FALL_GRAVITY = 1110; // px/s², the crate dropping from the nozzle onto the desk
 
@@ -125,7 +125,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       const start = performance.now();
       const step = (now: number) => {
         if (cancelled) return reject(new Cancelled());
-        const t = skipping ? 1 : Math.min(1, (now - start) / Math.max(duration, 1));
+        const t = skipping ? 1 : Math.max(0, Math.min(1, (now - start) / Math.max(duration, 1)));
         onFrame(t);
         if (t < 1) requestAnimationFrame(step); else resolve();
       };
@@ -294,6 +294,8 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
         button.classList.add('crate-away');
         await accelerate(crateY - pipeY, SUCK, f => placeGhost(ghost, crateX, crateY + (pipeY - crateY) * f, 1 - .8 * f));
         ghost.style.visibility = 'hidden';
+        // As soon as the first crate of the visit goes into the pipe, a robot holds up the note about the lever.
+        if (animatedRef.current) nudge();
         await stretch(hose, 1, 0, HOSE);
       } finally {
         dropHose(hose);
@@ -381,7 +383,6 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       else if (job.mode === 'inline') await openInPlace(job);
       else { button.classList.add('crate-opened'); setOpened(data); }
       phase = 'open';
-      if (job.mode === 'desk' && animatedRef.current) nudge();
       // A skipped opening shows everything taken out of the crate at once.
       if (skipping) area.querySelectorAll('.crate-details *').forEach(element => element.getAnimations().forEach(animation => animation.finish()));
       endSkip();
@@ -401,13 +402,14 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       resume();
     }
 
-    // After the first full trip of the visit, a note next to the pump says it can be switched off, for a few seconds.
+    // On the first trip of the visit, a robot standing on the pipe next to the pump holds up a note saying it can be
+    // switched off, for a few seconds (or until the lever is used).
     let nudged = false;
     function nudge() {
       if (nudged) return;
       nudged = true;
-      pump.classList.add('pump-nudge');
-      const timer = setTimeout(() => { timers.delete(timer); pump.classList.remove('pump-nudge'); }, NUDGE_TIME);
+      grid.classList.add('pump-nudge');
+      const timer = setTimeout(() => { timers.delete(timer); grid.classList.remove('pump-nudge'); }, NUDGE_TIME);
       timers.add(timer);
     }
 
@@ -424,7 +426,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
     };
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') putBack(); };
     const onClick = (event: MouseEvent) => {
-      pump.classList.remove('pump-nudge');
+      if ((event.target as Element).closest('.pump-switch')) grid.classList.remove('pump-nudge');
       if (phase === 'open' && !(event.target as Element).closest('.crate-button, .crate-details, .pump-switch')) putBack();
     };
     document.addEventListener('keydown', onKey);
@@ -518,7 +520,8 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       document.removeEventListener('click', onClick);
       window.removeEventListener('resize', onResizeClerk);
       fx.replaceChildren();
-      pump.classList.remove('pump-on', 'pump-nudge');
+      pump.classList.remove('pump-on');
+      grid.classList.remove('pump-nudge');
       area.querySelectorAll('.ladder-clerk, .forklift, .crate-popper').forEach(element => element.remove());
       area.classList.remove('yard-skip');
       area.querySelectorAll('.crate-away, .crate-opened').forEach(element => element.classList.remove('crate-away', 'crate-opened'));
@@ -570,7 +573,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
             <div className="office-scene" aria-hidden="true">
               {languages.chat.map((line, index) => (
                 <span key={line} className={`office-robot office-robot-${index}`}>
-                  <span className="office-bubble font-mono">{line}</span>
+                  <span className="office-bubble">{line}</span>
                   <RobotSprite pose="idle" mood="happy" />
                 </span>
               ))}
@@ -607,11 +610,15 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
             >
               <span className="pump-lever" aria-hidden="true" />
               <span className="pump-tip font-mono" aria-hidden="true">{animated ? counter.pumpOff : counter.pumpOn}</span>
-              <span className="pump-note font-mono" aria-hidden="true">{counter.nudge}</span>
             </button>
             <span className="pump-light" aria-hidden="true" />
           </span>
           <span className="pump-stack" aria-hidden="true" />
+        </span>
+        {/* The robot that holds up the note about the lever: standing on the pipe behind it, head and hands over its top. */}
+        <span className="pump-helper" aria-hidden="true">
+          <span className="pump-helper-robot" dangerouslySetInnerHTML={{ __html: crewMarkup(true, 0) }} />
+          <span className="pump-note">{counter.nudge}</span>
         </span>
         <div ref={fxRef} className="yard-fx" aria-hidden="true" />
       </div>

@@ -17,8 +17,9 @@ type Walker = { el: HTMLSpanElement; x: number; walk: (on: boolean) => void; ang
 // A guard robot that now and then walks the length of a section's divider line, alternating direction, with a stop
 // midway to look around. About one round in four a hard-hat worker comes the other way: they bump, stare each other
 // down anime-style, brawl inside a cartoon dust cloud and one of them gets punched off into the sky with a twinkle.
-// Pauses while off-screen or in a background tab; absent without motion.
-export function PatrolRobot() {
+// Pauses while off-screen or in a background tab; absent without motion. waitForBuild: it only starts its rounds once the
+// contact section has finished being built (the page's last animation).
+export function PatrolRobot({ waitForBuild = false }: { waitForBuild?: boolean }) {
   const stageRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -183,6 +184,7 @@ export function PatrolRobot() {
 
     async function run() {
       const guard = walker('A');
+      while (waitForBuild && document.documentElement.dataset.build === 'pending') await pause(1000);
       for (let rightward = true; ; rightward = !rightward) {
         await pause(6000 + Math.random() * 6000);
         const width = line.clientWidth;
@@ -209,7 +211,7 @@ export function PatrolRobot() {
       observer.disconnect();
       document.removeEventListener('visibilitychange', resume);
     };
-  }, []);
+  }, [waitForBuild]);
 
   return <span ref={stageRef} className="patrol-stage" aria-hidden="true" />;
 }

@@ -5,9 +5,9 @@ import { armZapGag, skipZapGag } from '@/components/zap-gag';
 import { crewMarkup, pixelMarkup, robotMarkup, type CrewFace, type RobotMood, type RobotPose } from '@/components/robot-sprite';
 
 type Stage = 'blank' | 'playing' | 'done';
-// What the robots say or show: the boss calling the crew and stopping the fight, the title's typo, the boss's sigh, the sign.
+// What the robots say or show: the boss calling the crew and stopping the fight, the title's typo, the sign.
 type StageLines = {
-  call: string; stop: string; typo: string; keep: string; sigh: string; nothing: string;
+  call: string; stop: string; typo: string; keep: string; nothing: string;
   // The skip robot: its jokes when it peeks out, and its last one before the park.
   jokes: readonly string[]; finale: string;
 };
@@ -26,6 +26,8 @@ const ANNOYED_WALK = 200; // a brisk walk: off to mop up the puddle, stepping up
 const RUN_SPEED = 220;
 const DASH_SPEED = 520;
 const COVER_RUN = 245; // the crew rushing to hide the patches
+const CARRY_WALK = 260; // the ones bringing in the picnic basket and the bench, so the park doesn't wait on them
+const PARK_AFTER = 1000; // ms after the crew head for their watching spots when the park starts going up
 const FOOTER_AFTER = 1600; // ms into the e-mail's delivery (the "@" rolling off) when the footer's notes get thrown
 const SKIP_PEEK_EVERY = 15000; // ms between the skip robot's peeks with a joke
 const COVER_GAP = 550; // ms between one disguise's trick and the next
@@ -91,6 +93,17 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     }
   }, []);
 
+  // Teleporting into the section (teleport.tsx) lands on it finished, as if the visitor had skipped the show.
+  useEffect(() => {
+    const onFinish = (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== 'contato' || document.documentElement.dataset.build !== 'pending') return;
+      skipZapGag();
+      setStage('done');
+    };
+    window.addEventListener('site:finish-build', onFinish);
+    return () => window.removeEventListener('site:finish-build', onFinish);
+  }, []);
+
   useEffect(() => {
     const section = sectionRef.current;
     if (!section || document.documentElement.dataset.build !== 'pending') return;
@@ -133,7 +146,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         if (cancelled) return reject(new Cancelled());
         if (inView && !document.hidden) elapsed += now - last;
         last = now;
-        const t = Math.min(1, elapsed / Math.max(duration, 1));
+        const t = Math.max(0, Math.min(1, elapsed / Math.max(duration, 1)));
         onFrame(t);
         if (t < 1) requestAnimationFrame(step); else resolve();
       };
@@ -334,7 +347,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         }
         if (cover.how === 'sign') {
           // Arms up, holding a little sign over its head.
-          sign = spawn('robot-sign nothing-sign font-mono', member.element, lines.nothing);
+          sign = spawn('robot-sign nothing-sign', member.element, lines.nothing);
           member.pose({ arms: true, facing: 1 });
         }
       })));
@@ -372,7 +385,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       boss.draw('idle', 'angry');
       for (let index = 0; index < 2; index++) { puff(boss.element, index % 2 ? 'right' : 'left'); await pause(150); }
       boss.draw('jump', 'angry');
-      const call = over(boss.element, 'stage-shout font-mono', lines.call);
+      const call = over(boss.element, 'stage-shout', lines.call);
       void skip.current?.flinch().catch(() => {});
       const stomping = (async () => {
         for (let jump = 0; jump < 2; jump++) await boss.hop(12, 250);
@@ -382,8 +395,9 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       // Right after the shout the order sinks in: "!!" over the crew one after the other, and the disguise falls apart
       // as they leave their posts: the sign drops, the one stuck to the wall slides down, arms go up.
       await pause(ORDER_SINKS_IN);
+      // (Not the first one, the boss's shout is right over its head.)
       const alarms: HTMLElement[] = [];
-      for (const member of team) {
+      for (const member of team.slice(1)) {
         alarms.push(over(member.element, 'stage-mark stage-mark-alert', '!!'));
         await pause(70);
       }
@@ -603,7 +617,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await pause(1200);
 
       boss.draw('jump', 'angry');
-      const stop = over(boss.element, 'stage-shout font-mono', lines.stop);
+      const stop = over(boss.element, 'stage-shout', lines.stop);
       skip.current?.coverEyes(false);
       // One big stomp, and the ground line spreads out from where it lands.
       await boss.hop(22, 460);
@@ -942,8 +956,8 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await tween(Math.abs(toX - fromX) / speed * 1000, t => { const x = fromX + (toX - fromX) * t; member.place(x, GRASS); onStep?.(x); });
       member.legs(false);
     }
-    async function leave(member: Member, toX: number) {
-      await walkOnGrass(member, toX);
+    async function leave(member: Member, toX: number, speed = CREW_WALK) {
+      await walkOnGrass(member, toX, speed);
       member.element.remove();
     }
 
@@ -1112,23 +1126,21 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       showPart(basket);
       const hold = (x: number) => movePart(basket, { x: x + CREW_W / 2 - (basketBox.x + basketBox.w / 2), y: -CREW_H + 4 });
       hold(bringer.x);
-      await walkOnGrass(bringer, basketBox.x + basketBox.w / 2 - CREW_W / 2, CREW_WALK, hold);
+      await walkOnGrass(bringer, basketBox.x + basketBox.w / 2 - CREW_W / 2, CARRY_WALK, hold);
       await tween(250, t => movePart(basket, { y: (-CREW_H + 4) * (1 - t) }));
       bringer.pose({ arms: false });
-      await Promise.all([spreaderOff, leave(bringer, stageEl.clientWidth + 40)]);
+      await Promise.all([spreaderOff, leave(bringer, stageEl.clientWidth + 40, CARRY_WALK)]);
     }
 
-    // The bench comes last: the boss taps its foot until two of the crew bring it, then sits down with a sigh and the
-    // pigeons fly in.
+    // The bench comes last: the boss taps its foot until two of the crew bring it, then sits down and the pigeons fly in.
     async function bench(boss: ReturnType<typeof robot>, waiting: Promise<unknown>) {
       const seat = part('.ending-bench');
       if (!seat) return;
-      // While it waits, now and then a short fit of impatience: tapping its foot, huffing, rolling its eyes up.
+      // While it waits, now and then a short fit of impatience: tapping its foot, rolling its eyes up.
       let tapping = true;
       const impatience = (async () => {
         const fits = [
           async () => { const dots = over(boss.element, 'stage-mark', '…'); for (let tap = 0; tap < 3; tap++) await boss.hop(3, 220); dots.remove(); },
-          async () => { boss.draw('idle', 'angry'); puff(boss.element, 'left'); await pause(500); boss.draw('idle', 'normal'); },
           async () => { boss.draw('blink', 'normal'); await pause(600); boss.draw('idle', 'normal', 'right'); await pause(400); boss.draw('idle', 'normal'); },
         ];
         for (let fit = 0; tapping; fit++) {
@@ -1146,11 +1158,11 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       showPart(seat);
       const hold = (x: number) => movePart(seat, { x: x - (seatBox.x + 6), y: -CREW_H + 2 });
       hold(-CREW_W - 100);
-      await Promise.all(carriers.map((member, index) => walkOnGrass(member, seatBox.x + 6 + index * 40, CREW_WALK, index ? undefined : hold)));
+      await Promise.all(carriers.map((member, index) => walkOnGrass(member, seatBox.x + 6 + index * 40, CARRY_WALK, index ? undefined : hold)));
       await tween(300, t => movePart(seat, { y: (-CREW_H + 2) * (1 - t) }));
       movePart(seat, {});
       carriers.forEach(member => member.pose({ arms: false }));
-      const leaving = Promise.all(carriers.map(member => leave(member, -CREW_W - 40)));
+      const leaving = Promise.all(carriers.map(member => leave(member, -CREW_W - 40, CARRY_WALK)));
       tapping = false;
       await impatience;
       // Hop onto the bench: the sitting boss of the scene takes over.
@@ -1162,8 +1174,6 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await tween(500, t => boss.place(fromX + (spot.x - fromX) * t, fromY + (spot.y - fromY) * t - Math.sin(Math.PI * t) * 24));
       boss.element.remove();
       showPart(sitting);
-      const sigh = spawn('stage-grumble stage-sigh font-mono', actors, lines.sigh);
-      Object.assign(sigh.style, { left: `${spot.x + spot.w + 6}px`, top: `${spot.y - 18}px` });
 
       // The pigeons fly in from the sky and land in front of it.
       await Promise.all([...stageEl.querySelectorAll<HTMLElement>('.ending-pigeon')].map(async (pigeon, index) => {
@@ -1173,11 +1183,11 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         movePart(pigeon, {});
       }));
       await pause(600);
-      sigh.remove();
       await leaving;
     }
 
-    // Job done: the crew throw their hard hats in the air, two sit down for the picnic and one goes to fly the kite.
+    // Job done: the crew throw their hard hats in the air and each takes a place in the park: one fishes, one naps, two sit
+    // down for the picnic and one goes to fly the kite.
     async function celebrate(crewLeft: Member[]) {
       const width = stageEl.clientWidth;
       for (const member of crewLeft) {
@@ -1190,8 +1200,8 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await tween(600, t => crewLeft.forEach(member => member.place(member.x, GRASS + Math.sin(Math.PI * t) * 6)));
       crewLeft.forEach(member => member.pose({ arms: false }));
       await pause(500);
-      const spots = ['.ending-picnic-crew-1', '.ending-picnic-crew-2', '.ending-flyer'].map(part);
-      // From left to right: the two nearest the blanket sit down, the next one takes the kite.
+      const spots = ['.ending-fisher', '.ending-napper', '.ending-picnic-crew-1', '.ending-picnic-crew-2', '.ending-flyer'].map(part);
+      // From left to right, each goes to the nearest place.
       const byDistance = [...crewLeft].sort((a, b) => a.x - b.x);
       await Promise.all(spots.map(async (spot, index) => {
         const member = byDistance[index];
@@ -1199,8 +1209,24 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         if (!spot) { await leave(member, width + 40); return; }
         const spotBox = boxOf(spot);
         await walkOnGrass(member, spotBox.x);
+        // The napper has a good stretch before lying down.
+        if (spot.classList.contains('ending-napper')) {
+          member.pose({ arms: true });
+          await tween(700, t => member.place(member.x, GRASS + Math.sin(Math.PI * t) * 3));
+        }
         member.element.remove();
         showPart(spot);
+        // The fisher casts: the rod swings forward from over its shoulder and the float lands on the lake.
+        if (spot.classList.contains('ending-fisher')) {
+          const rig = spot.querySelector<HTMLElement>('.ending-rod-rig');
+          const float = spot.querySelector<HTMLElement>('.ending-float');
+          if (rig && float) {
+            float.style.opacity = '0';
+            await tween(700, t => { rig.style.rotate = `${-70 * (1 - smooth(t))}deg`; });
+            rig.style.rotate = '';
+            float.style.opacity = '';
+          }
+        }
         if (spot.classList.contains('ending-flyer')) {
           const rig = spot.querySelector<HTMLElement>('.ending-kite-rig');
           if (rig) {
@@ -1216,20 +1242,25 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
     async function buildPark(boss: ReturnType<typeof robot>, team: Member[]) {
       // Everyone steps up onto the grass; the crew clear the stage to watch from two gaps in the park (clapping now and
-      // then: a little hop with their arms up) until it's time for their hats.
+      // then: a little hop with their arms up) until it's time for their hats. The park starts going up while they're
+      // still walking over; each one joins the cheering once it gets there.
       const width = stageEl.clientWidth;
       const bossY = boss.y;
       void tween(250, t => boss.place(boss.x, bossY - GRASS * t - Math.sin(Math.PI * t) * 8)).catch(() => {});
       const seats = [.3, .34, .38, .68, .72];
-      await Promise.all(team.map(async (member, index) => {
+      const seated: Member[] = [];
+      const arriving = Promise.all(team.map(async (member, index) => {
         await leap(member, member.x, GRASS, 250, 8);
         await walkOnGrass(member, width * seats[index % seats.length]);
         member.pose({ facing: index < 3 ? -1 : 1 });
+        seated.push(member);
       }));
+      await pause(PARK_AFTER);
       let watching = true;
       const cheering = (async () => {
         for (let round = 0; watching; round++) {
-          const fan = team[round % team.length];
+          if (!seated.length) { await pause(200); continue; }
+          const fan = seated[round % seated.length];
           fan.pose({ arms: true });
           await tween(260, t => fan.place(fan.x, GRASS + Math.sin(Math.PI * t) * 5));
           fan.pose({ arms: false });
@@ -1247,6 +1278,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
         await Promise.all([sky, lawn, woods, blanket]);
       })();
       await bench(boss, scenery);
+      await arriving;
       watching = false;
       await cheering;
       await celebrate(team);
@@ -1269,7 +1301,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       await Promise.all([mopping, writeTitle(crew.filter(member => member !== dropper).sort((a, b) => a.x - b.x)[0])]);
       await pause(300);
       await placeWords(crew);
-      await pause(400);
+      await pause(200);
       parkStarted = true;
       void skipFinale().catch(() => {});
       await buildPark(boss, crew);
@@ -1423,7 +1455,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
       {stage !== 'done' && (
         // Hanging on a rope from a pulley at the end of the line above, just past the section's right edge, its sign
         // hanging under its seat on two strings (and some popcorn while it watches). Hovering brings it down.
-        <button ref={skipRef} type="button" className="skip-robot" data-mode={skipMode} aria-label={skipLabel} onClick={() => { skipZapGag(sectionRef.current); setStage('done'); }}>
+        <button ref={skipRef} type="button" className="skip-robot" data-mode={skipMode} aria-label={skipLabel} onClick={() => { skipZapGag(); setStage('done'); }}>
           <span className="skip-pulley" aria-hidden="true" />
           <span className="skip-swing" aria-hidden="true">
             <span className="skip-rope" />
@@ -1434,7 +1466,7 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
               <span ref={skipBodyRef} className="skip-body" />
               <span className="skip-popcorn" />
               <span className="skip-strings" />
-              <span className="skip-sign font-mono">
+              <span className="skip-sign">
                 <span className="skip-label">{skipLabel}</span>
                 {skipLine && <span className="skip-joke">{skipLine}</span>}
               </span>

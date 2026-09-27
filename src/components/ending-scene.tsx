@@ -1,5 +1,5 @@
-// The page's happy ending: a park at dusk above the last footer line. The boss rests on a bench feeding pigeons, two of
-// the crew have a picnic by the lake without their hard hats and a third one flies a kite. Pixel art drawn from character
+// The page's happy ending: a park at dusk above the last footer line. The boss rests on a bench feeding pigeons; the
+// crew, without their hard hats, fish in the lake, nap on the grass, have a picnic and fly a kite. Pixel art drawn from character
 // maps like the other sprites ("." is transparent); only small calm idle loops in CSS, and still without motion.
 
 const COLORS: Record<string, string> = {
@@ -38,6 +38,10 @@ const PIGEON = ['....gg.', '...gGGP', 'gGGGGG.', '.gGGG..', '..S.S..'];
 // Crew off duty: no hard hat, just the antenna.
 const CREW_SITTING = ['...A....', '...S....', '..BBBB..', '.BDDDDB.', '.BADDAB.', '..BBBB..', '.SBABBS.', '..BBBB..', '.BBBBBB.', 'SS....SS'];
 const CREW_EATING = ['....A...', '....S...', '..BBBB..', '.BDDDDB.', '.BADDAB.', '..BBBB..', '.SBABBSP', '..BBBB.P', '.BBBBBB.', 'SS....SS'];
+// Sitting with its arm out, holding the fishing rod.
+const CREW_FISHING = ['...A....', '...S....', '..BBBB..', '.BDDDDB.', '.BADDAB.', '..BBBB..', '.SBABBSS', '..BBBB..', '.BBBBBB.', 'SS....SS'];
+// Lying on its back on the grass, face up, antenna to the left.
+const CREW_NAPPING = ['..BDDB..S...', 'ASBADBBBBBSS', '..BBBBBABBSS', '..BBBB.BBB..'];
 // Standing with one arm up, holding the kite's string.
 const CREW_KITE = ['...A....', '...S....', '..BBBB..', '.BDDDDB.', '.BADDABS', '..BBBBS.', '.SBABB..', '..BBBB..', '..B..B..', '.SS..SS.'];
 const KITE = ['...A...', '..AaA..', '.AAaAA.', 'AaaaaaA', '.AAaAA.', '..AaA..', '...A...'];
@@ -69,6 +73,21 @@ export function EndingScene() {
       </span>
       <span className="ending-pigeon ending-pigeon-1"><Pixels rows={PIGEON} /></span>
       <span className="ending-pigeon ending-pigeon-2"><Pixels rows={PIGEON} /></span>
+
+      <span className="ending-fisher">
+        <Pixels rows={CREW_FISHING} />
+        {/* The rod, its line and the float, which bob together; the rod gives a little tug now and then. */}
+        <span className="ending-rod-rig">
+          <svg className="ending-rod" viewBox="0 0 60 60" width="60" height="60"><path className="ending-rod-pole" d="M0 60 L 40 10" /><path className="ending-rod-line" d="M40 10 L 48 26" /></svg>
+          <span className="ending-float" />
+        </span>
+      </span>
+
+      <span className="ending-napper">
+        <Pixels rows={CREW_NAPPING} />
+        <span className="ending-z ending-z-1">z</span>
+        <span className="ending-z ending-z-2">z</span>
+      </span>
 
       <span className="ending-picnic">
         <span className="ending-blanket" />

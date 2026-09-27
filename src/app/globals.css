@@ -193,7 +193,7 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .mechanic-hammer { position: absolute; right: -9px; top: 1px; width: 10px; height: 13px; transform-origin: 1px 12px; transform: rotate(-70deg); }
 .mechanic-hammer::before { content: ''; position: absolute; left: 0; bottom: 0; width: 2px; height: 11px; background: #b97a26; }
 .mechanic-hammer::after { content: ''; position: absolute; left: -3px; top: 0; width: 8px; height: 4px; border-radius: 1px; background: #8f9bb3; }
-.hammer-pam { position: absolute; z-index: 5; color: #ffd76a; font-size: 11px; font-weight: 700; line-height: 1; pointer-events: none; animation: hammer-pam .5s ease-out forwards; }
+.hammer-pam { position: absolute; z-index: 5; color: #ffd76a; font: 700 14px/1 var(--font-pixel), monospace; text-shadow: 1px 0 #11151b, -1px 0 #11151b, 0 1px #11151b, 0 -1px #11151b, 2px 2px 0 #11151b; rotate: -8deg; pointer-events: none; animation: hammer-pam .5s ease-out forwards; }
 @keyframes hammer-pam { from { transform: scale(.4); opacity: 1; } 40% { transform: scale(1.3); opacity: 1; } to { transform: translateY(-10px); opacity: 0; } }
 .hammer-spark { position: absolute; z-index: 5; color: #ffd76a; font-size: 10px; line-height: 1; pointer-events: none; animation: fight-bit .4s ease-out forwards; --dx: 10px; --dy: -8px; }
 .floor-hanging { transform-origin: 50% 0; }
@@ -291,7 +291,11 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .office-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .office-desk { position: absolute; left: 50%; bottom: 14px; width: 90px; height: 20px; margin-left: -45px; border: 2px solid #3a404c; border-radius: 2px; background: #151a24; }
 .office-desk::before { content: ''; position: absolute; left: 10px; top: -8px; width: 14px; height: 7px; border-radius: 3px 3px 0 0; background: #8f9bb3; }
-.office-bubble { position: absolute; bottom: calc(100% + 6px); left: 50%; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; opacity: 0; transform: translate(-50%, 4px) scale(.6); transition: opacity .2s, transform .2s ease-out; }
+.office-bubble { position: absolute; bottom: calc(100% + 9px); left: 50%; padding: 2px 8px; border: 2px solid var(--accent); border-radius: 2px; background: var(--background); color: var(--accent); font: 500 12px/1.4 var(--font-pixel), monospace; white-space: nowrap; box-shadow: 2px 2px 0 rgba(0, 0, 0, .45); opacity: 0; transform: translate(-50%, 4px) scale(.6); transition: opacity .2s, transform .2s ease-out; }
+/* The bubble's tail, pointing down at whoever speaks: an outline triangle with the fill one over it. */
+.office-bubble::before, .office-bubble::after { content: ''; position: absolute; top: 100%; left: 50%; border: solid transparent; }
+.office-bubble::before { margin-left: -6px; border-width: 7px 6px 0; border-top-color: var(--accent); }
+.office-bubble::after { margin-left: -3px; border-width: 4px 3px 0; border-top-color: var(--background); }
 .office-bubble-on { opacity: 1; transform: translate(-50%, 0); }
 /* Crates with something inside are buttons; their lid is a separate piece so it can open. */
 .crate-button { border-top-width: 1px; margin-top: 3px; cursor: pointer; text-align: left; }
@@ -336,10 +340,20 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* Hover label next to the pump, over the free strip above the rack. */
 .pump-tip { position: absolute; left: calc(100% + 34px); top: 50%; padding: 3px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--background); color: var(--foreground); font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transform: translate(-4px, -50%); transition: opacity .2s, transform .2s; }
 .pump-switch:hover .pump-tip, .pump-switch:focus-visible .pump-tip { opacity: 1; transform: translate(0, -50%); }
-/* Note shown once, after the first full trip: points at the lever, which wiggles meanwhile. */
-.pump-note { position: absolute; left: calc(100% + 34px); top: 50%; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none; transform: translate(-4px, -50%); transition: opacity .3s, transform .3s; }
-.pump-note::before { content: ''; position: absolute; right: 100%; top: 50%; margin-top: -4px; border: 4px solid transparent; border-right-color: var(--accent); }
-.pump-nudge .pump-note { opacity: 1; transform: translate(0, -50%); }
+/* Shown once, as the first crate goes into the pipe: a note pointing at the lever (which wiggles meanwhile), held up by
+   a robot standing on the pipe behind it, only its head and hands showing over the note's top edge. The two come up
+   together and go back down when it's done; now and then the robot gives the note a little shake. */
+.pump-helper { position: absolute; left: 84px; top: 4px; z-index: 4; display: block; pointer-events: none; transform-origin: 0 50%; }
+.pump-helper-robot { position: absolute; right: 22px; top: -13px; width: 24px; height: 27px; }
+.pump-helper-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.pump-note { position: relative; z-index: 1; display: block; margin-left: 10px; padding: 2px 8px 2px 4px; border: 2px solid #8f9bb3; border-left: 0; border-radius: 0 2px 2px 0; background: #dfe5f1; color: #151a24; font: 600 12px/1.4 var(--font-pixel), monospace; white-space: nowrap; box-shadow: 2px 2px 0 rgba(0, 0, 0, .45); }
+/* The sign is shaped like an arrow pointing at the lever: its tip drawn as an outline triangle with the fill over it. */
+.pump-note::before, .pump-note::after { content: ''; position: absolute; right: 100%; top: -2px; border: solid transparent; }
+.pump-note::before { border-width: 12px 10px 12px 0; border-right-color: #8f9bb3; }
+.pump-note::after { top: 1px; margin-right: -1px; border-width: 9px 8px 9px 0; border-right-color: #dfe5f1; }
+.pump-helper { opacity: 0; translate: 0 12px; transition: opacity .25s, translate .35s ease-out; }
+.pump-nudge .pump-helper { opacity: 1; translate: 0 0; animation: helper-shake 3s ease-in-out .6s infinite; }
+@keyframes helper-shake { 0%, 72%, 100% { rotate: 0deg; } 78% { rotate: -2deg; } 86% { rotate: 1.5deg; } 93% { rotate: -.5deg; } }
 .pump-nudge .pump-tip { opacity: 0; }
 .pump-nudge .pump-lever { animation: lever-wiggle .5s ease-in-out infinite; }
 .pump-on .pump-needle { transform: rotate(55deg); }
@@ -447,8 +461,30 @@ html[data-zap-gag='skipped'] .contact-row:hover .zap-icon svg { fill: var(--acce
 .zap-shake { animation: zap-section-shake .35s linear; }
 @keyframes zap-section-shake { 20% { translate: -3px 1px; } 40% { translate: 3px -1px; } 60% { translate: -2px 0; } 80% { translate: 2px 1px; } }
 .zap-mark { z-index: 6; }
+/* Comic sound effects (KABUM!, TCHIBUM!, PÁ!): pixel capitals in yellow with a dark outline, tilted, popping in over
+   the spot where it happens and fading away. */
+.sfx { position: absolute; z-index: 6; color: #ffd76a; font: 700 16px/1 var(--font-pixel), monospace; white-space: nowrap; text-shadow: 1px 0 #11151b, -1px 0 #11151b, 0 1px #11151b, 0 -1px #11151b, 2px 2px 0 #11151b; pointer-events: none; translate: -50% -50%; rotate: -8deg; animation: sfx-pop 1s ease-out forwards; }
+.sfx-big { font-size: 22px; animation-duration: 1.2s; }
+.sfx-water { color: #a3bcff; rotate: 6deg; }
+@keyframes sfx-pop { 0% { scale: .3; opacity: 0; } 15% { scale: 1.25; opacity: 1; } 30% { scale: 1; } 75% { opacity: 1; translate: -50% -50%; } 100% { opacity: 0; translate: -50% calc(-50% - 10px); } }
 /* Held out to its left side at chest height, clear of the button, the arrow pointing past the robot at it. */
 .robot-sign.zap-sign { left: auto; right: calc(100% + 4px); bottom: 6px; font-size: 11px; transform: none; animation: none; }
+/* Then the panic and the lake: the ember that flares up on it, the sign thrown away, the splash, the bubbles and blue
+   sparks as it shorts out, the fisher's rod and line, and the robot's "bzzt". */
+.zap-ember { position: absolute; left: 3px; top: 12px; width: 4px; height: 4px; border-radius: 1px; background: #ff8a3d; box-shadow: 0 0 6px 2px rgba(255, 138, 61, .7); animation: zap-ember .3s ease-in-out infinite alternate; }
+@keyframes zap-ember { to { scale: 1.5; background: #ffd76a; } }
+.robot-sign.zap-sign-flying { left: 0; top: 0; bottom: auto; z-index: 5; font-size: 11px; transform: none; animation: none; }
+.zap-drop { position: absolute; z-index: 5; width: 3px; height: 4px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: #a3bcff; animation: zap-drop .6s ease-out forwards; }
+@keyframes zap-drop { 50% { translate: calc(var(--dx) * .6) var(--dy); } to { translate: var(--dx) 6px; opacity: 0; } }
+.zap-bubble { position: absolute; z-index: 5; width: 4px; height: 4px; border: 1px solid #a3bcff; border-radius: 50%; animation: zap-bubble .8s ease-out forwards; }
+@keyframes zap-bubble { to { translate: 0 -14px; opacity: 0; } }
+.zap-spark-blue { color: #6994ff; }
+.zap-bzzt { color: #a3bcff; font-size: 16px; animation: fight-pop .25s ease-out both, bzzt-jitter .1s steps(2) .25s infinite; }
+@keyframes bzzt-jitter { from { translate: -1px 0; } to { translate: 1px -1px; } }
+.zap-rod-layer { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.zap-rod-layer svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; }
+.zap-rod { fill: none; stroke: #8a6a4c; stroke-width: 1.5; }
+.zap-line { fill: none; stroke: #8f9bb3; stroke-width: 1; opacity: .7; }
 /* Hovering a row leaves it still: only its action (text and icon) turns blue. */
 .contact-row:hover .contact-action, .contact-row:focus-visible .contact-action { color: var(--accent); }
 .contact-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
@@ -500,7 +536,7 @@ html[data-build='pending'] .skip-robot { position: absolute; top: var(--anchor, 
 .skip-seat { position: absolute; left: -6px; top: 36px; width: 45px; height: 4px; border-radius: 1px; background: #7a5c46; box-shadow: 0 2px 0 #5a4334; }
 /* The sign: a little wooden board hanging from its belt on two strings. */
 .skip-strings { position: absolute; left: 7px; top: 40px; width: 19px; height: 8px; border-inline: 1px solid #8f9bb3; }
-.skip-sign { position: absolute; left: 50%; top: 47px; padding: 2px 7px; border: 2px solid #5a4334; border-radius: 2px; background: #33271d; color: #e9d8b4; font-size: 10px; font-weight: 700; white-space: nowrap; translate: -50% 0; transform-origin: 50% 0; cursor: pointer; transition: background-color .2s, color .2s, opacity .3s; }
+.skip-sign { position: absolute; left: 50%; top: 47px; padding: 2px 7px; border: 2px solid #5a4334; border-radius: 2px; background: #33271d; color: #e9d8b4; font: 600 11px/1.3 var(--font-pixel), monospace; white-space: nowrap; translate: -50% 0; transform-origin: 50% 0; cursor: pointer; transition: background-color .2s, color .2s, opacity .3s; }
 .skip-robot[data-mode='loud'] .skip-sign { animation: sign-wave .45s ease-in-out infinite alternate; }
 @keyframes sign-wave { from { rotate: -3deg; } to { rotate: 3deg; } }
 .skip-robot[data-mode='quiet']:not(:hover, :focus-visible) .skip-sign { opacity: .4; }
@@ -532,9 +568,14 @@ html[data-build='pending'] .skip-robot { position: absolute; top: var(--anchor, 
 .actor-body, .actor-body svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .boss-actor { width: 33px; height: 36px; }
 /* "?" and "!" over a head, and the boss's shout. */
-.stage-mark { position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); color: #3a5a9b; font: 700 20px/1 var(--font-geist-mono), monospace; text-align: center; animation: fight-pop .25s ease-out both; }
-.stage-mark-alert { color: #d64545; font-size: 24px; }
-.stage-shout { position: absolute; left: calc(100% + 10px); bottom: calc(100% - 6px); padding: 4px 10px; border: 2px solid #d64545; border-radius: 4px; background: #fff; color: #d64545; font-size: 15px; font-weight: 700; white-space: nowrap; transform-origin: 0 100%; animation: bubble-pop .25s ease-out both; }
+.stage-mark { position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); color: #a3bcff; font: 700 22px/1 var(--font-pixel), monospace; text-align: center; text-shadow: 1px 0 #11151b, -1px 0 #11151b, 0 1px #11151b, 0 -1px #11151b, 2px 2px 0 #11151b; animation: fight-pop .25s ease-out both; }
+.stage-mark-alert { color: #e24c4c; font-size: 24px; }
+.stage-shout { position: absolute; left: calc(100% + 6px); bottom: calc(100% - 10px); isolation: isolate; padding: 12px 18px; color: #e24c4c; font: 700 16px/1 var(--font-pixel), monospace; white-space: nowrap; transform-origin: 0 100%; animation: bubble-pop .25s ease-out both, shout-shake .1s linear .25s 4 alternate; }
+/* A comic-book burst: a red jagged outline with the white burst inside it. */
+.stage-shout::before, .stage-shout::after { content: ''; position: absolute; z-index: -1; clip-path: polygon(0% 30%, 8% 18%, 6% 2%, 22% 12%, 32% 0%, 42% 12%, 56% 0%, 64% 14%, 80% 2%, 84% 18%, 100% 14%, 94% 34%, 100% 52%, 92% 64%, 100% 84%, 82% 82%, 76% 100%, 62% 86%, 48% 100%, 38% 86%, 22% 100%, 18% 84%, 0% 90%, 6% 68%, 0% 52%, 6% 42%); }
+.stage-shout::before { inset: 0; background: #e24c4c; }
+.stage-shout::after { inset: 3px 4px; background: #fff; }
+@keyframes shout-shake { from { translate: -1px 0; } to { translate: 1px 0; } }
 .stage-out { opacity: 0; transition: opacity .25s; }
 /* Steam puffing out of an angry head. */
 .steam { position: absolute; top: 2px; width: 8px; height: 8px; border-radius: 50%; background: #9aa3b8; opacity: 0; animation: steam-rise .9s ease-out forwards; }
@@ -575,7 +616,7 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 @keyframes sign-drop { to { transform: translate(-30%, 16px) rotate(70deg); opacity: 0; } }
 .hole-covered { display: none; }
 /* Whistled notes, paint buckets, thrown globs, splats that dry into the wall's colour, the puddle and the mop. */
-.whistle-note { position: absolute; top: -6px; right: -8px; color: #8f9bb3; font-size: 12px; line-height: 1; animation: note-rise 1s ease-out forwards; }
+.whistle-note { position: absolute; top: -6px; right: -8px; color: #a3bcff; font-size: 13px; line-height: 1; animation: note-rise 1s ease-out forwards; }
 @keyframes note-rise { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate(10px, -22px) rotate(15deg); } }
 .paint-bucket { position: absolute; left: -12px; bottom: 5px; width: 12px; height: 12px; }
 .paint-bucket svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
@@ -608,16 +649,13 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .stage-click { z-index: 6; }
 .just-built { animation: piece-land .35s ease-out; }
 @keyframes piece-land { 0% { transform: translateY(-6px); } 60% { transform: translateY(2px); } 100% { transform: none; } }
-/* The park being built: the rope the sun comes down on, the green roller, the hats thrown in the air, the boss's sigh. */
+/* The park being built: the rope the sun comes down on, the green roller, the hats thrown in the air. */
 .stage-rope { position: absolute; width: 2px; height: 0; background: #8f9bb3; }
 .rope-rider { z-index: 3; }
 .grass-roller { background: #1d3028; box-shadow: 0 0 0 1px #2a4d3c; }
 .flying-hat { position: absolute; left: 0; top: 0; width: 14px; height: 6px; border-radius: 6px 6px 1px 1px; background: #ffb347; }
-.stage-sigh { right: auto; bottom: auto; }
 .hand-roller { position: absolute; left: -13px; bottom: 7px; width: 13px; height: 6px; border-radius: 2px; background: #1c2130; box-shadow: 0 0 0 1px #5d6678; }
 .hand-roller::after { content: ''; position: absolute; left: 11px; top: -5px; width: 2px; height: 8px; background: #8f9bb3; transform: rotate(-35deg); }
-/* A small grey speech bubble on the side a robot faces (the boss's sigh). */
-.stage-grumble { position: absolute; right: calc(100% + 6px); bottom: calc(100% - 4px); padding: 2px 8px; border: 1px solid #8f9bb3; border-radius: 4px; background: #f7f8fb; color: #5d6678; font-size: 12px; white-space: nowrap; animation: bubble-pop .25s ease-out both; }
 /* Happy ending: a park at dusk standing on the footer's line. Sky fading into the page, a pale sun setting behind the
    hills and the lake, grass on the ground, and the pixel sprites placed along it. Calm idle loops only. */
 .ending { position: relative; height: 180px; margin-top: 28px; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); }
@@ -652,6 +690,20 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .ending-picnic-crew-2 { left: 84px; transform: scaleX(-1); }
 .ending-basket { position: absolute; left: 50px; bottom: 7px; width: 24px; height: 18px; }
 .ending-flyer { left: 77%; bottom: 16px; width: 24px; height: 30px; }
+/* Fishing from the grass: the rod reaches back over the lake and the float sits on the water, bobbing. */
+.ending-fisher { left: 33%; bottom: 16px; width: 24px; height: 30px; }
+.ending-rod-rig { position: absolute; left: 21px; bottom: 11px; width: 60px; height: 60px; transform-origin: 0 100%; animation: rod-tug 7s ease-in-out infinite; }
+.ending-rod { left: 0; top: 0; overflow: visible; }
+.ending-rod-pole { fill: none; stroke: #8a6a4c; stroke-width: 1.5; }
+.ending-rod-line { fill: none; stroke: #8f9bb3; stroke-width: 1; opacity: .6; }
+.ending-float { position: absolute; display: block; left: 46px; top: 24px; width: 4px; height: 4px; border-radius: 50%; background: #ffb347; animation: float-bob 2.4s ease-in-out infinite alternate; }
+@keyframes rod-tug { 0%, 86%, 100% { transform: none; } 90% { transform: rotate(-6deg); } 94% { transform: rotate(-2deg); } }
+@keyframes float-bob { to { translate: 0 1.5px; } }
+/* Napping on its back, a "z" drifting up from it now and then. */
+.ending-napper { left: 45%; bottom: 16px; width: 36px; height: 12px; }
+.ending-z { position: absolute; left: 6px; top: -8px; color: #a3bcff; font: 700 11px/1 var(--font-pixel), monospace; opacity: 0; animation: nap-z 4s ease-out infinite; }
+.ending-z-2 { animation-delay: 2s; }
+@keyframes nap-z { 0% { translate: 0 0; opacity: 0; } 15% { opacity: .8; } 100% { translate: 10px -22px; opacity: 0; } }
 .ending-kite-rig { position: absolute; left: 22px; bottom: 16px; width: 110px; height: 130px; transform-origin: 0 100%; animation: kite-swing 5s ease-in-out infinite alternate; }
 .ending-string { left: 0; top: 0; overflow: visible; }
 .ending-string path { fill: none; stroke: #8f9bb3; stroke-width: 1; opacity: .6; }
@@ -662,7 +714,7 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .ending-bush { right: 2%; bottom: 16px; width: 40px; height: 16px; }
 @media (max-width: 700px) {
   .ending { height: 180px; margin-top: 44px; }
-  .ending-tree, .ending-picnic, .ending-bush, .ending-pigeon-1 { display: none; }
+  .ending-tree, .ending-picnic, .ending-fisher, .ending-napper, .ending-bush, .ending-pigeon-1 { display: none; }
   .ending-bench { left: 5%; }
   .ending-pigeon-2 { left: 34%; }
   .ending-lake { left: 22%; right: 22%; }
@@ -674,7 +726,11 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .mailman-robot { position: absolute; left: 0; bottom: 0; width: 22px; height: 24px; }
 .mailman-envelope { position: absolute; left: 2px; bottom: 21px; width: 18px; height: 12px; transform-origin: 50% 100%; animation: envelope-wave .28s ease-in-out .45s 4 alternate; }
 .mailman svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-.mailman-bubble { position: absolute; left: 30px; bottom: 3px; padding: 3px 8px; border: 1px solid var(--accent); border-radius: 4px; background: var(--background); color: var(--accent); font-size: 11px; line-height: 1.4; white-space: nowrap; transform-origin: 0 100%; animation: bubble-pop .3s ease-out .25s both; }
+.mailman-bubble { position: absolute; left: 33px; bottom: 5px; padding: 2px 8px; border: 2px solid var(--accent); border-radius: 2px; background: var(--background); color: var(--accent); font: 500 12px/1.4 var(--font-pixel), monospace; white-space: nowrap; box-shadow: 2px 2px 0 rgba(0, 0, 0, .45); transform-origin: 0 100%; animation: bubble-pop .3s ease-out .25s both; }
+/* Its tail, pointing left at the mail robot. */
+.mailman-bubble::before, .mailman-bubble::after { content: ''; position: absolute; right: 100%; bottom: 3px; border: solid transparent; }
+.mailman-bubble::before { border-width: 5px 7px 5px 0; border-right-color: var(--accent); }
+.mailman-bubble::after { bottom: 6px; margin-right: -1px; border-width: 2px 4px 2px 0; border-right-color: var(--background); }
 @keyframes mailman { 0% { transform: translateY(18px); opacity: 0; } 12% { transform: translateY(-8px); opacity: 1; } 20% { transform: none; } 85% { transform: none; opacity: 1; } 100% { transform: translateY(18px); opacity: 0; } }
 @keyframes envelope-wave { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
 @keyframes bubble-pop { from { transform: scale(.3); opacity: 0; } 70% { transform: scale(1.08); opacity: 1; } to { transform: none; opacity: 1; } }
@@ -695,7 +751,7 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .patrol-bot { position: absolute; left: 0; top: -18px; width: 16px; height: 18px; opacity: 0; }
 .patrol-bot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 /* Brawl on the divider line: stare-down marks, a jittering dust cloud that throws debris, and a twinkle where the loser vanishes. */
-.fight-alert { position: absolute; top: -36px; color: #ff6b6b; font: 700 14px/1 var(--font-geist-mono), monospace; animation: fight-pop .25s ease-out both; }
+.fight-alert { position: absolute; top: -38px; color: #e24c4c; font: 700 18px/1 var(--font-pixel), monospace; text-shadow: 1px 0 #11151b, -1px 0 #11151b, 0 1px #11151b, 0 -1px #11151b, 2px 2px 0 #11151b; animation: fight-pop .25s ease-out both; }
 @keyframes fight-pop { from { transform: translateY(6px) scale(.3); opacity: 0; } 60% { transform: translateY(-2px) scale(1.3); } to { transform: none; opacity: 1; } }
 .fight-lines { position: absolute; top: -22px; width: 140px; height: 22px; background: repeating-linear-gradient(to bottom, transparent 0 4px, color-mix(in srgb, var(--accent) 45%, transparent) 4px 5px); -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent); animation: fight-lines .12s steps(2) infinite; }
 @keyframes fight-lines { to { transform: translateX(4px); } }
@@ -739,7 +795,7 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .tech-stage { position: relative; align-self: stretch; }
 .robot { position: absolute; left: 0; top: 0; width: 22px; height: 24px; opacity: 0; cursor: pointer; z-index: 2; will-change: transform; }
 /* The boss's order: a little sign held over its head with the group the crew should bring. */
-.robot-sign { position: absolute; bottom: calc(100% - 1px); left: 50%; padding: 2px 7px; border: 2px solid #8f9bb3; border-radius: 3px; background: #dfe5f1; color: #151a24; font-size: 11px; font-weight: 700; line-height: 1.3; white-space: nowrap; pointer-events: none; transform: translateX(-50%); animation: sign-up .22s ease-out both; }
+.robot-sign { position: absolute; bottom: calc(100% - 1px); left: 50%; padding: 2px 7px; border: 2px solid #8f9bb3; border-radius: 2px; background: #dfe5f1; color: #151a24; font: 600 12px/1.3 var(--font-pixel), monospace; white-space: nowrap; pointer-events: none; box-shadow: 2px 2px 0 rgba(0, 0, 0, .35); transform: translateX(-50%); animation: sign-up .22s ease-out both; }
 @keyframes sign-up { from { transform: translate(-50%, 8px) scale(.6); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
 /* Hard-hat crew that hauls the old words away and brings the next group, one line each. */
 .crew-layer { position: absolute; inset: 0; pointer-events: none; }
@@ -846,3 +902,42 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
   .animated-tech { display: none; }
   .static-tech { display: block; }
 }
+/* The page's footer: a thin line like the ones closing each section, the site's sign
+   summed up in one muted line with a small hazard-striped mark, a tiny builders' lift back to the top, and the small
+   print under it. No background: just the line sets it apart from the park; the guard patrols it like the others. */
+.site-footer { margin-top: 36px; padding: 12px 0 22px; }
+.footer-line { position: relative; height: 1px; margin-bottom: 12px; background: var(--border); }
+.footer-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; }
+.footer-sign { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; color: var(--muted); font-size: 11px; }
+.footer-sign-item + .footer-sign-item::before { content: '·'; margin: 0 8px; color: var(--border); }
+.footer-stripes { display: inline-block; flex: none; width: 10px; height: 10px; margin-right: 10px; border-radius: 1px; background: repeating-linear-gradient(-45deg, #ffb347 0 2px, #151a24 2px 4px); }
+.footer-legal { margin-top: 8px; color: color-mix(in srgb, var(--muted) 70%, transparent); font-size: 10px; }
+/* The tiny builders' lift: a short rail with a cabin at its foot and "Topo" beside it; clicking sends it up with a
+   robot inside, waving, as the page scrolls up. */
+.footer-lift { display: inline-flex; align-items: flex-end; gap: 8px; height: 40px; color: var(--muted); font-size: 11px; cursor: pointer; transition: color .2s; }
+.footer-lift:hover, .footer-lift:focus-visible { color: var(--accent); }
+.footer-lift:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+.lift-shaft { position: relative; width: 22px; height: 40px; }
+.lift-rail { position: absolute; left: 9px; top: 0; bottom: 0; width: 4px; border-inline: 1px solid #5d6678; background: repeating-linear-gradient(to bottom, transparent 0 3px, #3a404c 3px 4px); }
+.lift-cabin { position: absolute; left: 0; bottom: 0; width: 22px; height: 22px; border: 1px solid #8f9bb3; border-top-width: 2px; border-radius: 1px; background: #11151b; transition: border-color .2s; }
+.lift-cabin::after { content: ''; position: absolute; right: 2px; top: 2px; width: 3px; height: 3px; background: #3a5a9b; }
+.footer-lift:hover .lift-cabin, .footer-lift:focus-visible .lift-cabin { border-color: var(--accent); }
+.lift-cabin.lift-pressed::after { background: #7fe08a; box-shadow: 0 0 4px #7fe08a; }
+.lift-label { line-height: 22px; }
+.lift-rider { position: absolute; left: 2px; bottom: 0; width: 16px; height: 18px; }
+.lift-rider svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+@media (max-width: 700px) {
+  .footer-row { align-items: flex-end; }
+}
+/* Teleporting around the page (teleport.tsx): the pixels the screen breaks into, and the robots' layer over the page:
+   the one arriving next to the destination's title (beamed in, in a column of blue light with sparkles). */
+.tp-screen { position: fixed; inset: 0; z-index: 100; width: 100vw; height: 100vh; pointer-events: auto; }
+.tp-layer { position: absolute; left: 0; top: 0; z-index: 60; width: 100%; height: 0; pointer-events: none; }
+.tp-bot { position: absolute; left: 0; top: 0; width: 24px; height: 27px; }
+.tp-body { position: absolute; inset: 0; }
+.tp-body svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.tp-beam { position: absolute; width: 30px; height: 60px; margin: -60px 0 0 -15px; background: linear-gradient(to top, rgba(105, 148, 255, .55), rgba(105, 148, 255, 0)); animation: tp-beam .7s ease-out forwards; }
+@keyframes tp-beam { 0% { scale: .2 1; opacity: 0; } 25% { scale: 1 1; opacity: 1; } 100% { scale: .3 1; opacity: 0; } }
+.tp-spark { position: absolute; color: #a3bcff; font-size: 10px; line-height: 1; animation: fight-twinkle .6s ease-out forwards; }
+.tp-press { display: inline-block; animation: tp-press .14s ease-out; }
+@keyframes tp-press { 50% { scale: .9; } }

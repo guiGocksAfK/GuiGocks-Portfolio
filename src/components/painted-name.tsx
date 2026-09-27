@@ -51,7 +51,7 @@ export function PaintedName({ firstName, lastName }: { firstName: string; lastNa
         const step = (now: number) => {
           if (cancelled) return reject(new Cancelled());
           const elapsed = now - start;
-          onFrame(Math.min(1, elapsed / duration), elapsed);
+          onFrame(Math.max(0, Math.min(1, elapsed / duration)), Math.max(0, elapsed));
           if (elapsed < duration) frame = requestAnimationFrame(step);
           else resolve();
         };

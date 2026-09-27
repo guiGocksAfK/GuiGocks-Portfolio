@@ -33,7 +33,7 @@ export function EmailCopy({ email, copiedLabel, copyHint }: { email: string; cop
       <span className="sr-only" aria-live="polite">{delivery ? copiedLabel : ''}</span>
       {delivery > 0 && (
         <span key={delivery} className="mailman" aria-hidden="true">
-          <span className="mailman-bubble font-mono">{copiedLabel}</span>
+          <span className="mailman-bubble">{copiedLabel}</span>
           <span className="mailman-envelope"><EnvelopeSprite /></span>
           <span className="mailman-robot"><RobotSprite pose="carry" mood="happy" /></span>
         </span>

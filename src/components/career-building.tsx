@@ -56,7 +56,7 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       const start = performance.now();
       const step = (now: number) => {
         if (cancelled) return reject(new Cancelled());
-        const t = Math.min(1, (now - start) / duration);
+        const t = Math.max(0, Math.min(1, (now - start) / duration));
         onFrame(t);
         if (t < 1) requestAnimationFrame(step); else resolve();
       };
@@ -118,7 +118,7 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
             await play(hammer, [{ transform: 'rotate(-70deg)' }, { transform: 'rotate(25deg)' }], { duration: 170, easing: 'cubic-bezier(.6, 0, .9, .4)' });
             // Impact: "PAM!", sparks and the whole crane shaking.
             const pam = document.createElement('span');
-            pam.className = 'hammer-pam font-mono';
+            pam.className = 'hammer-pam';
             pam.textContent = 'PAM!';
             pam.style.left = `${mastX + 6 - blow * 4}px`;
             pam.style.top = `${groundY - 20 - blow * 6}px`;
@@ -261,11 +261,26 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       }
     }
 
+    // Finished on the spot: whatever is moving stops and the building stands complete, scaffolding gone.
+    const finish = () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+      intervals.forEach(clearInterval);
+      area.getAnimations({ subtree: true }).forEach(animation => { if (!(animation instanceof CSSAnimation) && !(animation instanceof CSSTransition)) animation.cancel(); });
+      area.querySelectorAll('.site-crew, .spray-mist, .crane-smoke, .hammer-pam, .hammer-spark').forEach(element => element.remove());
+      floors.forEach(floor => floor.classList.remove('floor-hanging'));
+      area.querySelector<HTMLElement>('.floor-next')?.style.removeProperty('clip-path');
+      crane.style.removeProperty('height');
+      setOperatorOut(false);
+      setOperatorMood('normal');
+      setPhase('done');
+    };
+
     // Steps 2 to 4 of the About scene: floors, the sprayed next floor, then the scaffolding comes down.
     const unregister = [
-      registerStep('about', 2, async () => { setPhase('building'); await raiseFloors(); }),
-      registerStep('about', 3, sprayNextFloor),
-      registerStep('about', 4, async () => { await dismantle(); setPhase('done'); }),
+      registerStep('about', 2, async () => { setPhase('building'); await raiseFloors(); }, finish),
+      registerStep('about', 3, sprayNextFloor, finish),
+      registerStep('about', 4, async () => { await dismantle(); setPhase('done'); }, finish),
     ];
 
     return () => {

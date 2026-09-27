@@ -33,7 +33,7 @@ export function StoryDebug({ paragraphs, bugWord }: { paragraphs: readonly strin
       const start = performance.now();
       const step = (now: number) => {
         if (cancelled) return reject(new Cancelled());
-        const t = Math.min(1, (now - start) / duration);
+        const t = Math.max(0, Math.min(1, (now - start) / duration));
         onFrame(t);
         if (t < 1) requestAnimationFrame(step); else resolve();
       };
@@ -116,8 +116,16 @@ export function StoryDebug({ paragraphs, bugWord }: { paragraphs: readonly strin
       }
     }
 
-    // Last step of the About scene: everything else is finished before the letter falls.
-    const unregister = registerStep('about', 5, fix);
+    // Last step of the About scene: everything else is finished before the letter falls. Finished on the spot, the
+    // letter simply stays in its word.
+    const unregister = registerStep('about', 5, fix, () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+      area.querySelectorAll('.debug-robot, .debug-tec, .debug-sparkle').forEach(element => element.remove());
+      const letter = letterRef.current;
+      letter?.getAnimations().forEach(animation => animation.cancel());
+      letter?.style.removeProperty('transform');
+    });
 
     return () => {
       cancelled = true;
