@@ -44,7 +44,7 @@ export default function Home() {
               <p className="status font-mono"><span aria-hidden="true" />{hero.status}</p>
               <PaintedName firstName={hero.firstName} lastName={hero.lastName} />
               <p className="role font-mono"><span aria-hidden="true" className="text-accent">&gt; </span>{hero.role}<span aria-hidden="true" className="text-accent">_</span></p>
-              <div className="intro"><p>{hero.introduction}</p><p>{hero.education}</p></div>
+              <div className="intro"><p>{hero.introduction}</p></div>
               <div className="contact">
                 <nav aria-label={content.accessibility.social} className="social-links">
                   {contact.links.map(link => {

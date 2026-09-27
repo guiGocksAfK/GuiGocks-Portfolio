@@ -24,8 +24,7 @@ export const content = {
     firstName: 'Guilherme Gabriel',
     lastName: 'Gocks',
     role: 'Full-stack developer',
-    introduction: 'Desenvolvo aplicações com Java, Spring Boot e React.',
-    education: 'Estudante de Engenharia de Software na UniAmérica.',
+    introduction: 'Desenvolvo aplicações web completas, do banco de dados à interface, com código organizado, testado e pronto para crescer.',
     // Shown one group at a time in the hero, each group starting with the main tool.
     technologies: [
       { label: 'backend', items: ['Java', 'Spring Boot', 'Node.js', 'Python'] },
@@ -40,7 +39,7 @@ export const content = {
     title: 'Sobre mim.',
     footerNote: 'Engenharia de Software · UniAmérica',
     paragraphs: [
-      'Comecei a programar em C++, no Code::Blocks. De lá para cá, troquei os primeiros exercícios por sistemas de verdade: hoje construo aplicações completas, do banco de dados à interface.',
+      'Comecei a programar em C++, no Code::Blocks. De lá para cá, troquei os primeiros exercícios por sistemas de verdade, com usuários de verdade, e cada um deles me ensinou algo que nenhuma aula ensinaria.',
       'Gosto de projetos grandes e bem testados, daqueles em que o usuário descobre um detalhe novo a cada uso. Trabalho melhor com organização: escopo bem definido, tarefas claras e uma equipe alinhada.',
     ],
     // Word in the story whose last letter falls off and gets fixed at the end of the About scene (must appear in a paragraph).
@@ -159,9 +158,10 @@ export const content = {
         category: 'Sistema em uso por escolas',
         description: 'Registro de classe e chamada usado por escolas em Curitiba e Cascavel, reunindo a rotina pedagógica e o histórico dos alunos.',
         highlights: [
-          { title: 'Acesso por papel', text: 'A diretora acompanha todas as turmas; cada professora acessa apenas a própria.' },
-          { title: 'Rotina em um só lugar', text: 'Chamada diária e avaliações descritivas no mesmo sistema.' },
-          { title: 'Histórico preservado', text: 'Alunos transferidos mantêm o histórico, e a chamada do mês é exportada para impressão.' },
+          { title: 'Sessão revogada na hora, sem blacklist', text: 'O token só diz quem é a pessoa: o papel e a escola são lidos do banco a cada requisição, por chave primária. Uma professora removida perde o acesso na hora, não 8 horas depois, sem blacklist para sincronizar. O custo foi medido, e o desenho do cache já está documentado.' },
+          { title: 'Não migrar para cookie, de propósito', text: 'Front e API estão em domínios diferentes, então um cookie httpOnly exigiria `SameSite=None` e abriria uma brecha de CSRF que o header `Authorization` não tem. A decisão ficou documentada, com o caminho certo na ordem certa: unificar o domínio antes de mudar o token de lugar.' },
+          { title: 'Backup que não é teatro', text: 'Três camadas (PITR do Neon, dump diário e cópia no Backblaze B2), cifradas na origem com a chave fora do servidor. O Object Lock impede apagar o histórico mesmo com a chave da VM, um alerta avisa se o backup parar, e a restauração foi testada de verdade.' },
+          { title: 'Tudo fechado por padrão', text: 'Toda rota nasce protegida, e liberar exige um `@Public()` explícito. A API se recusa a subir em produção com segredo fraco, CORS aberto ou rate limit desligado. Mais de 100 testes de fumaça provam o isolamento: a diretora de uma escola recebe 403 na turma da outra.' },
         ],
         stack: ['Angular', 'NestJS', 'PostgreSQL', 'Prisma'],
         stamp: { label: 'Em uso real', tone: 'accent' },
@@ -175,9 +175,10 @@ export const content = {
         category: 'Projeto acadêmico em grupo',
         description: 'Sistema de gestão de turismo desenvolvido em equipe, com frontend Angular e backend Java/Spring Boot.',
         highlights: [
-          { title: 'Autenticação com JWT', text: 'Login protegido com Spring Security e tokens JWT.' },
-          { title: 'Sem enumeração de usuários', text: 'Usuário inexistente e senha incorreta recebem a mesma resposta 401, então o login não revela quem está cadastrado.' },
-          { title: 'Banco versionado', text: 'PostgreSQL com migrações versionadas pelo Flyway.' },
+          { title: 'Documento do passageiro cifrado', text: 'Um `AttributeConverter` cifra o campo com AES-256-GCM sem o service saber. O formato grava `v1:` + IV + texto + tag, então o algoritmo pode mudar sem quebrar dado antigo, e registros legados em texto puro são recifrados na próxima gravação, sem downtime.' },
+          { title: 'Testes com banco de verdade', text: 'Testcontainers sobe um PostgreSQL real, não H2, e o WireMock simula a API de câmbio sem sair para a internet: mocks não pegam erro de SQL nem de mapeamento JPA. Os containers sobem uma vez para a suíte inteira, para o JUnit não recriá-los numa porta nova entre as classes.' },
+          { title: 'Câmbio fora do ar não trava o cadastro', text: 'A cotação vem de uma API externa via Feign, com cache. Se ela cair, o transfer é cadastrado mesmo assim: o valor base fica pendente e o erro vira log, não uma exceção na tela de quem está trabalhando.' },
+          { title: 'Log à prova de injeção', text: 'Antes de registrar o que o usuário digitou, `\\r`, `\\n` e `\\t` são trocados, então ninguém forja linhas falsas no log escrevendo uma quebra de linha no campo de usuário.' },
         ],
         stack: ['Angular', 'Spring Boot 3', 'Java 17', 'Spring Security', 'PostgreSQL', 'Flyway'],
         stamp: { label: 'Projeto acadêmico', tone: 'muted' },
