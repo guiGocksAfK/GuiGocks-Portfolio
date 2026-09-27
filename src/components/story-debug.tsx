@@ -33,7 +33,7 @@ export function StoryDebug({ paragraphs, bugWord }: { paragraphs: readonly strin
       const start = performance.now();
       const step = (now: number) => {
         if (cancelled) return reject(new Cancelled());
-        const t = Math.min(1, (now - start) / duration);
+        const t = Math.max(0, Math.min(1, (now - start) / duration));
         onFrame(t);
         if (t < 1) requestAnimationFrame(step); else resolve();
       };
