@@ -7,35 +7,37 @@ import { finishScene } from '@/components/scene';
 // Teleporting around the page. Clicking one of the site's shortcuts (the menu, the logo, a project link in a crate, the
 // footer's lift) doesn't scroll: the link sinks in with a spark, the screen breaks up into pixels bubbling out from
 // where the visitor clicked, a short trip screen shows where they're going (with speed lines rushing the right way)
-// while the page jumps behind it, and the pixels clear away from the destination's title outwards. A section that
+// while the page jumps behind it, and the same pixels play backwards in a wave spreading from the destination's title. A section that
 // is built by robots (About, Contact) is delivered already built. Then a robot materializes next to the destination's
 // title, looks around, points at it and walks off; about one time in seven the teleport glitches (it arrives upside
-// down, twice, in two halves or charred). On the visit's first teleport from the menu, an operator robot pops up behind
-// the link and pulls a lever first. The skip link, links opened straight from the address bar and reduced motion keep
-// plain scrolling.
+// down, twice, in two halves or charred). The skip link, links opened straight from the address bar and reduced motion
+// keep plain scrolling.
 
 // About 1.1s in all: out (~.42s), the trip (~.22s), in (~.44s), with the arriving robot starting before the end.
 const CELL = 20; // px, the size of the pixels the screen breaks into
 const COVER = 220; // ms for the wave of pixels to reach the far corner (it starts slowly and speeds up)
-const GROW = 150; // ms for a pixel to grow in, overshooting a little
+const GROW = 150; // ms for a pixel to grow in, overshooting a little (and, on the way in, to shrink away)
 const TRAIL = 150; // ms of colour behind the wave's front, from light blue to the page's colour
+const PIXEL = Math.max(GROW, TRAIL); // ms each pixel takes, on the way out and back in
 const HOLD = 220; // ms of the trip screen: the destination's name and speed lines
 const REVEAL = 260; // ms for the pixels to clear away from the destination's title (fast at first, then settling)
-const SHRINK = 140; // ms for a pixel to shrink away
 const JITTER = 50;
 const OPEN_AT = .45; // how far into the reveal the robot starts beaming in
 const LIGHT = '#a3bcff';
 const DEEP = '#1d2540';
+// How far below the top of the window a destination's content lands.
+const LAND_GAP = 32;
 const GLITCH_CHANCE = .15;
 const BOT_W = 24;
 const BOT_H = 27;
 const SHORTCUTS = '.nav-link[href^="#"], .wordmark[href^="#"], .crate-details a[href^="#"]';
-// Where each destination's title is, for the robot to arrive next to it.
+// Where each destination's title is, for the robot to arrive next to it, and where its content starts, to land on
+// (just below the top of the window, rather than on the section's empty space above its title).
 const TITLES: Record<string, string> = { main: '#hero-title', projetos: '#projects-title', sobre: '#about-title', capacidades: '#capabilities-title', contato: '#contact-title' };
+const LANDINGS: Record<string, string> = { projetos: '#projects-title', sobre: '#about-title', capacidades: '#capabilities-title', contato: '.contact-status' };
 
 type Teleport = (href: string, origin?: Element | null) => Promise<void>;
 let active: Teleport | null = null;
-let operatorDone = false;
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Grows a little past full size and settles back (0..1 → 0..1, peaking about 1.05).
@@ -54,10 +56,9 @@ function destination(href: string) {
   const element = document.getElementById(id);
   if (!element) return null;
   if (id === 'main') return { top: 0, title: document.querySelector<HTMLElement>(TITLES.main) ?? element };
-  const box = element.closest<HTMLElement>('.project-card') ?? element;
-  const padding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  const box = element.closest<HTMLElement>('.project-card') ?? (LANDINGS[id] ? document.querySelector<HTMLElement>(LANDINGS[id]) : null) ?? element;
   const title = TITLES[id] ? document.querySelector<HTMLElement>(TITLES[id]) : null;
-  return { top: Math.max(0, box.getBoundingClientRect().top + window.scrollY - padding), title: title ?? element };
+  return { top: Math.max(0, box.getBoundingClientRect().top + window.scrollY - LAND_GAP), title: title ?? element };
 }
 
 // A plain jump (reduced motion, or no teleporter on the page).
@@ -146,8 +147,8 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
         async cover(from: { x: number; y: number }) {
           const far = farthest(from);
           cells.forEach(cell => { cell.delay = Math.sqrt(distance(cell, from) / far) * COVER + Math.random() * JITTER; });
-          await tween(COVER + JITTER + TRAIL, t => {
-            const now = t * (COVER + JITTER + TRAIL);
+          await tween(COVER + JITTER + PIXEL, t => {
+            const now = t * (COVER + JITTER + PIXEL);
             context.clearRect(0, 0, width, height);
             for (const cell of cells) {
               const age = now - cell.delay;
@@ -180,22 +181,22 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
           context.fillStyle = page;
           context.fillRect(0, 0, width, height);
         },
-        // In: the pixels clear away from the destination's title outwards, fast at first and settling at the end,
-        // each flashing light blue and shrinking to nothing. onOpen fires once the title's surroundings are clear.
+        // In: the same pixels played backwards, in a wave spreading out from the destination's title that starts fast
+        // and settles: each one goes from the page's colour through dark blue, blue and light blue, swelling a little
+        // and shrinking to nothing. onOpen fires once the title's surroundings are clear.
         async reveal(from: { x: number; y: number }, onOpen: () => void) {
           canvas.style.pointerEvents = 'none';
           const far = farthest(from);
           cells.forEach(cell => { cell.delay = (1 - Math.sqrt(1 - Math.min(1, distance(cell, from) / far))) * REVEAL + Math.random() * JITTER; });
           let opened = false;
-          await tween(REVEAL + JITTER + SHRINK, t => {
-            const now = t * (REVEAL + JITTER + SHRINK);
+          await tween(REVEAL + JITTER + PIXEL, t => {
+            const now = t * (REVEAL + JITTER + PIXEL);
             if (!opened && t > OPEN_AT) { opened = true; onOpen(); }
             context.clearRect(0, 0, width, height);
             for (const cell of cells) {
-              const age = now - cell.delay;
-              if (age < -TRAIL * .5) square(cell, 1, page);
-              else if (age < 0) square(cell, 1, DEEP);
-              else if (age < SHRINK) { const p = age / SHRINK; square(cell, 1 - p * p, p < .4 ? LIGHT : accent); }
+              // How far this pixel is from being gone, on the way-out's clock.
+              const age = PIXEL - (now - cell.delay);
+              if (age > 0) square(cell, overshoot(Math.min(1, age / GROW)), tint(age));
             }
           });
           if (!opened) onOpen();
@@ -215,9 +216,9 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
       hop: (height: number, duration: number) => Promise<void>;
       walk: (toX: number, duration: number, fade?: boolean) => Promise<void>;
     };
-    function bot(x: number, y: number, hat: 'O' | 'A' | 'none' = 'O', small = false) {
+    function bot(x: number, y: number, hat: 'O' | 'A' | 'none' = 'O') {
       const element = document.createElement('span');
-      element.className = `tp-bot${small ? ' tp-bot-small' : ''}`;
+      element.className = 'tp-bot';
       const body = document.createElement('span');
       body.className = 'tp-body';
       element.appendChild(body);
@@ -342,32 +343,6 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
       }
     }
 
-    // The operator, on the visit's first teleport from the menu: it pops up behind the link and pulls a lever.
-    async function operator(link: Element) {
-      const box = link.getBoundingClientRect();
-      const x = box.right - 4 + window.scrollX;
-      const y = box.top - 17 + window.scrollY;
-      const robot = bot(x, y + 18, 'O', true);
-      robot.element.style.clipPath = 'inset(-40px -20px 18px -20px)';
-      robot.face(-1);
-      const lever = document.createElement('span');
-      lever.className = 'tp-lever';
-      robot.element.appendChild(lever);
-      // Rising from behind the link: whatever is still below its top edge stays hidden.
-      await tween(240, t => {
-        const below = 18 * (1 - t);
-        robot.place(x, y + below);
-        robot.element.style.clipPath = `inset(-40px -20px ${below}px -20px)`;
-      });
-      robot.element.style.clipPath = '';
-      await sleep(150);
-      lever.classList.add('tp-lever-pulled');
-      robot.draw(true);
-      await sleep(220);
-      effect('tp-spark', x - 6, y - 4, '✦');
-      return robot;
-    }
-
     active = async (href, origin) => {
       if (busy) return;
       const target = destination(href);
@@ -384,11 +359,9 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
           origin.addEventListener('animationend', () => origin.classList.remove('tp-press'), { once: true });
           effect('tp-spark', from.x + window.scrollX - 4, from.y + window.scrollY - 14, '✦');
         }
-        const helper = !operatorDone && origin?.closest('header') ? (operatorDone = true, await operator(origin)) : null;
         const down = target.top > window.scrollY;
         const pixels = screen();
         await pixels.cover(from);
-        helper?.element.remove();
         // The trip, while behind the pixels a section built by robots is delivered finished and the page jumps.
         const id = href.slice(1);
         const trip = pixels.travel(labelFor(href, homeLabel), down);
