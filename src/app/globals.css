@@ -34,7 +34,7 @@ a.nav-link:hover { color: var(--accent); }
 h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; letter-spacing: -.055em; }
 .name-period { color: #a3bcff; }
 .role { font-size: clamp(18px, 2.3vw, 34px); letter-spacing: -.035em; margin-top: 26px; }
-.intro { font-size: clamp(15px, 1.35vw, 19px); line-height: 1.75; color: var(--muted); margin-top: 26px; }
+.intro { max-width: 52ch; font-size: clamp(15px, 1.35vw, 19px); line-height: 1.75; color: var(--muted); margin-top: 26px; }
 .contact { margin-top: 38px; }
 .social-links { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
 .social-link { display: inline-flex; justify-content: center; align-items: center; gap: 14px; padding: 15px 27px; min-height: 50px; border-radius: 5px; font-size: 14px; font-weight: 500; transition: transform .18s, background-color .18s, border-color .18s; }
@@ -43,6 +43,9 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 .social-primary:hover { background: #8aabff; }
 .social-outline { border: 1px solid var(--muted); }
 .social-outline:hover { border-color: var(--accent); background: #151b27; }
+/* The shortcut down the page: just text, underlined on hover. */
+.social-internal { padding-inline: 8px; color: var(--muted); text-decoration: underline transparent; text-underline-offset: 5px; transition: color .18s, text-decoration-color .18s; }
+.social-internal:hover { transform: none; color: var(--accent); text-decoration-color: currentColor; }
 .social-text:hover { color: var(--accent); }
 .arrow { width: 18px; height: 18px; }
 .email { display: inline-block; margin-top: 17px; font-size: 14px; color: var(--muted); }

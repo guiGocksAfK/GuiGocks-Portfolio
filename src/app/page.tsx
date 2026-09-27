@@ -23,6 +23,11 @@ function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
+// Pointing down: a link to somewhere further down this page.
+function DownArrow() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
 export default function Home() {
   const { hero, contact, projects, about, capabilities, contactSection } = content;
   return (
@@ -44,7 +49,7 @@ export default function Home() {
               <p className="status font-mono"><span aria-hidden="true" />{hero.status}</p>
               <PaintedName firstName={hero.firstName} lastName={hero.lastName} />
               <p className="role font-mono"><span aria-hidden="true" className="text-accent">&gt; </span>{hero.role}<span aria-hidden="true" className="text-accent">_</span></p>
-              <div className="intro"><p>{hero.introduction}</p><p>{hero.education}</p></div>
+              <div className="intro"><p>{hero.introduction}</p></div>
               <div className="contact">
                 <nav aria-label={content.accessibility.social} className="social-links">
                   {contact.links.map(link => {
@@ -57,6 +62,8 @@ export default function Home() {
                       </a>
                     );
                   })}
+                  {/* The quietest of the three: a shortcut down the page (it teleports, like the menu). */}
+                  <a className="social-link social-internal font-mono" href={contact.tools.href}>{contact.tools.label}<DownArrow /></a>
                 </nav>
                 <EmailCopy email={contact.email} copiedLabel={contact.copiedLabel} copyHint={contact.copyHint} />
               </div>
