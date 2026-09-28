@@ -155,7 +155,7 @@ export default function Home() {
         <h2 id="contact-title">{contactSection.title}</h2>
         <ContactList rows={contactSection.rows} copiedLabel={contactSection.copiedLabel} pendingLabel={contactSection.pendingLabel} zapReady={contactSection.zapReady} />
         {/* Happy ending: a park at dusk standing on the last line of the page. */}
-        <EndingScene />
+        <EndingScene lateLine={contactSection.lines.late} />
         <div className="section-footer font-mono"><span>{contactSection.section}</span><span>{contactSection.footerNote}</span></div>
       </ContactStage>
       </main>
