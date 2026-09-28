@@ -45,7 +45,7 @@ type Teleport = (href: string, origin?: Element | null) => Promise<void>;
 let active: Teleport | null = null;
 let activeSwitch: ((href: string, way: 'right' | 'left') => Promise<void>) | null = null;
 // The sections, top to bottom, to find where the visitor is when switching language.
-const SECTIONS = ['main', 'projetos', 'sobre', 'capacidades', 'contato'];
+const SECTIONS = ['projetos', 'sobre', 'capacidades', 'contato'];
 // What a language switch leaves for the other version of the page (in sessionStorage, read by the boot script and by
 // the teleporter there): where the visitor was, what to call the destination on the trip screen, and whether to animate.
 type SwitchNote = { id: string; offset: number; label: string; animate: boolean; way: Way };
@@ -110,9 +110,9 @@ function titleSpot(title: HTMLElement) {
   return { x: Math.min(box.right, window.innerWidth - 20), y: box.top + box.height / 2 };
 }
 
-// The section the visitor is in, and how far into it.
+// The section the visitor is in, and how far into it ('' and the scroll itself above the first section).
 function currentAnchor() {
-  let id = SECTIONS[0];
+  let id = '';
   let offset = window.scrollY;
   for (const section of SECTIONS) {
     const element = document.getElementById(section);
