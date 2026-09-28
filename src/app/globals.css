@@ -950,8 +950,24 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
   .capabilities-section .section-footer { margin-top: 60px; }
   .about-section { padding-top: 60px; }
   .about-section .section-footer { margin-top: 60px; }
-  .about-story { padding: 24px 20px; }
   .about-story-robot { right: 12px; }
+  /* Phones: the story lined up with everything else, in a lighter size. */
+  .about-story { padding: 0; }
+  .about-story p { font-size: 14px; line-height: 1.6; }
+  .about-story p + p { margin-top: 10px; }
+  main .about-grid { gap: 20px; }
+  main .about-label { margin-top: 24px; }
+  /* The badge turns sideways: the photo on the left, name, role and town beside it, what I'm looking for underneath,
+     across the whole width; a shorter lanyard. */
+  .badge-rig { max-width: none; margin-bottom: 8px; }
+  .badge-lanyard { width: 52px; height: 40px; }
+  .badge-card { display: grid; grid-template-columns: 88px minmax(0, 1fr); column-gap: 16px; align-items: center; padding: 20px 16px 16px; text-align: left; }
+  .badge-photo-slot { grid-row: 1 / span 3; width: 88px; margin: 0; }
+  .badge-photo { width: 88px; }
+  .badge-name { grid-column: 2; align-self: end; font-size: 17px; line-height: 1.25; }
+  .badge-role, .badge-location { grid-column: 2; }
+  .badge-location { align-self: start; }
+  .badge-looking { grid-column: 1 / -1; margin-top: 14px; padding-top: 12px; }
   .project-details { padding: 24px 20px; }
   .placeholder-number { font-size: 48px; }
   /* Phones (the Galaxy A55's 412px as the reference): sections closer to the line above them, smaller titles, and
