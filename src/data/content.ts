@@ -60,8 +60,8 @@ export const content = {
       { year: '2026', text: 'Primeiros projetos para uma empresa e uma escola: AJT Viagens e Escola Imaculada' },
       { year: '2026', text: 'Primeiro projeto individual: o MyRank' },
     ],
-    // Until a real photo exists the badge shows a pixel-art avatar: save the photo in public/ (e.g. /about/foto.webp) and set the path here.
-    photo: null as string | null,
+    // The badge's photo (without one, null, it shows a pixel-art avatar instead).
+    photo: '/about/guilherme.jpeg' as string | null,
     photoAlt: 'Foto de Guilherme Gabriel Gocks',
     avatarLabel: 'Avatar em pixel art de Guilherme com capacete de obra',
   },

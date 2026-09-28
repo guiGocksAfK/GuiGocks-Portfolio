@@ -45,7 +45,7 @@ export function AboutBadge({ name, role, location, lookingLabel, lookingText, ph
             <span className="badge-clip" aria-hidden="true" />
             <div className="badge-photo">
               {photo
-                ? <Image src={photo} alt={photoAlt} fill quality={90} sizes="160px" className="badge-image" />
+                ? <Image src={photo} alt={photoAlt} fill quality={90} sizes="124px" className="badge-image" />
                 : <span className="badge-avatar" role="img" aria-label={avatarLabel}><AvatarSprite /></span>}
             </div>
             <p className="badge-name">{name}</p>
