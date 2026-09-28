@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { TechnologyTyping } from '@/components/technology-typing';
-import { content } from '@/data/content';
+import type { SiteContent } from '@/data/content-en';
 import { Reveal } from '@/components/reveal';
 import { PaintedName } from '@/components/painted-name';
 import { EmailCopy } from '@/components/email-copy';
@@ -18,6 +18,7 @@ import { EndingScene } from '@/components/ending-scene';
 import { ContactStage } from '@/components/contact-stage';
 import { SiteFooter } from '@/components/site-footer';
 import { Teleporter } from '@/components/teleport';
+import { LangSwitch } from '@/components/lang-switch';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -28,7 +29,8 @@ function DownArrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
-export default function Home() {
+// The whole page, in one language: the Portuguese page (/) and the English one (/en) both render it with their own copy.
+export function Home({ content }: { content: SiteContent }) {
   const { hero, contact, projects, about, capabilities, contactSection } = content;
   return (
     <div className="site-shell">
@@ -40,6 +42,7 @@ export default function Home() {
             ? <a key={item.label} href={item.href} className="nav-link font-mono">{item.label}</a>
             : <span key={item.label} aria-disabled="true" className="nav-link nav-pending font-mono">{item.label}</span>)}
         </nav>
+        <LangSwitch {...content.language} />
       </header>
       <main id="main">
       <div className="hero-main">

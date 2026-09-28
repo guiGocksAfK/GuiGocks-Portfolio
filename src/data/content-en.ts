@@ -4,7 +4,7 @@ import { content } from '@/data/content';
 // to be translated text by text.
 export const contentEn = {
   ...content,
-  language: { current: 'EN', target: 'PT', href: '/', tripLabel: 'Português', action: 'View the site in Portuguese', hint: 'Versão em português? Clique aqui' },
+  language: { current: 'EN', target: 'PT', href: '/', tripLabel: 'Português', action: 'View the site in Portuguese' },
 } as const;
 
 // What a page's copy looks like, in either language.

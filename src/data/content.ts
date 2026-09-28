@@ -11,10 +11,9 @@ export const content = {
     description: 'Desenvolvedor full-stack com foco em Java, Spring Boot e React. Estudante de Engenharia de Software na UniAmérica, aberto a oportunidades na área.',
   },
   brand: { name: 'gocks', suffix: '.dev', label: 'Guilherme Gabriel Gocks — início' },
-  // The language switch in the header: a robot holding up a sign with this page's language; clicking flips the sign
-  // to the other one and teleports to that version. tripLabel: the destination's name on the trip screen. hint:
-  // offered (in the other language) to visitors whose browser speaks it and who haven't chosen yet.
-  language: { current: 'PT', target: 'EN', href: '/en', tripLabel: 'English', action: 'Ver o site em inglês', hint: 'English version? Click me' },
+  // The language switch in the header ("PT / EN"): target is the other language, href its version of the page,
+  // tripLabel its name on the teleport's trip screen and action what the switch says to screen readers.
+  language: { current: 'PT', target: 'EN', href: '/en', tripLabel: 'English', action: 'Ver o site em inglês' },
   accessibility: { skip: 'Ir para o conteúdo', navigation: 'Navegação principal', social: 'Links de contato' },
   // These sections are intentionally inactive until their implementation is approved.
   navigation: [

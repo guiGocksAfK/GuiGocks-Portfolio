@@ -1075,32 +1075,33 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .tp-spark { position: absolute; color: #a3bcff; font-size: 10px; line-height: 1; animation: fight-twinkle .6s ease-out forwards; }
 .tp-press { display: inline-block; animation: tp-press .14s ease-out; }
 @keyframes tp-press { 50% { scale: .9; } }
-/* The language switch in the header (lang-switch.tsx): a robot holding up a sign with the page's language. The sign
-   turns over like a coin to the other language when clicked; hovering, the robot looks up and shakes it a little. */
+/* The language switch in the header (lang-switch.tsx): plain text like the menu, this page's language in white. A robot
+   peeks out from behind it on hover, holding up a sign asking for the other language; on a click the sign turns over
+   like a coin and the robot gives a thumbs up. */
 header nav { margin-left: auto; }
-.lang-switch { position: relative; display: inline-flex; flex: none; align-items: flex-end; gap: 1px; height: 30px; padding: 4px 2px 0; cursor: pointer; }
+.lang-switch { position: relative; display: inline-flex; flex: none; align-items: baseline; gap: 6px; padding: 8px 0; font-size: 13px; color: var(--muted); }
 .lang-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
-.lang-sign { position: relative; z-index: 1; width: 26px; height: 18px; margin-bottom: 7px; perspective: 120px; }
-.lang-sign-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .45s cubic-bezier(.3, .7, .35, 1); }
-.lang-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border: 2px solid #8f9bb3; border-radius: 2px; background: #dfe5f1; color: #151a24; font: 700 11px/1 var(--font-pixel), monospace; backface-visibility: hidden; }
-.lang-face-back { transform: rotateY(180deg); background: #c9d6f5; }
-.lang-flipped .lang-sign-inner { transform: rotateY(180deg); }
-.lang-robot { display: block; width: 16px; height: 18px; transition: translate .2s; }
+.lang-current { color: var(--foreground); }
+.lang-slash { color: var(--border); }
+.lang-target { transition: color .18s; }
+.lang-switch:hover .lang-target, .lang-switching .lang-target { color: var(--accent); }
+/* The robot comes up from behind the switch's top edge (anything below it stays hidden). */
+.lang-peek { position: absolute; right: -6px; bottom: calc(100% - 6px); width: 64px; height: 34px; overflow: hidden; pointer-events: none; }
+.lang-peeker { position: absolute; right: 0; bottom: 0; display: flex; align-items: flex-end; gap: 2px; translate: 0 100%; transition: translate .3s cubic-bezier(.34, 1.56, .64, 1); }
+.lang-switch:hover .lang-peeker, .lang-switching .lang-peeker, .lang-cheering .lang-peeker { translate: 0 0; }
+.lang-robot { display: block; width: 20px; height: 22px; }
 .lang-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-@media (hover: hover) {
-  .lang-switch:hover .lang-robot { translate: 0 -2px; }
-  .lang-switch:hover .lang-sign { animation: lang-shake .5s ease-in-out; }
-}
-@keyframes lang-shake { 25% { rotate: -8deg; } 60% { rotate: 6deg; } }
+.lang-sign { position: relative; width: 30px; height: 16px; margin-bottom: 6px; perspective: 120px; }
+.lang-sign-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .45s cubic-bezier(.3, .7, .35, 1); }
+.lang-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border: 2px solid #8f9bb3; border-radius: 2px; background: #dfe5f1; color: #151a24; font: 700 10px/1 var(--font-pixel), monospace; backface-visibility: hidden; }
+.lang-face-back { transform: rotateY(180deg); }
+.lang-flipped .lang-sign-inner { transform: rotateY(180deg); }
 .lang-cheering .lang-robot { animation: lang-hop .3s ease-out; }
-@keyframes lang-hop { 50% { translate: 0 -5px; } }
-/* The offer to visitors whose browser speaks the other language: a speech bubble under the robot. */
-.lang-hint { position: absolute; right: 0; top: calc(100% + 10px); z-index: 20; padding: 3px 8px; border: 2px solid var(--accent); border-radius: 2px; background: var(--background); color: var(--accent); font: 500 12px/1.4 var(--font-pixel), monospace; white-space: nowrap; box-shadow: 2px 2px 0 rgba(0, 0, 0, .45); animation: bubble-pop .3s ease-out both; pointer-events: none; }
-.lang-hint::before { content: ''; position: absolute; right: 6px; bottom: 100%; border-style: solid; border-width: 0 6px 7px; border-color: transparent transparent var(--accent); }
+@keyframes lang-hop { 50% { translate: 0 -4px; } }
 /* A language switch in progress: the page arrives covered, until the teleport lands it (see teleport.tsx). */
 html[data-lang-switch] body::after { content: ''; position: fixed; inset: 0; z-index: 99; background: var(--background); }
 @media (max-width: 600px) {
   /* Phones: the switch on the logo's row, the menu underneath. */
   header nav { order: 3; margin-left: 0; }
-  .lang-switch { order: 2; margin-left: auto; }
+  .lang-switch { order: 2; margin-left: auto; font-size: 12px; }
 }
