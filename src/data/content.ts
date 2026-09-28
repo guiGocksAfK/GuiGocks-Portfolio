@@ -90,7 +90,7 @@ export const content = {
       { label: 'Frontend', items: [
         { name: 'React', projects: [PORTFOLIO, MYRANK] },
         { name: 'Angular', projects: [ESCOLA, AJT], used: ['Angular Material'] },
-        { name: 'Tailwind CSS', projects: [AJT] },
+        { name: 'Tailwind CSS', projects: [PORTFOLIO, MYRANK, AJT] },
         { name: 'Vite', projects: [MYRANK] },
         { name: 'Next.js', projects: [PORTFOLIO] },
       ] },
