@@ -1079,29 +1079,42 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
    peeks out from behind it on hover, holding up a sign asking for the other language; on a click the sign turns over
    like a coin and the robot gives a thumbs up. */
 header nav { margin-left: auto; }
-.lang-switch { position: relative; display: inline-flex; flex: none; align-items: baseline; gap: 6px; padding: 8px 0; font-size: 13px; color: var(--muted); }
+.lang-switch { position: relative; display: inline-flex; flex: none; align-items: baseline; gap: 6px; margin-left: 16px; padding: 8px 0 8px 22px; font-size: 13px; color: var(--muted); }
+/* A thin divider between the menu (navigation) and the switch (a preference), with the menu's own spacing before it. */
+.lang-switch::before { content: ''; position: absolute; left: 0; top: 50%; width: 1px; height: 14px; background: var(--border); translate: 0 -50%; }
 .lang-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
 .lang-current { color: var(--foreground); }
 .lang-slash { color: var(--border); }
 .lang-target { transition: color .18s; }
 .lang-switch:hover .lang-target, .lang-switching .lang-target { color: var(--accent); }
-/* The robot comes up from behind the switch's top edge (anything below it stays hidden). */
-.lang-peek { position: absolute; right: -6px; bottom: calc(100% - 6px); width: 64px; height: 34px; overflow: hidden; pointer-events: none; }
-.lang-peeker { position: absolute; right: 0; bottom: 0; display: flex; align-items: flex-end; gap: 2px; translate: 0 100%; transition: translate .3s cubic-bezier(.34, 1.56, .64, 1); }
+/* The translator drone comes up from behind the switch's top edge (anything below it stays hidden), hovering. */
+.lang-peek { position: absolute; right: -8px; bottom: calc(100% - 6px); width: 72px; height: 38px; overflow: hidden; pointer-events: none; }
+.lang-peeker { position: absolute; right: 0; bottom: 0; display: flex; align-items: center; translate: 0 calc(100% + 2px); transition: translate .3s cubic-bezier(.34, 1.56, .64, 1); }
 .lang-switch:hover .lang-peeker, .lang-switching .lang-peeker, .lang-cheering .lang-peeker { translate: 0 0; }
-.lang-robot { display: block; width: 20px; height: 22px; }
-.lang-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
-.lang-sign { position: relative; width: 30px; height: 16px; margin-bottom: 6px; perspective: 120px; }
-.lang-sign-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .45s cubic-bezier(.3, .7, .35, 1); }
-.lang-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border: 2px solid #8f9bb3; border-radius: 2px; background: #dfe5f1; color: #151a24; font: 700 10px/1 var(--font-pixel), monospace; backface-visibility: hidden; }
-.lang-face-back { transform: rotateY(180deg); }
-.lang-flipped .lang-sign-inner { transform: rotateY(180deg); }
-.lang-cheering .lang-robot { animation: lang-hop .3s ease-out; }
-@keyframes lang-hop { 50% { translate: 0 -4px; } }
+.lang-drone { position: relative; width: 22px; height: 20px; margin-bottom: 8px; animation: drone-hover 1.6s ease-in-out infinite alternate; }
+.lang-drone-body, .lang-drone-body svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+@keyframes drone-hover { from { translate: 0 -1px; } to { translate: 0 2px; } }
+/* Its thruster: a small flickering flame under the nozzle. */
+.lang-thruster { position: absolute; left: 50%; top: 100%; width: 4px; height: 6px; margin-left: -2px; border-radius: 0 0 2px 2px; background: linear-gradient(#a3bcff, rgba(105, 148, 255, 0)); animation: thruster .12s steps(2) infinite alternate; }
+@keyframes thruster { to { height: 4px; opacity: .6; } }
+/* The hologram it projects from its eye: translucent blue with scan lines, flickering now and then. */
+.lang-beam { width: 8px; height: 14px; margin: 0 -1px; background: linear-gradient(90deg, rgba(163, 188, 255, .05), rgba(163, 188, 255, .35)); clip-path: polygon(0 0, 100% 42%, 100% 58%, 0 100%); }
+.lang-holo { position: relative; width: 32px; height: 18px; animation: holo-flicker 3.2s steps(1) infinite; }
+.lang-holo-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(163, 188, 255, .6); border-radius: 2px; background: repeating-linear-gradient(to bottom, rgba(105, 148, 255, .2) 0 1px, rgba(105, 148, 255, .08) 1px 3px); color: #cfdcff; font: 700 10px/1 var(--font-pixel), monospace; text-shadow: 0 0 4px rgba(163, 188, 255, .9); }
+.lang-holo-back { opacity: 0; }
+@keyframes holo-flicker { 0%, 100% { opacity: 1; } 91% { opacity: .55; } 93% { opacity: 1; } 95% { opacity: .7; } }
+/* Clicked: the hologram glitches (splits into red and blue, jitters) over to the other language; the drone spins. */
+.lang-flipped .lang-holo { animation: holo-glitch .45s steps(6) both; }
+.lang-flipped .lang-holo-front { opacity: 0; transition: opacity 0s .2s; }
+.lang-flipped .lang-holo-back { opacity: 1; transition: opacity 0s .2s; }
+@keyframes holo-glitch { 0% { translate: 0 0; filter: none; } 20% { translate: -2px 0; filter: drop-shadow(2px 0 #ff6b6b) drop-shadow(-2px 0 #6994ff); } 40% { translate: 2px -1px; } 60% { translate: -1px 1px; filter: drop-shadow(-2px 0 #ff6b6b) drop-shadow(2px 0 #6994ff); } 80% { translate: 1px 0; } 100% { translate: 0 0; filter: none; } }
+.lang-cheering .lang-drone { animation: drone-spin .45s ease-in-out; }
+@keyframes drone-spin { 50% { rotate: 180deg; scale: .85; } 100% { rotate: 360deg; } }
 /* A language switch in progress: the page arrives covered, until the teleport lands it (see teleport.tsx). */
 html[data-lang-switch] body::after { content: ''; position: fixed; inset: 0; z-index: 99; background: var(--background); }
 @media (max-width: 600px) {
   /* Phones: the switch on the logo's row, the menu underneath. */
   header nav { order: 3; margin-left: 0; }
-  .lang-switch { order: 2; margin-left: auto; font-size: 12px; }
+  .lang-switch { order: 2; margin-left: auto; padding-left: 0; font-size: 12px; }
+  .lang-switch::before { display: none; }
 }
