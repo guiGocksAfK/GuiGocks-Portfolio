@@ -38,7 +38,7 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 .contact { margin-top: 38px; }
 .social-links { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
 .social-link { display: inline-flex; justify-content: center; align-items: center; gap: 14px; padding: 15px 27px; min-height: 50px; border-radius: 5px; font-size: 14px; font-weight: 500; transition: transform .18s, background-color .18s, border-color .18s; }
-.social-link:hover { transform: translateY(-3px); }
+@media (hover: hover) { .social-link:hover { transform: translateY(-3px); } }
 .social-primary { background: var(--accent); color: var(--background); border: 1px solid var(--accent); }
 .social-primary:hover { background: #8aabff; }
 .social-outline { border: 1px solid var(--muted); }
@@ -71,14 +71,23 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
   .social-link { font-size: 12px; padding: 12px 15px; gap: 9px; }
   .social-text { padding-left: 8px; padding-right: 8px; }
   .email { font-size: 12px; }
-  .hero-footer, .section-footer { font-size: 9px; gap: 12px; }
+  .hero-footer, .section-footer { font-size: 10px; gap: 12px; }
+  /* The header in two rows: the logo, then the menu spread across the width, each link a comfortable tap target. */
+  header { flex-wrap: wrap; row-gap: 6px; padding-top: 20px; padding-bottom: 8px; }
+  header nav { width: 100%; justify-content: space-between; gap: 0; }
+  .nav-link { padding: 12px 0; font-size: 12px; }
+  /* The hero takes the height it needs (the desktop's fit-the-screen height leaves a gap on a phone). */
+  main .hero-main { min-height: 0; padding-top: 36px; padding-bottom: 56px; }
+  /* GitHub and LinkedIn side by side, the same width; the shortcut under them, lined up with everything else. */
+  .social-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .social-link { min-height: 48px; }
+  .social-links .social-internal { grid-column: 1 / -1; justify-content: flex-start; min-height: 44px; padding: 0; }
+  .email { margin-top: 6px; padding: 8px 0; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition: none !important; animation: none !important; } }
 
 @media (max-width: 380px) {
-  header { flex-wrap: wrap; row-gap: 18px; }
-  header nav { width: 100%; justify-content: space-between; }
-  .hero-main { padding-top: 40px; }
+  h1 { font-size: 40px; }
 }
 
 
@@ -149,11 +158,40 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .badge-rig:hover .badge-hang { animation: badge-nudge 1s ease-out; }
 .badge-lanyard { display: block; width: 70px; height: 60px; margin: 0 auto; overflow: visible; }
 .badge-lanyard path { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
-.badge-card { position: relative; margin-top: -4px; padding: 26px 18px 18px; border: 1px solid var(--border); border-radius: 8px; background: #11151b; text-align: center; overflow: hidden; }
-.badge-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: repeating-linear-gradient(-45deg, #ffb347 0 6px, #11151b 6px 12px); opacity: .8; }
+.badge-card { position: relative; margin-top: -4px; padding: 26px 18px 18px; border: 1px solid var(--border); border-radius: 8px; background: #11151b; text-align: center; }
+/* A thin line in the site's blue along the top, where the lanyard's clip holds it. */
+.badge-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; border-radius: 8px 8px 0 0; background: var(--accent); opacity: .8; }
 .badge-clip { position: absolute; left: calc(50% - 30px); top: -5px; width: 60px; height: 11px; border-radius: 3px; background: #8f9bb3; box-shadow: inset 0 -2px 0 #5d6678; z-index: 2; }
 .badge-photo { position: relative; width: 124px; aspect-ratio: 1; margin: 0 auto 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #0f1218; }
 .badge-image { object-fit: cover; }
+/* The photo, close to its own colours: a touch less saturated and a soft vignette darkening its edges, so the face
+   leads and the background doesn't shine out of the dark card. */
+.badge-photo-real .badge-image, .badge-pixels { filter: saturate(.85) contrast(1.05); }
+.badge-photo-real::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(circle at 50% 42%, transparent 50%, rgba(13, 15, 18, .55)); }
+/* A freshly delivered photo is dusty (a greyish-brown veil with a few specks), in two halves for the cleaner's two passes;
+   the cleaner itself, with its cloth rubbing away, and the sparkles it leaves. */
+.badge-dust { position: absolute; left: 0; right: 0; z-index: 2; height: calc(50% + 1px); pointer-events: none; background: radial-gradient(circle at 18% 30%, rgba(170, 150, 120, .5) 0 3px, transparent 4px), radial-gradient(circle at 64% 62%, rgba(170, 150, 120, .45) 0 2px, transparent 3px), radial-gradient(circle at 82% 22%, rgba(170, 150, 120, .45) 0 2px, transparent 3px), radial-gradient(circle at 38% 80%, rgba(170, 150, 120, .4) 0 3px, transparent 4px), rgba(58, 52, 44, .62); }
+.badge-dust-top { top: 0; }
+.badge-dust-bottom { top: calc(50% - 1px); }
+.badge-cleaner { position: absolute; left: 0; top: 0; z-index: 4; width: 16px; height: 18px; opacity: 0; pointer-events: none; }
+.badge-cleaner-body { position: absolute; inset: 0; }
+.badge-cleaner svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.badge-cloth { position: absolute; right: -6px; top: 3px; width: 7px; height: 6px; border-radius: 1px; background: #dfe5f1; box-shadow: inset 0 -2px 0 #8f9bb3; animation: cloth-rub .16s ease-in-out infinite alternate; }
+@keyframes cloth-rub { from { translate: 0 -2px; } to { translate: 0 2px; } }
+.badge-sparkle { position: absolute; z-index: 4; color: #fff; font-size: 11px; line-height: 1; text-shadow: 0 0 6px #fff; pointer-events: none; animation: fight-twinkle .6s ease-out forwards; }
+/* On hover, a robot peeks out from behind the photo's top edge and says who that is. */
+.badge-photo-slot { position: relative; width: 124px; margin: 0 auto 16px; }
+.badge-photo-slot .badge-photo { z-index: 1; margin: 0; }
+.badge-spy { position: absolute; right: 12px; top: 0; z-index: 0; width: 16px; height: 18px; pointer-events: none; }
+.badge-spy-robot { position: absolute; inset: 0; transition: translate .3s cubic-bezier(.34, 1.56, .64, 1); }
+.badge-spy-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.badge-spy-line { position: absolute; left: calc(100% + 6px); bottom: calc(100% + 2px); padding: 2px 7px; border: 2px solid var(--accent); border-radius: 2px; background: var(--background); color: var(--accent); font: 500 12px/1.4 var(--font-pixel), monospace; white-space: nowrap; opacity: 0; scale: .6; transform-origin: 0 100%; transition: opacity .2s, scale .2s; }
+.badge-spy-line::before { content: ''; position: absolute; left: -2px; top: 100%; border-style: solid; border-width: 6px 6px 0 0; border-color: var(--accent) transparent transparent transparent; }
+.badge-photo-slot:hover .badge-spy-robot { translate: 0 -15px; }
+.badge-photo-slot:hover .badge-spy-line { opacity: 1; scale: 1; transition-delay: .25s; }
+/* The pixel reveal while the drone brings the badge: big pixels drawn over the photo, sharpening step by step. */
+.badge-pixels { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.badge-delivering .badge-image { visibility: hidden; }
 .badge-avatar { position: absolute; inset: 14px 14px 0; }
 .badge-avatar svg, .badge-drone svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .badge-name { font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
@@ -179,12 +217,17 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
    on the right. The cable hangs from the jib at 14px (CABLE_TOP in career-building.tsx) above the middle of the building. */
 .building-site { position: relative; margin-top: 14px; padding-top: 60px; }
 .crane { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
-.crane-mast { position: absolute; right: 8px; top: 6px; bottom: 0; width: 14px; border-inline: 2px solid #e8a33d; background: repeating-linear-gradient(45deg, transparent 0 8px, #e8a33d 8px 10px); }
-.crane-jib { position: absolute; top: 6px; right: 0; left: calc(50% - 22px - 48px); height: 8px; border-block: 2px solid #e8a33d; background: repeating-linear-gradient(-45deg, transparent 0 5px, #e8a33d 5px 7px); }
+/* Steel lattice in greys, so the finished site reads as built rather than as a warning; the only colour left is the
+   small signal light at the tip of the jib, blinking slowly. */
+.crane-mast { position: absolute; right: 8px; top: 6px; bottom: 0; width: 14px; border-inline: 2px solid #5d6678; background: repeating-linear-gradient(45deg, transparent 0 8px, #3a404c 8px 10px), repeating-linear-gradient(-45deg, transparent 0 8px, #2c313b 8px 10px); }
+.crane-jib { position: absolute; top: 6px; right: 0; left: calc(50% - 22px - 48px); height: 8px; border-block: 2px solid #5d6678; background: repeating-linear-gradient(-45deg, transparent 0 5px, #3a404c 5px 7px); }
+.crane-jib::after { content: ''; position: absolute; left: -2px; top: -7px; width: 4px; height: 4px; border-radius: 50%; background: #ff8a3d; box-shadow: 0 0 6px 1px rgba(255, 138, 61, .55); animation: crane-light 2.6s ease-in-out infinite; }
+@keyframes crane-light { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .crane-jib::after { animation: none; opacity: .8; } }
 .crane-cable { position: absolute; top: 14px; left: calc(50% - 22px - 1px); width: 2px; height: 30px; background: #8f9bb3; }
 .crane-hook { position: absolute; left: -4px; bottom: -2px; width: 10px; height: 8px; border: 2px solid #8f9bb3; border-top: 0; border-radius: 0 0 6px 6px; }
 /* Operator's cabin on the crane. The operator hides behind it and slides out through the side when the crane breaks. */
-.crane-cabin { position: absolute; z-index: 2; right: 20px; top: 16px; width: 28px; height: 22px; border: 2px solid #dfe5f1; border-radius: 3px; background: #151a24; box-shadow: inset 0 -5px 0 #e8a33d; }
+.crane-cabin { position: absolute; z-index: 2; right: 20px; top: 16px; width: 28px; height: 22px; border: 2px solid #dfe5f1; border-radius: 3px; background: #151a24; box-shadow: inset 0 -5px 0 #5d6678; }
 .crane-cabin::after { content: ''; position: absolute; inset: 3px 3px 8px; border-radius: 1px; background: color-mix(in srgb, var(--accent) 30%, #151a24); }
 .crane-operator { position: absolute; z-index: 1; right: 23px; top: 15px; width: 22px; height: 14px; overflow: hidden; transition: transform .25s ease-out; }
 .crane-operator svg { display: block; width: 22px; height: 24px; shape-rendering: crispEdges; }
@@ -204,10 +247,11 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* Scaffolding while the building is under construction: two poles and planks sticking out past the floors (which sit
    above it). The crew pulls the poles and everything falls away piece by piece. */
 .scaffold { position: absolute; z-index: 1; top: 60px; bottom: 2px; left: -8px; right: 36px; pointer-events: none; }
-.scaffold-pole, .scaffold-plank { position: absolute; background: #e8a33d; opacity: .85; }
+/* Like a real one: steel tubes and wooden planks. */
+.scaffold-pole, .scaffold-plank { position: absolute; background: #5d6678; opacity: .9; }
 .scaffold-pole { top: 0; bottom: 0; left: 0; width: 4px; }
 .scaffold-pole-right { left: auto; right: 0; }
-.scaffold-plank { left: 0; right: 0; height: 3px; background: repeating-linear-gradient(90deg, #e8a33d 0 14px, #b97a26 14px 16px); }
+.scaffold-plank { left: 0; right: 0; height: 3px; background: repeating-linear-gradient(90deg, #7a5c46 0 14px, #5a4334 14px 16px); }
 .building-dismantling .scaffold-pole, .building-dismantling .scaffold-plank { animation: scaffold-fall .75s cubic-bezier(.5, 0, .9, .6) forwards; }
 .building-dismantling .scaffold-pole { animation-delay: .1s; }
 .building-dismantling .scaffold-pole-right { animation-name: scaffold-fall-right; }
@@ -377,6 +421,11 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 /* The counter in the office, and what came out of the crate. */
 .office-counter { padding: 20px 0 14px; animation: counter-in .3s ease-out both; }
 .crate-inline { display: none; }
+/* Phones: the puff that opens a crate where it stands, a gust of air under it and a small "fuup!". */
+.crate-gust { position: absolute; left: 50%; bottom: -6px; width: 36px; height: 10px; margin-left: -18px; border-radius: 50%; background: radial-gradient(closest-side, rgba(163, 188, 255, .55), transparent); pointer-events: none; animation: crate-gust .45s ease-out forwards; }
+@keyframes crate-gust { from { scale: .3 1; opacity: 1; } to { scale: 1.6 .6; opacity: 0; } }
+.crate-fuup { position: absolute; right: -10px; top: -16px; z-index: 3; color: #a3bcff; font: 700 11px/1 var(--font-pixel), monospace; white-space: nowrap; text-shadow: 1px 0 #11151b, -1px 0 #11151b, 0 1px #11151b, 0 -1px #11151b; rotate: 8deg; pointer-events: none; animation: crate-fuup .7s ease-out forwards; }
+@keyframes crate-fuup { 0% { scale: .3; opacity: 0; } 20% { scale: 1.2; opacity: 1; } 35% { scale: 1; } 75% { opacity: 1; translate: 0 0; } 100% { opacity: 0; translate: 0 -8px; } }
 .crate-details-label { margin-bottom: 6px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
 .crate-details-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .crate-details-list:last-child { margin-bottom: 0; }
@@ -396,6 +445,13 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
   .rack-shelf { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .rack-tag { align-self: start; }
   .yard-pipe, .pump, .office-counter { display: none; }
+  /* No crate ever lands in the office here, so its room shrinks to a strip where the two robots chat face to face,
+     with room above them for their speech bubbles; no desk. */
+  .office-space { min-height: 0; }
+  .office-scene { min-height: 0; justify-content: center; gap: 72px; padding-top: 40px; }
+  .office-robot { width: 27px; height: 30px; margin-bottom: 10px; }
+  .office-robot-1 svg { transform: scaleX(-1); }
+  .office-desk { display: none; }
   .crate-inline { display: block; padding: 4px 0 6px; }
 }
 /* Contact: the page's ending. No cards: a status line, a big title and an editorial list of full-width rows split by
@@ -500,6 +556,11 @@ html[data-zap-gag='skipped'] .contact-row:hover .zap-icon svg { fill: var(--acce
   .contact-section { padding-top: 60px; }
   .contact-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 18px 4px; }
   .contact-label { grid-column: 1 / -1; }
+  /* The status as small tags that wrap cleanly (no separator dots left at the start of a line). */
+  .contact-section .contact-status { gap: 6px; font-size: 10px; }
+  .contact-status i { display: none; }
+  .contact-status em { padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; color: var(--muted); }
+  .contact-status em:first-of-type { color: var(--foreground); }
 }
 /* The section still to be built (html[data-build="pending"], set by the boot script): its content in the page but out of
    sight, the wall full of bare patches, and only the skip robot on it. */
@@ -716,13 +777,25 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 @keyframes kite-flutter { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
 .ending-bush { right: 2%; bottom: 16px; width: 40px; height: 16px; }
 @media (max-width: 700px) {
-  .ending { height: 180px; margin-top: 44px; }
-  .ending-tree, .ending-picnic, .ending-fisher, .ending-napper, .ending-bush, .ending-pigeon-1 { display: none; }
-  .ending-bench { left: 5%; }
-  .ending-pigeon-2 { left: 34%; }
-  .ending-lake { left: 22%; right: 22%; }
-  .ending-flyer { left: 62%; }
+  /* The whole park on a phone: no tree; the fisher and the napper a row further back on the grass (smaller), the
+     bench, pigeons, picnic and kite in front, the bush at the end. */
+  .ending { height: 190px; margin-top: 44px; }
+  .ending .ending-tree { display: none; }
+  .ending-lake { left: 16%; right: 16%; }
+  .ending-bench { left: 1%; }
+  .ending-pigeon-1 { left: 25%; }
+  .ending-pigeon-2 { left: 31%; }
+  .ending-fisher { left: 34%; bottom: 36px; scale: .8; transform-origin: 0 100%; }
+  .ending-napper { left: 60%; bottom: 40px; scale: .8; transform-origin: 0 100%; }
+  .ending-picnic { left: 39%; bottom: 6px; scale: .78; transform-origin: 0 100%; }
+  .ending-flyer { left: 71%; }
+  .ending-kite-rig { scale: .72; transform-origin: 0 100%; }
+  .ending-bush { right: 0; scale: .8; transform-origin: 100% 100%; }
 }
+/* The boss's line on phones: a speech bubble over the bench, pointing down at it. */
+.ending .ending-late { position: absolute; display: block; left: 32px; bottom: 48px; z-index: 2; max-width: 190px; padding: 3px 8px; border: 2px solid var(--accent); border-radius: 2px; background: var(--background); color: var(--accent); font: 500 11px/1.35 var(--font-pixel), monospace; box-shadow: 2px 2px 0 rgba(0, 0, 0, .45); opacity: 0; scale: .6; transform-origin: 0 100%; transition: opacity .25s, scale .25s ease-out; pointer-events: none; }
+.ending .ending-late::before { content: ''; position: absolute; left: 4px; top: 100%; border-style: solid; border-width: 7px 7px 0 0; border-color: var(--accent) transparent transparent transparent; }
+.ending .ending-late.ending-late-on { opacity: 1; scale: 1; }
 /* Mail robot: pops up next to the email with an envelope over its head and a "copied" bubble, then drops back down. */
 .email-wrap { position: relative; display: inline-block; }
 .mailman { position: absolute; left: calc(100% + 12px); bottom: -2px; width: 22px; height: 24px; pointer-events: none; animation: mailman 2.2s ease-out both; }
@@ -866,6 +939,18 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .drawer-panel .project-highlights li { border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); padding-left: 12px; font-size: 12.5px; line-height: 1.6; }
 .highlight-title { display: block; color: var(--foreground); font-size: 13px; font-weight: 600; }
 .highlight-text { display: block; margin-top: 2px; }
+/* Phones: the decisions as a list of titles; a tap folds a title's text open (one at a time). */
+.drawer-panel .highlights-compact { gap: 0; padding: 12px 0 14px; }
+.drawer-panel .highlights-compact li { padding-left: 0; border-left: 0; border-bottom: 1px solid var(--border); }
+.highlight-button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 10px 2px; text-align: left; line-height: 1.35; cursor: pointer; }
+.highlight-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+.highlight-chevron { flex: none; color: var(--accent); font-size: 11px; transition: rotate .2s; }
+.highlight-shown .highlight-chevron { rotate: 180deg; }
+.highlight-fold { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .25s ease-out; }
+.highlight-fold > .highlight-text { overflow: hidden; margin: 0; padding: 0 2px; }
+.highlight-shown .highlight-fold { grid-template-rows: 1fr; }
+.highlight-shown .highlight-fold > .highlight-text { padding-bottom: 14px; }
+.drawer-toggle-bottom { margin: 4px 0 6px; }
 .highlight-text code { font-family: var(--font-geist-mono), monospace; font-size: 12px; color: var(--foreground); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 3px; padding: 1px 5px; }
 /* Bottom edge of the open drawer, with a pixel handle in the middle that the robot grabs. */
 .drawer-edge { position: relative; height: 0; }
@@ -894,10 +979,48 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
   .capabilities-section .section-footer { margin-top: 60px; }
   .about-section { padding-top: 60px; }
   .about-section .section-footer { margin-top: 60px; }
-  .about-story { padding: 24px 20px; }
   .about-story-robot { right: 12px; }
+  /* Phones: the story lined up with everything else, in a lighter size. */
+  .about-story { padding: 0; }
+  .about-story p { font-size: 14px; line-height: 1.6; }
+  .about-story p + p { margin-top: 10px; }
+  main .about-grid { gap: 20px; }
+  main .about-label { margin-top: 24px; }
+  /* The badge turns sideways: the photo on the left, name, role and town beside it, what I'm looking for underneath,
+     across the whole width; a shorter lanyard. */
+  .badge-rig { max-width: none; margin-bottom: 8px; }
+  .badge-lanyard { width: 52px; height: 40px; }
+  .badge-card { display: grid; grid-template-columns: 88px minmax(0, 1fr); column-gap: 16px; align-items: center; padding: 20px 16px 16px; text-align: left; }
+  .badge-photo-slot { grid-row: 1 / span 3; width: 88px; margin: 0; }
+  .badge-photo { width: 88px; }
+  .badge-name { grid-column: 2; align-self: end; font-size: 17px; line-height: 1.25; }
+  .badge-role, .badge-location { grid-column: 2; }
+  .badge-location { align-self: start; }
+  .badge-looking { grid-column: 1 / -1; margin-top: 14px; padding-top: 12px; }
   .project-details { padding: 24px 20px; }
   .placeholder-number { font-size: 48px; }
+  /* Phones (the Galaxy A55's 412px as the reference): sections closer to the line above them, smaller titles, and
+     project cards compact enough to see one whole on the screen. */
+  main .projects-section, main .about-section, main .capabilities-section { padding-top: 36px; }
+  main :is(.projects-section, .about-section, .capabilities-section, .contact-section) h2 { font-size: 28px; margin-bottom: 20px; }
+  .project-list { gap: 20px; }
+  main .project-visual { aspect-ratio: 2 / 1; }
+  .stamp-area { top: 10px; left: 10px; }
+  .project-stamp { padding: 3px 7px; font-size: 9px; border-width: 1.5px; }
+  main .project-details { padding: 18px 16px 20px; }
+  .project-eyebrow { margin-bottom: 8px; }
+  .project-description { margin-top: 8px; }
+  .project-stack { gap: 5px; margin-top: 12px; }
+  .project-stack li { padding: 3px 6px; }
+  .project-links { column-gap: 18px; margin-top: 8px; }
+  .project-links a { min-height: 40px; }
+  .project-code { column-gap: 12px; }
+  .code-separator { display: none; }
+  /* Capabilities: the hint under the title (its desktop pull-up would overlap the smaller title), and no ladder, so
+     the crates get the width back. */
+  main .yard-hint { margin: -10px 0 14px; }
+  .rack-ladder, .ladder-clerk { display: none; }
+  main .rack { padding-right: 16px; }
   .social-links { gap: 9px; }
   .social-link { padding-left: 12px; padding-right: 12px; }
 }
@@ -930,7 +1053,15 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .lift-rider { position: absolute; left: 2px; bottom: 0; width: 16px; height: 18px; }
 .lift-rider svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 @media (max-width: 700px) {
-  .footer-row { align-items: flex-end; }
+  /* Phones: the sign cut down to the site and its start, on one line with the lift, which gets a shorter rail. */
+  .footer-row { flex-wrap: nowrap; align-items: center; }
+  .footer-sign-item:nth-child(3), .footer-sign-item:nth-child(5) { display: none; }
+  .footer-lift { height: 28px; gap: 6px; }
+  .lift-shaft { width: 18px; height: 28px; }
+  .lift-rail { left: 7px; }
+  .lift-cabin { width: 18px; height: 18px; }
+  .lift-rider { left: 1px; width: 14px; height: 16px; }
+  .footer-legal { margin-top: 6px; line-height: 1.5; }
 }
 /* Teleporting around the page (teleport.tsx): the pixels the screen breaks into, and the robots' layer over the page:
    the one arriving next to the destination's title (beamed in, in a column of blue light with sparkles). */

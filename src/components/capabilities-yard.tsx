@@ -352,8 +352,20 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
       }
     }
 
-    // Narrow screens: the crate opens where it stands and its contents show under the shelf.
+    // Narrow screens: the crate opens where it stands and its contents show under the shelf. A little pump under it
+    // gives it a puff first: the crate hops with a "fuup!" and a gust of air.
     async function openInPlace(job: NonNullable<typeof current>) {
+      const puff = (className: string, text = '') => {
+        const element = document.createElement('span');
+        element.className = className;
+        element.textContent = text;
+        element.addEventListener('animationend', () => element.remove());
+        job.button.appendChild(element);
+      };
+      puff('crate-gust');
+      puff('crate-fuup', 'FUUP!');
+      await tween(320, t => { job.button.style.translate = `0 ${-Math.sin(Math.PI * t) * 9}px`; });
+      job.button.style.translate = '';
       job.button.classList.add('crate-opened');
       await wait(LID_TIME);
       const { popper, robot } = popRobot(job.button);

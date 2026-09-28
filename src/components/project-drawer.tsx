@@ -13,7 +13,8 @@ class Cancelled extends Error {}
 // with a tired breather in between when the decisions fill two rows), or pushes it shut from below, then leaves.
 // Without motion the drawer just opens and closes.
 // The toggle stays in the card's text column; the drawer itself renders into a full-width slot under the whole card,
-// so opening it never stretches the screenshot.
+// so opening it never stretches the screenshot. On phones the decisions show as a list of titles, each opening its
+// text on a tap (one at a time), with a second "hide" button at the bottom so a long drawer can be closed from there.
 export function ProjectDrawer({ items, openLabel, closeLabel, slotId }: { items: readonly { title: string; text: string }[]; openLabel: string; closeLabel: string; slotId: string }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -23,8 +24,28 @@ export function ProjectDrawer({ items, openLabel, closeLabel, slotId }: { items:
   const cancelRef = useRef<() => void>(() => {});
   const panelId = useId();
   const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const [compact, setCompact] = useState(false);
+  const [shown, setShown] = useState<number | null>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => () => cancelRef.current(), []);
+  // Phones get the list of titles.
+  useEffect(() => {
+    const phone = window.matchMedia('(max-width: 600px)');
+    const update = () => setCompact(phone.matches);
+    update();
+    phone.addEventListener('change', update);
+    return () => phone.removeEventListener('change', update);
+  }, []);
+
+  // The bottom "hide" button: back up to the card's own button first, so the page doesn't jump when the drawer shuts.
+  function closeFromBottom() {
+    const button = toggleRef.current;
+    if (!button) return;
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    button.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+    setTimeout(() => { void toggle(); }, smooth ? 450 : 0);
+  }
   // The slot is server-rendered markup, so it can only be looked up after mount.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setSlot(document.getElementById(slotId)), [slotId]);
@@ -146,15 +167,27 @@ export function ProjectDrawer({ items, openLabel, closeLabel, slotId }: { items:
     <div className={`drawer-sheet${state}`}>
       <div ref={bodyRef} className="drawer-body" style={{ height: 0 }}>
         <div ref={panelRef} className="drawer-panel" id={panelId} hidden={!open && !busy}>
-          <ul className="project-highlights">
-            {items.map(item => (
-              <li key={item.title}>
-                <strong className="highlight-title">{item.title}</strong>
-                {/* Odd segments between backticks are code. */}
-                <span className="highlight-text">{item.text.split('`').map((part, index) => (index % 2 ? <code key={index}>{part}</code> : part))}</span>
-              </li>
-            ))}
+          <ul className={`project-highlights${compact ? ' highlights-compact' : ''}`}>
+            {items.map((item, index) => {
+              // Odd segments between backticks are code.
+              const text = item.text.split('`').map((part, piece) => (piece % 2 ? <code key={piece}>{part}</code> : part));
+              if (!compact) return <li key={item.title}><strong className="highlight-title">{item.title}</strong><span className="highlight-text">{text}</span></li>;
+              const textId = `${panelId}-${index}`;
+              return (
+                <li key={item.title} className={shown === index ? 'highlight-shown' : undefined}>
+                  <button type="button" className="highlight-title highlight-button" aria-expanded={shown === index} aria-controls={textId} onClick={() => setShown(current => current === index ? null : index)}>
+                    {item.title}<span className="highlight-chevron" aria-hidden="true">▾</span>
+                  </button>
+                  <div className="highlight-fold" id={textId}><span className="highlight-text">{text}</span></div>
+                </li>
+              );
+            })}
           </ul>
+          {compact && (
+            <button type="button" className="drawer-toggle drawer-toggle-bottom font-mono" onClick={closeFromBottom}>
+              {closeLabel}<span className="drawer-chevron" aria-hidden="true">▴</span>
+            </button>
+          )}
         </div>
       </div>
       {/* The drawer's bottom edge with its handle; the robot hangs from here. */}
@@ -166,7 +199,7 @@ export function ProjectDrawer({ items, openLabel, closeLabel, slotId }: { items:
 
   return (
     <div className={`drawer${state}`}>
-      <button type="button" className="drawer-toggle font-mono" aria-expanded={open} aria-controls={panelId} onClick={toggle}>
+      <button ref={toggleRef} type="button" className="drawer-toggle font-mono" aria-expanded={open} aria-controls={panelId} onClick={toggle}>
         {open ? closeLabel : openLabel}<span className="drawer-chevron" aria-hidden="true">▾</span>
       </button>
       {slot && createPortal(sheet, slot)}

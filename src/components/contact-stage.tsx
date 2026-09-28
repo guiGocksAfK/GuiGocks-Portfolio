@@ -64,6 +64,8 @@ const COVER: { members: number[]; how: 'body' | 'jump' | 'sheet' | 'sign' }[] = 
 
 class Cancelled extends Error {}
 
+const LATE_LINE_FOR = 5000; // ms the boss's "too late" line stays up on phones
+
 const finishBuild = () => { delete document.documentElement.dataset.build; };
 
 // The contact section is built by the robots in front of the visitor. The boot script marks the page before the first
@@ -91,6 +93,26 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
     if (section && line && skipRef.current) {
       skipRef.current.style.setProperty('--anchor', `${line.getBoundingClientRect().top - section.getBoundingClientRect().top}px`);
     }
+  }, []);
+
+  // Phones get the section finished (see the boot script); when the park first comes into view the boss, on its bench,
+  // says they're a bit late: it's all been built already.
+  // With the section delivered finished (phones, reduced motion) there's no show to earn the WhatsApp gag, so the
+  // button starts out in the site's colours, as after skipping.
+  useEffect(() => { if (document.documentElement.dataset.build !== 'pending') skipZapGag(); }, []);
+
+  useEffect(() => {
+    const line = sectionRef.current?.querySelector<HTMLElement>('.ending-late');
+    if (!line || document.documentElement.dataset.build === 'pending' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+      line.classList.add('ending-late-on');
+      timer = setTimeout(() => line.classList.remove('ending-late-on'), LATE_LINE_FOR);
+    }, { threshold: .7 });
+    observer.observe(line.closest('.ending') ?? line);
+    return () => { observer.disconnect(); clearTimeout(timer); };
   }, []);
 
   // Teleporting into the section (teleport.tsx) lands on it finished, as if the visitor had skipped the show.

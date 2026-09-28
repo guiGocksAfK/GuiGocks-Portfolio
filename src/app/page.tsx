@@ -124,7 +124,7 @@ export default function Home() {
         <div className="about-grid">
           <AboutBadge
             name={`${hero.firstName} ${hero.lastName}`} role={about.badge.role} location={about.badge.location}
-            lookingLabel={about.badge.lookingLabel} lookingText={about.badge.lookingText}
+            lookingLabel={about.badge.lookingLabel} lookingText={about.badge.lookingText} spyLine={about.badge.spyLine}
             photo={about.photo} photoAlt={about.photoAlt} avatarLabel={about.avatarLabel}
           />
           <div className="about-main">
@@ -155,7 +155,7 @@ export default function Home() {
         <h2 id="contact-title">{contactSection.title}</h2>
         <ContactList rows={contactSection.rows} copiedLabel={contactSection.copiedLabel} pendingLabel={contactSection.pendingLabel} zapReady={contactSection.zapReady} />
         {/* Happy ending: a park at dusk standing on the last line of the page. */}
-        <EndingScene />
+        <EndingScene lateLine={contactSection.lines.late} />
         <div className="section-footer font-mono"><span>{contactSection.section}</span><span>{contactSection.footerNote}</span></div>
       </ContactStage>
       </main>

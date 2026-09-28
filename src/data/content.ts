@@ -49,7 +49,9 @@ export const content = {
       role: 'Full-stack developer',
       location: 'Foz do Iguaçu, PR',
       lookingLabel: 'Procurando',
-      lookingText: 'Um time onde eu possa entregar desde o primeiro dia: estágio ou júnior, front, back ou full-stack. Presencial em Foz do Iguaçu ou remoto, inclusive para empresas de fora do Brasil.',
+      // What the robot peeking out from behind the photo says on hover.
+      spyLine: 'Esse é o chefe.',
+      lookingText: 'Um time onde eu possa entregar desde o primeiro dia: estágio ou júnior, front, back ou full-stack. Presencial em Foz do Iguaçu ou remoto, inclusive para fora do Brasil.',
     },
     timelineLabel: 'Trajetória',
     // Dashed top floor of the career building.
@@ -60,8 +62,8 @@ export const content = {
       { year: '2026', text: 'Primeiros projetos para uma empresa e uma escola: AJT Viagens e Escola Imaculada' },
       { year: '2026', text: 'Primeiro projeto individual: o MyRank' },
     ],
-    // Until a real photo exists the badge shows a pixel-art avatar: save the photo in public/ (e.g. /about/foto.webp) and set the path here.
-    photo: null as string | null,
+    // The badge's photo (without one, null, it shows a pixel-art avatar instead).
+    photo: '/about/guilherme.jpeg' as string | null,
     photoAlt: 'Foto de Guilherme Gabriel Gocks',
     avatarLabel: 'Avatar em pixel art de Guilherme com capacete de obra',
   },
@@ -135,7 +137,7 @@ export const content = {
       {
         name: MYRANK,
         category: 'Plataforma social',
-        description: 'Uma plataforma para organizar e compartilhar rankings de filmes, séries, jogos, livros e animes.',
+        description: 'Uma rede social para ranquear qualquer coisa, de filmes e jogos a tudo o que você quiser, com chat em tempo real, conquistas, insights gerados por IA e um bot no Discord.',
         highlights: [
           { title: 'Sequestro de conta bloqueado', text: 'Login social só se une a contas com e-mail já confirmado. O link de confirmação é salvo apenas como hash SHA-256, e o "reenviar" responde igual para qualquer e-mail, sem revelar quais estão cadastrados.' },
           { title: 'Infraestrutura própria numa VM ARM da Oracle', text: 'A API roda com Docker Compose numa VM gratuita da Oracle em São Paulo, com um Caddy compartilhado fazendo o HTTPS de vários projetos e o banco na mesma região. Ela fica sempre ligada, sobe em ~25s, usa ~336 MB de RAM e tem backup diário do banco.' },
@@ -208,7 +210,7 @@ export const content = {
     skipLabel: 'Pular animação ⏭',
     // What the robots say while building: the boss ordering paint, the boss stopping the fight.
     // typo: how the title gets misspelt at first; keep: what stays when the typo is erased (both must start the title).
-    lines: { call: 'TINTA, JÁ!!', stop: 'CHEGA!!', typo: 'Vamos contruir', keep: 'Vamos con', nothing: 'NADA AQUI :)',
+    lines: { call: 'TINTA, JÁ!!', stop: 'CHEGA!!', typo: 'Vamos contruir', keep: 'Vamos con', nothing: 'NADA AQUI :)', late: 'Chegou tarde, já construímos tudo :)',
       // The skip robot's lines: its jokes as it peeks out, the last one before the park.
       jokes: ['Tá longo, né?', 'Pode pular, eu não conto', 'Ainda dá tempo!'], finale: 'Ok, agora vale ver o final',
     },
@@ -224,7 +226,7 @@ export const content = {
       { label: 'Currículo', value: 'Baixar em PDF', action: 'Baixar currículo', kind: 'download', href: '/curriculo-guilherme-gocks.pdf' },
     ],
   } as {
-    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; typo: string; keep: string; nothing: string; jokes: readonly string[]; finale: string }; copiedLabel: string; pendingLabel: string; zapReady: string;
+    section: string; title: string; status: readonly string[]; footerNote: string; skipLabel: string; lines: { call: string; stop: string; typo: string; keep: string; nothing: string; late: string; jokes: readonly string[]; finale: string }; copiedLabel: string; pendingLabel: string; zapReady: string;
     rows: readonly { label: string; value: string; action: string; kind: 'copy' | 'external' | 'download'; href: string | null; icon?: 'whatsapp' }[];
   },
   contact: {

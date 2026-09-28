@@ -50,7 +50,7 @@ const CANOPY = ['.....llll.......', '...llLLLLll.....', '..lLLMMLLLLl....', '.lL
 const TRUNK = ['....lllTlll.....', '.......T........', '.......T........', '.......T........', '......TT........', '......TT........', '......TT........', '.....TTTT.......'];
 const BUSH = ['...llLl...', '.lLLMLLLl.', 'lLMLLLLMLl', 'lLLLLLLLLl'];
 
-export function EndingScene() {
+export function EndingScene({ lateLine }: { lateLine: string }) {
   return (
     <div className="ending" aria-hidden="true">
       <span className="ending-sky" />
@@ -70,6 +70,8 @@ export function EndingScene() {
       <span className="ending-bench">
         <Pixels rows={BENCH} />
         <span className="ending-boss"><Pixels rows={BOSS} /></span>
+        {/* Phones only (they get the park already built): the boss's line when it comes into view. */}
+        <span className="ending-late">{lateLine}</span>
       </span>
       <span className="ending-pigeon ending-pigeon-1"><Pixels rows={PIGEON} /></span>
       <span className="ending-pigeon ending-pigeon-2"><Pixels rows={PIGEON} /></span>
