@@ -43,12 +43,17 @@ const LANDINGS: Record<string, string> = { projetos: '#projects-title', sobre: '
 
 type Teleport = (href: string, origin?: Element | null) => Promise<void>;
 let active: Teleport | null = null;
-let activeSwitch: ((href: string) => Promise<void>) | null = null;
+let activeSwitch: ((href: string, way: 'right' | 'left') => Promise<void>) | null = null;
 // The sections, top to bottom, to find where the visitor is when switching language.
 const SECTIONS = ['main', 'projetos', 'sobre', 'capacidades', 'contato'];
 // What a language switch leaves for the other version of the page (in sessionStorage, read by the boot script and by
 // the teleporter there): where the visitor was, what to call the destination on the trip screen, and whether to animate.
-type SwitchNote = { id: string; offset: number; label: string; animate: boolean };
+type SwitchNote = { id: string; offset: number; label: string; animate: boolean; way: Way };
+// Which way a trip goes: down or up the page for the shortcuts; sideways for a language switch, to a parallel page
+// (right into English, left back into Portuguese).
+type Way = 'down' | 'up' | 'right' | 'left';
+const ARROWS: Record<Way, string> = { down: '↓', up: '↑', right: '→', left: '←' };
+const sideways = (way: Way) => way === 'right' || way === 'left';
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Grows a little past full size and settles back (0..1 → 0..1, peaking about 1.05).
@@ -123,9 +128,10 @@ function currentAnchor() {
 // remembered for the next visit.
 export function switchLanguage(href: string, label: string) {
   try { localStorage.setItem('lang', href.startsWith('/en') ? 'en' : 'pt'); } catch {}
-  const note: SwitchNote = { ...currentAnchor(), label, animate: !!activeSwitch && !reducedMotion() };
+  const way: Way = href.startsWith('/en') ? 'right' : 'left';
+  const note: SwitchNote = { ...currentAnchor(), label, animate: !!activeSwitch && !reducedMotion(), way };
   try { sessionStorage.setItem('lang-switch', JSON.stringify(note)); } catch {}
-  if (note.animate && activeSwitch) return activeSwitch(href);
+  if (note.animate && activeSwitch) return activeSwitch(href, way);
   window.location.href = href;
   return Promise.resolve();
 }
@@ -167,7 +173,7 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
       const font = getComputedStyle(document.body).getPropertyValue('--font-pixel').trim() || 'monospace';
       const cols = Math.ceil(width / CELL);
       const rows = Math.ceil(height / CELL);
-      const cells = Array.from({ length: cols * rows }, (_, index) => ({ col: index % cols, x: (index % cols) * CELL, y: Math.floor(index / cols) * CELL, delay: 0 }));
+      const cells = Array.from({ length: cols * rows }, (_, index) => ({ col: index % cols, row: Math.floor(index / cols), x: (index % cols) * CELL, y: Math.floor(index / cols) * CELL, delay: 0 }));
       // A pixel of the given size (0..1+ of a cell), centred on a point.
       const square = (x: number, y: number, side: number, size: number, color: string) => {
         if (size <= .02) return;
@@ -191,42 +197,57 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
         square(cell.x, cell.y, CELL, overshoot(Math.min(1, age / GROW)), tint(age));
       };
       // A soft band of light running along the curtain's edge while it crosses the window.
-      const glow = (now: number, down: boolean) => {
+      const glow = (now: number, way: Way) => {
         const progress = now / SWEEP;
         if (progress <= 0 || progress >= 1) return;
-        const edge = (down ? smooth(progress) : 1 - smooth(progress)) * height;
-        const band = context.createLinearGradient(0, edge - GLOW, 0, edge + GLOW);
+        const across = sideways(way);
+        const forward = way === 'down' || way === 'right';
+        const edge = (forward ? smooth(progress) : 1 - smooth(progress)) * (across ? width : height);
+        const band = across ? context.createLinearGradient(edge - GLOW, 0, edge + GLOW, 0) : context.createLinearGradient(0, edge - GLOW, 0, edge + GLOW);
         band.addColorStop(0, 'rgba(163, 188, 255, 0)');
         band.addColorStop(.5, 'rgba(163, 188, 255, .45)');
         band.addColorStop(1, 'rgba(163, 188, 255, 0)');
         context.fillStyle = band;
-        context.fillRect(0, edge - GLOW, width, GLOW * 2);
+        if (across) context.fillRect(edge - GLOW, 0, GLOW * 2, height);
+        else context.fillRect(0, edge - GLOW, width, GLOW * 2);
       };
       // The destination's name, in small pixels: shown on the trip screen and taken apart by the curtain on the way in.
       let letters: { x: number; y: number; delay: number; size: number }[] = [];
-      // When the curtain's front reaches a height of the window (0 top .. 1 bottom), going the way of the trip. Its speed
-      // eases in and out; each column is a little ragged.
-      const ragged = Array.from({ length: cols }, () => Math.random() * JITTER);
-      const reach = (y: number, down: boolean, sweep: number) => unsmooth(Math.min(1, Math.max(0, down ? y / height : 1 - y / height))) * sweep;
+      // When the curtain's front reaches a point of the window, going the way of the trip. Its speed eases in and out;
+      // its edge is a little ragged (column by column going up or down, row by row going sideways).
+      const raggedCols = Array.from({ length: cols }, () => Math.random() * JITTER);
+      const raggedRows = Array.from({ length: rows }, () => Math.random() * JITTER);
+      const ragged = (x: number, y: number, way: Way) => sideways(way) ? raggedRows[Math.min(rows - 1, Math.max(0, Math.floor(y / CELL)))] : raggedCols[Math.min(cols - 1, Math.max(0, Math.floor(x / CELL)))];
+      const reach = (x: number, y: number, way: Way, sweep: number) => {
+        const along = way === 'down' ? y / height : way === 'up' ? 1 - y / height : way === 'right' ? x / width : 1 - x / width;
+        return unsmooth(Math.min(1, Math.max(0, along))) * sweep;
+      };
+      const arrive = (x: number, y: number, way: Way) => reach(x, y, way, SWEEP) + ragged(x, y, way);
       return {
         // Out: the curtain sweeps over the page the way the trip goes, each pixel growing from nothing to a little
         // more than a cell as the wave's colours pass through it.
-        async cover(down: boolean, onProgress: (t: number) => void) {
-          cells.forEach(cell => { cell.delay = reach(cell.y + CELL / 2, down, SWEEP) + ragged[cell.col]; });
+        async cover(way: Way, onProgress: (t: number) => void) {
+          cells.forEach(cell => { cell.delay = arrive(cell.x + CELL / 2, cell.y + CELL / 2, way); });
           await tween(SWEEP + JITTER + PIXEL, t => {
             const now = t * (SWEEP + JITTER + PIXEL);
             onProgress(t);
             context.clearRect(0, 0, width, height);
             for (const cell of cells) pixel(cell, now - cell.delay);
-            glow(now, down);
+            glow(now, way);
           });
         },
         // The trip, drawn with the same pixels: columns of them rushing the way the page is going, and the
         // destination's name spelt out in small pixels popping up one by one.
-        async travel(label: string, down: boolean) {
-          const streaks = Array.from({ length: Math.round(cols * .45) }, () => ({ col: Math.floor(Math.random() * cols), row: Math.random() * rows, length: 2 + Math.floor(Math.random() * 4), speed: 30 + Math.random() * 30, alpha: .12 + Math.random() * .22 }));
+        async travel(label: string, way: Way) {
+          // Streaks of pixels rushing against the trip (like scenery going by): along columns up or down, along rows
+          // sideways. lane: the column (or row) a streak runs in; head: where along it it is.
+          const across = sideways(way);
+          const lanes = across ? rows : cols;
+          const length = across ? cols : rows;
+          const back = way === 'down' || way === 'right' ? -1 : 1;
+          const streaks = Array.from({ length: Math.round(lanes * .45) }, () => ({ lane: Math.floor(Math.random() * lanes), head: Math.random() * length, size: 2 + Math.floor(Math.random() * 4), speed: 30 + Math.random() * 30, alpha: .12 + Math.random() * .22 }));
           // The name, rendered small off screen and read back pixel by pixel.
-          const text = `${down ? '↓' : '↑'} ${label.toUpperCase()}`;
+          const text = `${ARROWS[way]} ${label.toUpperCase()}`;
           const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
           probe.font = `700 ${LETTER_FONT}px ${font}`;
           const textWidth = Math.ceil(probe.measureText(text).width) + 2;
@@ -251,11 +272,12 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
             context.fillStyle = page;
             context.fillRect(0, 0, width, height);
             for (const streak of streaks) {
-              const head = streak.row + (down ? -1 : 1) * streak.speed * now / 1000;
+              const head = streak.head + back * streak.speed * now / 1000;
               context.globalAlpha = streak.alpha;
-              for (let piece = 0; piece < streak.length; piece++) {
-                const row = Math.floor(((head + (down ? piece : -piece)) % rows + rows) % rows);
-                square(streak.col * CELL, row * CELL, CELL, .8 - piece * .12, accent);
+              for (let piece = 0; piece < streak.size; piece++) {
+                const at = Math.floor(((head - back * piece) % length + length) % length);
+                if (across) square(at * CELL, streak.lane * CELL, CELL, .8 - piece * .12, accent);
+                else square(streak.lane * CELL, at * CELL, CELL, .8 - piece * .12, accent);
               }
             }
             context.globalAlpha = 1;
@@ -275,11 +297,11 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
           context.fillStyle = page;
           context.fillRect(0, 0, width, height);
         },
-        async reveal(down: boolean, titleY: number, onOpen: () => void, onProgress: (t: number) => void) {
+        async reveal(way: Way, spot: { x: number; y: number }, onOpen: () => void, onProgress: (t: number) => void) {
           canvas.style.pointerEvents = 'none';
-          cells.forEach(cell => { cell.delay = reach(cell.y + CELL / 2, down, SWEEP) + ragged[cell.col]; });
-          letters.forEach(dot => { dot.delay = reach(dot.y + dot.size / 2, down, SWEEP) + ragged[Math.min(cols - 1, Math.floor(dot.x / CELL))]; });
-          const openAt = reach(titleY, down, SWEEP) + JITTER + PIXEL * .6;
+          cells.forEach(cell => { cell.delay = arrive(cell.x + CELL / 2, cell.y + CELL / 2, way); });
+          letters.forEach(dot => { dot.delay = arrive(dot.x + dot.size / 2, dot.y + dot.size / 2, way); });
+          const openAt = reach(spot.x, spot.y, way, SWEEP) + JITTER + PIXEL * .6;
           let opened = false;
           await tween(SWEEP + JITTER + PIXEL, t => {
             const now = t * (SWEEP + JITTER + PIXEL);
@@ -292,7 +314,7 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
               const age = PIXEL - (now - dot.delay);
               if (age > 0) square(dot.x, dot.y, dot.size, overshoot(Math.min(1, age / GROW)) * .86, LIGHT);
             }
-            glow(now, down);
+            glow(now, way);
           });
           if (!opened) onOpen();
           canvas.remove();
@@ -443,12 +465,19 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
     // dimension and put back. The robots' layer slides along with it.
     const shell = document.querySelector<HTMLElement>('.site-shell');
     let pageShift = 0;
-    const centre = () => { if (shell) shell.style.transformOrigin = `50% ${window.scrollY + window.innerHeight / 2 - shell.offsetTop}px`; };
+    // Set when this teleporter goes away (React also mounts it twice in development): whatever it still had running
+    // must leave the page alone from then on.
+    let disposed = false;
+    // Which way the page slides: up and down for the shortcuts, sideways for a language switch.
+    let axis: 'x' | 'y' = 'y';
+    const centre = () => { if (shell && !disposed) shell.style.transformOrigin = `50% ${window.scrollY + window.innerHeight / 2 - shell.offsetTop}px`; };
     function shift(y: number, scale: number, opacity: number, clear = false) {
-      pageShift = clear ? 0 : y;
-      layer.style.translate = clear ? '' : `0 ${y}px`;
+      if (disposed) return;
+      pageShift = clear || axis === 'x' ? 0 : y;
+      const offset = axis === 'x' ? `${y}px 0` : `0 ${y}px`;
+      layer.style.translate = clear ? '' : offset;
       if (!shell) return;
-      shell.style.translate = clear ? '' : `0 ${y}px`;
+      shell.style.translate = clear ? '' : offset;
       shell.style.scale = clear ? '' : String(scale);
       shell.style.opacity = clear ? '' : String(opacity);
       if (clear) shell.style.transformOrigin = '';
@@ -471,14 +500,16 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
           effect('tp-spark', from.x + window.scrollX - 4, from.y + window.scrollY - 14, '✦');
         }
         const down = target.top >= window.scrollY;
+        const way: Way = down ? 'down' : 'up';
+        axis = 'y';
         // Going down the page, the page is pulled upwards (and the destination arrives from below), and back.
         const drift = down ? -1 : 1;
         const pixels = screen();
         centre();
-        await pixels.cover(down, t => shift(drift * PULL * t * t, 1 - .03 * t * t, 1 - .45 * t));
+        await pixels.cover(way, t => shift(drift * PULL * t * t, 1 - .03 * t * t, 1 - .45 * t));
         // The trip, while behind the pixels a section built by robots is delivered finished and the page jumps.
         const id = href.slice(1);
-        const trip = pixels.travel(labelFor(href, homeLabel), down);
+        const trip = pixels.travel(labelFor(href, homeLabel), way);
         if (id === 'sobre') finishScene('about');
         if (id === 'contato') window.dispatchEvent(new CustomEvent('site:finish-build', { detail: 'contato' }));
         await frame();
@@ -488,12 +519,12 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
         window.scrollTo({ top: landing.top, behavior: 'instant' });
         history.pushState(null, '', href);
         focusTitle(landing.title);
-        const titleY = titleSpot(landing.title).y;
+        const spot = titleSpot(landing.title);
         centre();
         shift(-drift * PULL, 1.03, .55);
         await trip;
         let arriving: Promise<void> = Promise.resolve();
-        await pixels.reveal(down, titleY, () => { arriving = arrive(landing.title); }, t => {
+        await pixels.reveal(way, spot, () => { arriving = arrive(landing.title); }, t => {
           const eased = 1 - (1 - t) * (1 - t);
           shift(-drift * PULL * (1 - eased), 1 + .03 * (1 - eased), .55 + .45 * eased);
         });
@@ -519,16 +550,25 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
     document.addEventListener('click', onClick);
 
     // ——— Switching language: the way out here, the way in on the other version of the page. ———
-    activeSwitch = async href => {
+    activeSwitch = async (href, way) => {
       if (busy) return;
       busy = true;
+      // Going right into the other language, the page is pulled away to the left (and the other one comes in from the
+      // right), and the other way round.
+      const drift = way === 'right' ? -1 : 1;
+      axis = 'x';
       const pixels = screen();
       centre();
-      await pixels.cover(true, t => shift(-PULL * t * t, 1 - .03 * t * t, 1 - .45 * t));
+      await pixels.cover(way, t => shift(drift * PULL * t * t, 1 - .03 * t * t, 1 - .45 * t));
       // The page stays covered while the other version loads; it picks the trip up from here.
       window.location.href = href;
     };
     async function arriveInLanguage(note: SwitchNote) {
+      // Only once this teleporter is sure to stay (a development double mount goes away before the next frame) does it
+      // take the note and start the trip; the one that stays finds the note still there.
+      await frame();
+      if (disposed) return;
+      try { sessionStorage.removeItem('lang-switch'); } catch {}
       const land = () => {
         const element = document.getElementById(note.id);
         const top = element ? element.getBoundingClientRect().top + window.scrollY : 0;
@@ -541,28 +581,37 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
         const pixels = screen();
         pixels.fill();
         delete document.documentElement.dataset.langSwitch;
+        const way: Way = note.way === 'left' ? 'left' : 'right';
+        const drift = way === 'right' ? -1 : 1;
+        axis = 'x';
         centre();
-        shift(PULL, 1.03, .55);
-        await pixels.travel(note.label, true);
+        shift(-drift * PULL, 1.03, .55);
+        // The destination's name is drawn in the pixel font: give a freshly loaded page a moment to have it.
+        const pixelFont = getComputedStyle(document.body).getPropertyValue('--font-pixel').trim();
+        if (pixelFont) await Promise.race([document.fonts.load(`700 11px ${pixelFont}`).catch(() => {}), sleep(300)]);
+        if (disposed) return;
+        await pixels.travel(note.label, way);
         land();
-        await pixels.reveal(true, window.innerHeight / 2, () => window.dispatchEvent(new Event('lang-arrived')), t => {
+        await pixels.reveal(way, { x: window.innerWidth / 2, y: window.innerHeight / 2 }, () => window.dispatchEvent(new Event('lang-arrived')), t => {
           const eased = 1 - (1 - t) * (1 - t);
-          shift(PULL * (1 - eased), 1 + .03 * (1 - eased), .55 + .45 * eased);
+          shift(-drift * PULL * (1 - eased), 1 + .03 * (1 - eased), .55 + .45 * eased);
         });
-        await tween(260, t => shift(-SETTLE * Math.sin(Math.PI * t), 1, 1));
+        await tween(260, t => shift(drift * SETTLE * Math.sin(Math.PI * t), 1, 1));
       } finally {
         shift(0, 1, 1, true);
+        axis = 'y';
         busy = false;
       }
     }
     let note: SwitchNote | null = null;
     try {
       const saved = sessionStorage.getItem('lang-switch');
-      if (saved) { sessionStorage.removeItem('lang-switch'); note = JSON.parse(saved) as SwitchNote; }
+      if (saved) note = JSON.parse(saved) as SwitchNote;
     } catch {}
     if (note) void arriveInLanguage(note);
     else delete document.documentElement.dataset.langSwitch;
     return () => {
+      disposed = true;
       document.removeEventListener('click', onClick);
       active = null;
       activeSwitch = null;
