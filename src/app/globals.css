@@ -1048,7 +1048,15 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .lift-rider { position: absolute; left: 2px; bottom: 0; width: 16px; height: 18px; }
 .lift-rider svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 @media (max-width: 700px) {
-  .footer-row { align-items: flex-end; }
+  /* Phones: the sign cut down to the site and its start, on one line with the lift, which gets a shorter rail. */
+  .footer-row { flex-wrap: nowrap; align-items: center; }
+  .footer-sign-item:nth-child(3), .footer-sign-item:nth-child(5) { display: none; }
+  .footer-lift { height: 28px; gap: 6px; }
+  .lift-shaft { width: 18px; height: 28px; }
+  .lift-rail { left: 7px; }
+  .lift-cabin { width: 18px; height: 18px; }
+  .lift-rider { left: 1px; width: 14px; height: 16px; }
+  .footer-legal { margin-top: 6px; line-height: 1.5; }
 }
 /* Teleporting around the page (teleport.tsx): the pixels the screen breaks into, and the robots' layer over the page:
    the one arriving next to the destination's title (beamed in, in a column of blue light with sparkles). */

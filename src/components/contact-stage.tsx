@@ -97,6 +97,10 @@ export function ContactStage({ skipLabel, lines, children }: { skipLabel: string
 
   // Phones get the section finished (see the boot script); when the park first comes into view the boss, on its bench,
   // says they're a bit late: it's all been built already.
+  // With the section delivered finished (phones, reduced motion) there's no show to earn the WhatsApp gag, so the
+  // button starts out in the site's colours, as after skipping.
+  useEffect(() => { if (document.documentElement.dataset.build !== 'pending') skipZapGag(); }, []);
+
   useEffect(() => {
     const line = sectionRef.current?.querySelector<HTMLElement>('.ending-late');
     if (!line || document.documentElement.dataset.build === 'pending' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;

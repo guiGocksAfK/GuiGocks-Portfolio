@@ -7,7 +7,6 @@ import { teleport } from '@/components/teleport';
 
 type Footer = { sign: readonly string[]; topLabel: string; topAction: string; disclaimer: string };
 
-const LIFT_RISE = 18; // px the cabin rides up its rail
 
 // The page's footer, thin and quiet: a line like the ones closing each section, with the site's sign (the "placa de
 // obra") summed up in one line, a tiny builders' lift back to the top and the small print. The guard patrols the line
@@ -42,8 +41,10 @@ export function SiteFooter({ footer }: { footer: Footer }) {
       rider.innerHTML = crewMarkup(true, 0, 'O');
       cabin.classList.add('lift-pressed');
       await tween(200, () => {});
+      // Up to the top of its rail (shorter on phones).
+      const rise = (cabin.parentElement?.clientHeight ?? 40) - cabin.offsetHeight;
       await tween(900, t => {
-        cabin.style.translate = `0 ${-LIFT_RISE * smooth(t)}px`;
+        cabin.style.translate = `0 ${-rise * smooth(t)}px`;
         rider.innerHTML = crewMarkup(Math.floor(t * 6) % 2 === 0, 0, 'O');
       });
       await teleport('#main', cabin);
