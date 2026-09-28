@@ -2,9 +2,9 @@
 
 A developer portfolio built as a pixel-art construction site, where little robots build, fix and look after every section while you watch.
 
-**Live:** [guigocks-portfolio.vercel.app](https://guigocks-portfolio.vercel.app/)
+**Live:** [in Portuguese](https://guigocks-portfolio.vercel.app/) · [in English](https://guigocks-portfolio.vercel.app/en)
 
-The site is in Brazilian Portuguese; the code and this README are in English.
+The site comes in Brazilian Portuguese and English; the code and this README are in English.
 
 ## Features
 
@@ -15,6 +15,7 @@ The site is in Brazilian Portuguese; the code and this README are in English.
 - **05 · Contact** — e-mail (copied with one click), WhatsApp with a message ready to send and the résumé as a PDF, closed by a park scene as the page's happy ending.
 - **Teleport navigation** — the menu and the page's shortcuts don't scroll: they teleport you to the section.
 - **A footer** styled as the building site's sign, with a tiny builders' lift that takes you back to the top.
+- **Two languages** — Portuguese at `/` and English at `/en`, switched from the header without reloading the page, landing on the same spot.
 
 ## User experience
 
@@ -29,6 +30,7 @@ The whole site plays out as a building site run by robots. Every section has its
 | Capabilities | A pump sucks the clicked crate through a pneumatic pipe to the office desk, where a robot climbs out with its contents. The pump has a lever that switches the whole trip off. |
 | Contact | The section is built live, in about a minute. The crew hides the damaged wall behind silly disguises, gets caught, paints it, slips in the paint, draws the lines, misspells the title and fixes it, throws every word into place and builds a park. A robot hanging from a rope lets you skip it all. |
 | Teleport | The screen is pulled into a curtain of pixels heading the way you're travelling, a trip screen names the destination, and a robot beams in next to its title. Now and then the teleport glitches: the robot arrives upside down, twice, in two halves or charred. |
+| Language switch | A little translator drone rises from behind the "PT / EN" switch and projects a hologram asking for the other language. Clicked, the hologram glitches over, the drone spins and the page is teleported sideways into the other language. |
 
 A few rules keep it pleasant rather than noisy:
 
@@ -56,6 +58,7 @@ The robots don't use any animation library. They run on the **Web Animations API
 - **Reduced motion is respected.** With `prefers-reduced-motion`, nothing is built on screen, every section is simply there and teleporting becomes a plain jump.
 - **The content is always in the page.** Sections waiting to be built are only hidden visually, so screen readers and search engines read everything from the first load.
 - **Keyboard and screen readers.** There's a skip link, focus moves to the destination's title after a teleport, and every decorative robot is hidden from assistive technology.
+- **Both languages are real pages.** Each has its own address, `<html lang>`, title and description, and they point to each other as alternates, so search engines index both.
 - **Animations only run when they can be seen.** They pause when their section is off screen or the tab is in the background, and resume where they left off.
 - **Light by design.** There is no animation library for the scenes and no image downloads for the sprites, and the images are resized for the size they're shown at.
 
@@ -65,6 +68,8 @@ The robots don't use any animation library. They run on the **Web Animations API
 - **The WhatsApp gag has to be earned.** It only arms when the contact show plays to the end. Skipping it, teleporting in or using a phone leaves the button working normally.
 - **The teleport is one canvas.** The pixel curtain, the speed lines and the destination's name are drawn on a single canvas, and the name is rendered small off screen and read back pixel by pixel to be rebuilt from the same squares as the curtain.
 - **Scenes can be finished on the spot.** Each step of a scene knows how to jump to its end state, which is how teleporting into the About or Contact section delivers it already built, even halfway through a show.
+- **Switching language doesn't reload anything.** The whole site lives in the root layout and reads its language from the address, while the `/` and `/en` pages only bring their title and description. Switching is a navigation inside the app: the copy is swapped behind the teleport's trip screen, and every robot and scene carries on. The other version is prefetched as soon as the drone shows up.
+- **The robots' sound effects are translated too.** KABUM! becomes KABOOM!, TCHIBUM! becomes SPLASH!, and the dropped letter falls out of "testados" on one page and "tested" on the other.
 
 ## Running locally
 
@@ -88,19 +93,27 @@ Then open [localhost:3000](http://localhost:3000).
 
 ### Editing content
 
-No environment variables are needed. All the text, links and project data live in [`src/data/content.ts`](src/data/content.ts), and the colours and scene styles in [`src/app/globals.css`](src/app/globals.css). The photo, the project screenshots and the résumé are in [`public/`](public).
+No environment variables are needed. All the text, links and project data live in [`src/data/content.ts`](src/data/content.ts) (Portuguese) and [`src/data/content-en.ts`](src/data/content-en.ts) (English), which share the same shape, and the colours and scene styles in [`src/app/globals.css`](src/app/globals.css). The photo, the project screenshots and the résumé are in [`public/`](public).
 
 ## Project structure
 
 ```
 src/
 ├── app/
-│   ├── layout.tsx            fonts, metadata and the pre-paint boot script
-│   ├── page.tsx              the page: every section in order
+│   ├── layout.tsx            the root: the whole site, shared by both languages
+│   ├── page.tsx              / — the Portuguese page's title and description
+│   ├── en/page.tsx           /en — the English page's title, description and language
 │   └── globals.css           theme, layout and every scene's styles
 ├── data/
-│   └── content.ts            all texts, links and project data
+│   ├── content.ts            all texts, links and project data, in Portuguese
+│   ├── content-en.ts         the same, in English
+│   └── locale.ts             which language an address is in
 └── components/
+    ├── site-document.tsx     the document: fonts and the pre-paint boot script
+    ├── localized-site.tsx    the site in the address's language
+    ├── home.tsx              the page: every section in order
+    ├── lang-switch.tsx       the "PT / EN" switch and its translator drone
+    ├── say.ts                the robots' sound effects, per language
     ├── robot-sprite.tsx      the pixel-art sprites (robots, drone, forklift)
     ├── robot-crew.ts         the pre-paint boot script and the hero's robots' timing
     ├── painted-name.tsx      the painter robot on the name
@@ -119,7 +132,7 @@ src/
     ├── contact-list.tsx      the contact rows (e-mail, WhatsApp, résumé)
     ├── zap-gag.ts            the WhatsApp button's gag
     ├── ending-scene.tsx      the park at the end of the page
-    ├── teleport.tsx          teleport navigation
+    ├── teleport.tsx          teleport navigation and the language switch's trip
     ├── site-footer.tsx       the footer, with the builders' lift
     └── reveal.tsx            fade-in on scroll
 ```
