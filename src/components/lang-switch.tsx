@@ -1,26 +1,47 @@
 'use client';
 
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { crewMarkup } from '@/components/robot-sprite';
+import { useRouter } from 'next/navigation';
+import { pixelMarkup } from '@/components/robot-sprite';
 import { switchLanguage } from '@/components/teleport';
 
-const PEEK = 280; // ms for the robot to pop up when the switch is clicked without hovering first (a tap on a phone)
-const FLIP = 450; // ms for the sign to turn over (matches the CSS)
-const THUMBS_UP = 300;
+// The translator drone: a round hovering body with an antenna, a dark visor and one glowing eye, and a thruster
+// underneath (its flame is drawn in CSS). "a" is the eye's light blue.
+const DRONE = [
+  '.....A.....',
+  '.....S.....',
+  '...BBBBB...',
+  '..BBBBBBB..',
+  '.BBDDDDDBB.',
+  'SBDDDaDDDBS',
+  '.BBDDDDDBB.',
+  '..BBBBBBB..',
+  '...SBBBS...',
+  '....SAS....',
+];
+const DRONE_SVG = pixelMarkup(DRONE, { a: '#a3bcff' });
+
+const PEEK = 280; // ms for the drone to rise when the switch is clicked without hovering first (a tap on a phone)
+const FLIP = 450; // ms for the hologram to glitch over to the other language (matches the CSS)
+const SPIN = 300; // ms of the drone's spin before the teleport starts
 
 type LangSwitchProps = { current: string; target: string; href: string; tripLabel: string; action: string };
 
 // The language switch: plain text in the header like the menu ("PT / EN", this page's language in white). Hovering it, a
-// robot peeks out from behind holding up a sign asking for the other language ("EN?"); clicking, it turns the sign over
-// ("EN!"), gives a thumbs up and teleports the visitor to that version of the page. A plain link underneath, so it also
-// works without JavaScript or opened in a new tab.
+// little translator drone rises from behind, hovering, and projects a hologram asking for the other language ("EN?");
+// clicking, the hologram glitches over to "EN!", the drone does a spin and the visitor is teleported to that version of
+// the page. A plain link underneath, so it also works without JavaScript or opened in a new tab.
 export function LangSwitch({ current, target, href, tripLabel, action }: LangSwitchProps) {
   const [switching, setSwitching] = useState(false);
   const [flipped, setFlipped] = useState(false);
   const [cheering, setCheering] = useState(false);
   const busy = useRef(false);
+  const router = useRouter();
+  // The other version is fetched as soon as the drone shows up, so it's ready by the click.
+  const prefetch = () => router.prefetch(href);
+  const navigate = (to: string) => router.push(to, { scroll: false });
 
-  // Arriving from the other language, it pops up for a moment with a thumbs up.
+  // Arriving from the other language, it rises for a moment and does a spin.
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const cheer = () => { setCheering(true); timer = setTimeout(() => setCheering(false), 1100); };
@@ -33,30 +54,32 @@ export function LangSwitch({ current, target, href, tripLabel, action }: LangSwi
     event.preventDefault();
     if (busy.current) return;
     busy.current = true;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { void switchLanguage(href, tripLabel); return; }
-    // Up it comes (if it wasn't already peeking), the sign turns over, a thumbs up, and off we go.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { void switchLanguage(href, tripLabel, navigate); return; }
+    // Up it comes (if it wasn't already hovering there), the hologram glitches over, a spin, and off we go.
     setSwitching(true);
     setTimeout(() => setFlipped(true), PEEK);
     setTimeout(() => setCheering(true), PEEK + FLIP);
-    setTimeout(() => { void switchLanguage(href, tripLabel); }, PEEK + FLIP + THUMBS_UP);
+    setTimeout(() => { void switchLanguage(href, tripLabel, navigate); }, PEEK + FLIP + SPIN);
   }
 
   const state = `${switching ? ' lang-switching' : ''}${flipped ? ' lang-flipped' : ''}${cheering ? ' lang-cheering' : ''}`;
   return (
-    <a href={href} hrefLang={target.toLowerCase()} className={`lang-switch font-mono${state}`} aria-label={action} onClick={choose}>
+    <a href={href} hrefLang={target.toLowerCase()} className={`lang-switch font-mono${state}`} aria-label={action} onClick={choose} onMouseEnter={prefetch} onFocus={prefetch}>
       <span className="lang-code lang-current" aria-hidden="true">{current}</span>
       <span className="lang-slash" aria-hidden="true">/</span>
       <span className="lang-code lang-target" aria-hidden="true">{target}</span>
-      {/* The robot peeking out from behind the switch, and its sign. */}
+      {/* The drone rising from behind the switch, and the hologram it projects. */}
       <span className="lang-peek" aria-hidden="true">
         <span className="lang-peeker">
-          <span className="lang-sign">
-            <span className="lang-sign-inner">
-              <span className="lang-face lang-face-front">{target}?</span>
-              <span className="lang-face lang-face-back">{target}!</span>
-            </span>
+          <span className="lang-holo">
+            <span className="lang-holo-face lang-holo-front">{target}?</span>
+            <span className="lang-holo-face lang-holo-back">{target}!</span>
           </span>
-          <span className="lang-robot" dangerouslySetInnerHTML={{ __html: crewMarkup(cheering, 0) }} />
+          <span className="lang-beam" />
+          <span className="lang-drone">
+            <span className="lang-drone-body" dangerouslySetInnerHTML={{ __html: DRONE_SVG }} />
+            <span className="lang-thruster" />
+          </span>
         </span>
       </span>
     </a>

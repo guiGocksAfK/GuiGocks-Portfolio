@@ -28,6 +28,7 @@ export function setSceneRunning(scene: string, on: boolean) {
 
 // Background robots (the patrol brawl) hold back while any scene is playing.
 export const anySceneRunning = () => running.size > 0;
+export const isSceneRunning = (scene: string) => running.has(scene);
 
 export const sceneFinished = (scene: string) => finished.has(scene);
 export const whenSceneFinished = (scene: string) => new Promise<void>(resolve => {

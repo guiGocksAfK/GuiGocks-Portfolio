@@ -42,7 +42,8 @@ export function Home({ content }: { content: SiteContent }) {
             ? <a key={item.label} href={item.href} className="nav-link font-mono">{item.label}</a>
             : <span key={item.label} aria-disabled="true" className="nav-link nav-pending font-mono">{item.label}</span>)}
         </nav>
-        <LangSwitch {...content.language} />
+        {/* Keyed by language, so after a switch it starts afresh, showing the new one. */}
+        <LangSwitch key={content.language.current} {...content.language} />
       </header>
       <main id="main">
       <div className="hero-main">

@@ -1,4 +1,5 @@
 import { crewMarkup, type CrewFace } from '@/components/robot-sprite';
+import { say } from '@/components/say';
 
 // The WhatsApp button's gag, played once per visit on its first click, and only if the visitor watched the contact
 // section being built (the show arms it when it ends). The green button shakes and breaks; at the picnic one of the
@@ -210,7 +211,7 @@ export async function playZapGag(icon: HTMLElement, readyLabel: string, setStep:
     stage.classList.add('zap-shake');
     const center = { x: iconBox.x + iconBox.w / 2, y: iconBox.y + iconBox.h / 2 };
     for (const className of ['zap-flash', 'zap-smoke', 'zap-tape-flying']) Object.assign(spawn(className).style, { left: `${center.x}px`, top: `${center.y}px` });
-    burst('sfx sfx-big', { x: center.x, y: center.y - 30 }, 'KABUM!');
+    burst('sfx sfx-big', { x: center.x, y: center.y - 30 }, say('KABUM!', 'KABOOM!'));
     // Charred: dark, outlined, eyes wide and white, smoking from its antenna from now on.
     robot.element.classList.add('zap-charred');
     const eyes = spawn('zap-eyes', robot.element);
@@ -262,7 +263,7 @@ export async function playZapGag(icon: HTMLElement, readyLabel: string, setStep:
     clearInterval(smoking);
     for (let drop = 0; drop < 7; drop++) burst('zap-drop', { x: dive.x + CREW_W / 2, y: water }, '', { '--dx': `${(drop - 3) * 7}px`, '--dy': `${-18 - (drop % 3) * 8}px` });
     puff({ x: dive.x + 8, y: water - 10 });
-    burst('sfx sfx-water', { x: dive.x + CREW_W / 2, y: water - 34 }, 'TCHIBUM!');
+    burst('sfx sfx-water', { x: dive.x + CREW_W / 2, y: water - 34 }, say('TCHIBUM!', 'SPLASH!'));
     const sink = (depth: number) => { robot.element.style.clipPath = `inset(-60px -60px ${depth}px -60px)`; robot.place(dive.x, dive.y + depth); };
     await tween(600, t => sink((CREW_H - 7) * (1 - (1 - t) * (1 - t))));
 
@@ -342,7 +343,7 @@ export async function playZapGag(icon: HTMLElement, readyLabel: string, setStep:
     fisher.draw(true);
     await fisher.hop(12, 260);
     burst('fight-twinkle stage-click', { x: lieX + 18, y: grassY + 10 }, '✦');
-    burst('sfx', { x: lieX + 22, y: grassY - 12 }, 'PÁ!');
+    burst('sfx', { x: lieX + 22, y: grassY - 12 }, say('PÁ!', 'WHACK!'));
     await tween(220, t => robot.place(lieX + Math.sin(t * Math.PI * 6) * 2, grassY));
     fisher.draw(false);
     await wait(500);
