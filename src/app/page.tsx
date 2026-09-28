@@ -124,7 +124,7 @@ export default function Home() {
         <div className="about-grid">
           <AboutBadge
             name={`${hero.firstName} ${hero.lastName}`} role={about.badge.role} location={about.badge.location}
-            lookingLabel={about.badge.lookingLabel} lookingText={about.badge.lookingText}
+            lookingLabel={about.badge.lookingLabel} lookingText={about.badge.lookingText} spyLine={about.badge.spyLine}
             photo={about.photo} photoAlt={about.photoAlt} avatarLabel={about.avatarLabel}
           />
           <div className="about-main">

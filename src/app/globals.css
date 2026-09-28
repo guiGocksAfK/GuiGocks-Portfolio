@@ -149,12 +149,40 @@ html[data-paint] .name-first { color: transparent; -webkit-background-clip: text
 .badge-rig:hover .badge-hang { animation: badge-nudge 1s ease-out; }
 .badge-lanyard { display: block; width: 70px; height: 60px; margin: 0 auto; overflow: visible; }
 .badge-lanyard path { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
-.badge-card { position: relative; margin-top: -4px; padding: 26px 18px 18px; border: 1px solid var(--border); border-radius: 8px; background: #11151b; text-align: center; overflow: hidden; }
+.badge-card { position: relative; margin-top: -4px; padding: 26px 18px 18px; border: 1px solid var(--border); border-radius: 8px; background: #11151b; text-align: center; }
 /* A thin line in the site's blue along the top, where the lanyard's clip holds it. */
-.badge-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--accent); opacity: .8; }
+.badge-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; border-radius: 8px 8px 0 0; background: var(--accent); opacity: .8; }
 .badge-clip { position: absolute; left: calc(50% - 30px); top: -5px; width: 60px; height: 11px; border-radius: 3px; background: #8f9bb3; box-shadow: inset 0 -2px 0 #5d6678; z-index: 2; }
 .badge-photo { position: relative; width: 124px; aspect-ratio: 1; margin: 0 auto 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #0f1218; }
 .badge-image { object-fit: cover; }
+/* The photo, close to its own colours: a touch less saturated and a soft vignette darkening its edges, so the face
+   leads and the background doesn't shine out of the dark card. */
+.badge-photo-real .badge-image, .badge-pixels { filter: saturate(.85) contrast(1.05); }
+.badge-photo-real::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(circle at 50% 42%, transparent 50%, rgba(13, 15, 18, .55)); }
+/* A freshly delivered photo is dusty (a greyish-brown veil with a few specks), in two halves for the cleaner's two passes;
+   the cleaner itself, with its cloth rubbing away, and the sparkles it leaves. */
+.badge-dust { position: absolute; left: 0; right: 0; z-index: 2; height: calc(50% + 1px); pointer-events: none; background: radial-gradient(circle at 18% 30%, rgba(170, 150, 120, .5) 0 3px, transparent 4px), radial-gradient(circle at 64% 62%, rgba(170, 150, 120, .45) 0 2px, transparent 3px), radial-gradient(circle at 82% 22%, rgba(170, 150, 120, .45) 0 2px, transparent 3px), radial-gradient(circle at 38% 80%, rgba(170, 150, 120, .4) 0 3px, transparent 4px), rgba(58, 52, 44, .62); }
+.badge-dust-top { top: 0; }
+.badge-dust-bottom { top: calc(50% - 1px); }
+.badge-cleaner { position: absolute; left: 0; top: 0; z-index: 4; width: 16px; height: 18px; opacity: 0; pointer-events: none; }
+.badge-cleaner-body { position: absolute; inset: 0; }
+.badge-cleaner svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.badge-cloth { position: absolute; right: -6px; top: 3px; width: 7px; height: 6px; border-radius: 1px; background: #dfe5f1; box-shadow: inset 0 -2px 0 #8f9bb3; animation: cloth-rub .16s ease-in-out infinite alternate; }
+@keyframes cloth-rub { from { translate: 0 -2px; } to { translate: 0 2px; } }
+.badge-sparkle { position: absolute; z-index: 4; color: #fff; font-size: 11px; line-height: 1; text-shadow: 0 0 6px #fff; pointer-events: none; animation: fight-twinkle .6s ease-out forwards; }
+/* On hover, a robot peeks out from behind the photo's top edge and says who that is. */
+.badge-photo-slot { position: relative; width: 124px; margin: 0 auto 16px; }
+.badge-photo-slot .badge-photo { z-index: 1; margin: 0; }
+.badge-spy { position: absolute; right: 12px; top: 0; z-index: 0; width: 16px; height: 18px; pointer-events: none; }
+.badge-spy-robot { position: absolute; inset: 0; transition: translate .3s cubic-bezier(.34, 1.56, .64, 1); }
+.badge-spy-robot svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.badge-spy-line { position: absolute; left: calc(100% + 6px); bottom: calc(100% + 2px); padding: 2px 7px; border: 2px solid var(--accent); border-radius: 2px; background: var(--background); color: var(--accent); font: 500 12px/1.4 var(--font-pixel), monospace; white-space: nowrap; opacity: 0; scale: .6; transform-origin: 0 100%; transition: opacity .2s, scale .2s; }
+.badge-spy-line::before { content: ''; position: absolute; left: -2px; top: 100%; border-style: solid; border-width: 6px 6px 0 0; border-color: var(--accent) transparent transparent transparent; }
+.badge-photo-slot:hover .badge-spy-robot { translate: 0 -15px; }
+.badge-photo-slot:hover .badge-spy-line { opacity: 1; scale: 1; transition-delay: .25s; }
+/* The pixel reveal while the drone brings the badge: big pixels drawn over the photo, sharpening step by step. */
+.badge-pixels { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.badge-delivering .badge-image { visibility: hidden; }
 .badge-avatar { position: absolute; inset: 14px 14px 0; }
 .badge-avatar svg, .badge-drone svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
 .badge-name { font-size: 18px; font-weight: 600; letter-spacing: -.02em; }

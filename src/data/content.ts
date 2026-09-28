@@ -49,7 +49,9 @@ export const content = {
       role: 'Full-stack developer',
       location: 'Foz do Iguaçu, PR',
       lookingLabel: 'Procurando',
-      lookingText: 'Um time onde eu possa entregar desde o primeiro dia: estágio ou júnior, front, back ou full-stack. Presencial em Foz do Iguaçu ou remoto, inclusive para empresas de fora do Brasil.',
+      // What the robot peeking out from behind the photo says on hover.
+      spyLine: 'Esse é o chefe.',
+      lookingText: 'Um time onde eu possa entregar desde o primeiro dia: estágio ou júnior, front, back ou full-stack. Presencial em Foz do Iguaçu ou remoto, inclusive para fora do Brasil.',
     },
     timelineLabel: 'Trajetória',
     // Dashed top floor of the career building.
