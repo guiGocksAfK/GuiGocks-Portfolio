@@ -910,6 +910,18 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .drawer-panel .project-highlights li { border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); padding-left: 12px; font-size: 12.5px; line-height: 1.6; }
 .highlight-title { display: block; color: var(--foreground); font-size: 13px; font-weight: 600; }
 .highlight-text { display: block; margin-top: 2px; }
+/* Phones: the decisions as a list of titles; a tap folds a title's text open (one at a time). */
+.drawer-panel .highlights-compact { gap: 0; padding: 12px 0 14px; }
+.drawer-panel .highlights-compact li { padding-left: 0; border-left: 0; border-bottom: 1px solid var(--border); }
+.highlight-button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 10px 2px; text-align: left; line-height: 1.35; cursor: pointer; }
+.highlight-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+.highlight-chevron { flex: none; color: var(--accent); font-size: 11px; transition: rotate .2s; }
+.highlight-shown .highlight-chevron { rotate: 180deg; }
+.highlight-fold { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .25s ease-out; }
+.highlight-fold > .highlight-text { overflow: hidden; margin: 0; padding: 0 2px; }
+.highlight-shown .highlight-fold { grid-template-rows: 1fr; }
+.highlight-shown .highlight-fold > .highlight-text { padding-bottom: 14px; }
+.drawer-toggle-bottom { margin: 4px 0 6px; }
 .highlight-text code { font-family: var(--font-geist-mono), monospace; font-size: 12px; color: var(--foreground); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 3px; padding: 1px 5px; }
 /* Bottom edge of the open drawer, with a pixel handle in the middle that the robot grabs. */
 .drawer-edge { position: relative; height: 0; }
