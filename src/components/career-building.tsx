@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CREW_HEIGHT, CREW_WIDTH, RobotSprite, crewMarkup, type RobotMood } from '@/components/robot-sprite';
 import { registerStep } from '@/components/scene';
+import { say } from '@/components/say';
 
 type Step = { year: string; text: string };
 type Phase = 'done' | 'waiting' | 'building' | 'spraying' | 'dismantling';
@@ -119,7 +120,7 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
             // Impact: "PAM!", sparks and the whole crane shaking.
             const pam = document.createElement('span');
             pam.className = 'hammer-pam';
-            pam.textContent = 'PAM!';
+            pam.textContent = say('PAM!', 'BAM!');
             pam.style.left = `${mastX + 6 - blow * 4}px`;
             pam.style.top = `${groundY - 20 - blow * 6}px`;
             area.appendChild(pam);

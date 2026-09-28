@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { RobotSprite, crewMarkup, forkliftMarkup } from '@/components/robot-sprite';
+import { say } from '@/components/say';
 
 // A crate is just a name, or a name with what is inside: the projects that use the tool and, optionally, what of it was used.
 type Crate = string | { name: string; projects: readonly string[]; used?: readonly string[] };
@@ -363,7 +364,7 @@ export function CapabilitiesYard({ shelves, languages, counter, projectLinks }: 
         job.button.appendChild(element);
       };
       puff('crate-gust');
-      puff('crate-fuup', 'FUUP!');
+      puff('crate-fuup', say('FUUP!', 'FWOOP!'));
       await tween(320, t => { job.button.style.translate = `0 ${-Math.sin(Math.PI * t) * 9}px`; });
       job.button.style.translate = '';
       job.button.classList.add('crate-opened');

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { CREW_HEIGHT, CREW_WIDTH, crewMarkup } from '@/components/robot-sprite';
 import { registerStep } from '@/components/scene';
+import { say } from '@/components/say';
 
 // Pause between the end of the construction and the letter falling off.
 const FALL_DELAY = 5000;
@@ -102,7 +103,7 @@ export function StoryDebug({ paragraphs, bugWord }: { paragraphs: readonly strin
         robot.appendChild(wrench);
         for (let turn = 0; turn < 2; turn++) {
           await play(wrench, [{ transform: 'rotate(-35deg)' }, { transform: 'rotate(40deg)' }], { duration: 200, easing: 'ease-in-out' });
-          spawn('debug-tec font-mono', 'tec', topX + CREW_WIDTH + 2 + turn * 6, topY - 4 - turn * 6, 450);
+          spawn('debug-tec font-mono', say('tec', 'clk'), topX + CREW_WIDTH + 2 + turn * 6, topY - 4 - turn * 6, 450);
           letter.animate([{ transform: 'none' }, { transform: 'translateY(2px)' }, { transform: 'none' }], { duration: 160 });
           await wait(160);
         }
