@@ -987,6 +987,11 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
   .project-links a { min-height: 40px; }
   .project-code { column-gap: 12px; }
   .code-separator { display: none; }
+  /* Capabilities: the hint under the title (its desktop pull-up would overlap the smaller title), and no ladder, so
+     the crates get the width back. */
+  main .yard-hint { margin: -10px 0 14px; }
+  .rack-ladder, .ladder-clerk { display: none; }
+  main .rack { padding-right: 16px; }
   .social-links { gap: 9px; }
   .social-link { padding-left: 12px; padding-right: 12px; }
 }
