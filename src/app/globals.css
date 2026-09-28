@@ -556,6 +556,11 @@ html[data-zap-gag='skipped'] .contact-row:hover .zap-icon svg { fill: var(--acce
   .contact-section { padding-top: 60px; }
   .contact-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 18px 4px; }
   .contact-label { grid-column: 1 / -1; }
+  /* The status as small tags that wrap cleanly (no separator dots left at the start of a line). */
+  .contact-section .contact-status { gap: 6px; font-size: 10px; }
+  .contact-status i { display: none; }
+  .contact-status em { padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; color: var(--muted); }
+  .contact-status em:first-of-type { color: var(--foreground); }
 }
 /* The section still to be built (html[data-build="pending"], set by the boot script): its content in the page but out of
    sight, the wall full of bare patches, and only the skip robot on it. */
@@ -775,7 +780,7 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
   /* The whole park on a phone: no tree; the fisher and the napper a row further back on the grass (smaller), the
      bench, pigeons, picnic and kite in front, the bush at the end. */
   .ending { height: 190px; margin-top: 44px; }
-  .ending-tree { display: none; }
+  .ending .ending-tree { display: none; }
   .ending-lake { left: 16%; right: 16%; }
   .ending-bench { left: 1%; }
   .ending-pigeon-1 { left: 25%; }
