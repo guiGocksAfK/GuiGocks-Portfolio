@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { crewMarkup } from '@/components/robot-sprite';
 import { finishScene } from '@/components/scene';
+import { say } from '@/components/say';
 
 // Teleporting around the page. Clicking one of the site's shortcuts (the menu, the logo, a project link in a crate, the
 // footer's lift) doesn't scroll: the link sinks in with a spark, and one pixel curtain sweeps across the screen the way
@@ -412,7 +413,7 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
           await tween(320, t => top.place(robot.x, fromY + (robot.y - fromY) * t * t));
           top.element.remove();
           robot.element.style.clipPath = '';
-          effect('sfx', robot.x + BOT_W / 2, robot.y - 12, 'PAM!');
+          effect('sfx', robot.x + BOT_W / 2, robot.y - 12, say('PAM!', 'BAM!'));
           await robot.hop(4, 160);
           await sleep(300);
           robot.face(towards);
