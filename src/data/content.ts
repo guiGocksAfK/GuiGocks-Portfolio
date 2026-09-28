@@ -137,7 +137,7 @@ export const content = {
       {
         name: MYRANK,
         category: 'Plataforma social',
-        description: 'Uma plataforma para organizar e compartilhar rankings de filmes, séries, jogos, livros e animes.',
+        description: 'Uma rede social para ranquear qualquer coisa, de filmes e jogos a tudo o que você quiser, com chat em tempo real, conquistas, insights gerados por IA e um bot no Discord.',
         highlights: [
           { title: 'Sequestro de conta bloqueado', text: 'Login social só se une a contas com e-mail já confirmado. O link de confirmação é salvo apenas como hash SHA-256, e o "reenviar" responde igual para qualquer e-mail, sem revelar quais estão cadastrados.' },
           { title: 'Infraestrutura própria numa VM ARM da Oracle', text: 'A API roda com Docker Compose numa VM gratuita da Oracle em São Paulo, com um Caddy compartilhado fazendo o HTTPS de vários projetos e o banco na mesma região. Ela fica sempre ligada, sobe em ~25s, usa ~336 MB de RAM e tem backup diário do banco.' },
