@@ -38,7 +38,7 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
 .contact { margin-top: 38px; }
 .social-links { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
 .social-link { display: inline-flex; justify-content: center; align-items: center; gap: 14px; padding: 15px 27px; min-height: 50px; border-radius: 5px; font-size: 14px; font-weight: 500; transition: transform .18s, background-color .18s, border-color .18s; }
-.social-link:hover { transform: translateY(-3px); }
+@media (hover: hover) { .social-link:hover { transform: translateY(-3px); } }
 .social-primary { background: var(--accent); color: var(--background); border: 1px solid var(--accent); }
 .social-primary:hover { background: #8aabff; }
 .social-outline { border: 1px solid var(--muted); }
@@ -71,14 +71,23 @@ h1 { font-size: clamp(48px, 6.2vw, 94px); font-weight: 650; line-height: 1.04; l
   .social-link { font-size: 12px; padding: 12px 15px; gap: 9px; }
   .social-text { padding-left: 8px; padding-right: 8px; }
   .email { font-size: 12px; }
-  .hero-footer, .section-footer { font-size: 9px; gap: 12px; }
+  .hero-footer, .section-footer { font-size: 10px; gap: 12px; }
+  /* The header in two rows: the logo, then the menu spread across the width, each link a comfortable tap target. */
+  header { flex-wrap: wrap; row-gap: 6px; padding-top: 20px; padding-bottom: 8px; }
+  header nav { width: 100%; justify-content: space-between; gap: 0; }
+  .nav-link { padding: 12px 0; font-size: 12px; }
+  /* The hero takes the height it needs (the desktop's fit-the-screen height leaves a gap on a phone). */
+  main .hero-main { min-height: 0; padding-top: 36px; padding-bottom: 56px; }
+  /* GitHub and LinkedIn side by side, the same width; the shortcut under them, lined up with everything else. */
+  .social-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .social-link { min-height: 48px; }
+  .social-links .social-internal { grid-column: 1 / -1; justify-content: flex-start; min-height: 44px; padding: 0; }
+  .email { margin-top: 6px; padding: 8px 0; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition: none !important; animation: none !important; } }
 
 @media (max-width: 380px) {
-  header { flex-wrap: wrap; row-gap: 18px; }
-  header nav { width: 100%; justify-content: space-between; }
-  .hero-main { padding-top: 40px; }
+  h1 { font-size: 40px; }
 }
 
 
