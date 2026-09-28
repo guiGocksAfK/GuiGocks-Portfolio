@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { crewMarkup } from '@/components/robot-sprite';
-import { finishScene } from '@/components/scene';
+import { finishScene, isSceneRunning } from '@/components/scene';
 import { say } from '@/components/say';
 
 // Teleporting around the page. Clicking one of the site's shortcuts (the menu, the logo, a project link in a crate, the
@@ -43,7 +43,9 @@ const LANDINGS: Record<string, string> = { projetos: '#projects-title', sobre: '
 
 type Teleport = (href: string, origin?: Element | null) => Promise<void>;
 let active: Teleport | null = null;
-let activeSwitch: ((href: string, way: 'right' | 'left') => Promise<void>) | null = null;
+// navigate: the app's own navigation (Next's router), which swaps the page's copy without reloading it.
+type Navigate = (href: string) => void;
+let activeSwitch: ((href: string, way: 'right' | 'left', label: string, navigate: Navigate) => Promise<void>) | null = null;
 // The sections, top to bottom, to find where the visitor is when switching language.
 const SECTIONS = ['projetos', 'sobre', 'capacidades', 'contato'];
 // What a language switch leaves for the other version of the page (in sessionStorage, read by the boot script and by
@@ -123,17 +125,37 @@ function currentAnchor() {
   return { id, offset };
 }
 
-// Switches to the page in the other language ("/en" or "/"), teleporting there: the pixel curtain covers the page, the
-// other version loads behind it and the trip carries on there, landing at the same point of the page. The choice is
-// remembered for the next visit.
-export function switchLanguage(href: string, label: string) {
+const langOf = (href: string) => (href.startsWith('/en') ? 'en' : 'pt-BR');
+// Resolves once the page's copy is in the given language (the root layout sets <html lang>), or after a while anyway.
+async function languageIs(lang: string, timeout = 3000) {
+  const start = performance.now();
+  while (document.documentElement.lang !== lang && performance.now() - start < timeout) await frame();
+}
+// Puts the visitor back at the same point of the page (the same section, as far into it) after the copy changed.
+function landAt({ id, offset }: { id: string; offset: number }) {
+  const element = id ? document.getElementById(id) : null;
+  const top = element ? element.getBoundingClientRect().top + window.scrollY : 0;
+  window.scrollTo({ top: Math.max(0, top + offset), behavior: 'instant' });
+}
+
+// Switches to the page in the other language ("/en" or "/"), teleporting there sideways: the pixel curtain covers the
+// page, the copy is swapped behind the trip screen (inside the app, no reload) and the curtain opens at the same point
+// of the page. The choice is remembered for the next visit. Without the app's navigation (or without the teleporter)
+// it falls back to loading the other page, leaving it a note to carry the trip on.
+export async function switchLanguage(href: string, label: string, navigate?: Navigate) {
   try { localStorage.setItem('lang', href.startsWith('/en') ? 'en' : 'pt'); } catch {}
-  const way: Way = href.startsWith('/en') ? 'right' : 'left';
-  const note: SwitchNote = { ...currentAnchor(), label, animate: !!activeSwitch && !reducedMotion(), way };
+  const way = href.startsWith('/en') ? 'right' : 'left';
+  if (navigate && activeSwitch && !reducedMotion()) return activeSwitch(href, way, label, navigate);
+  if (navigate) {
+    const anchor = currentAnchor();
+    navigate(href);
+    await languageIs(langOf(href));
+    landAt(anchor);
+    return;
+  }
+  const note: SwitchNote = { ...currentAnchor(), label, animate: !reducedMotion(), way };
   try { sessionStorage.setItem('lang-switch', JSON.stringify(note)); } catch {}
-  if (note.animate && activeSwitch) return activeSwitch(href, way);
   window.location.href = href;
-  return Promise.resolve();
 }
 
 // Teleports to a destination on the page ("#projetos", "#main", ...); origin is what was clicked.
@@ -144,6 +166,10 @@ export function teleport(href: string, origin?: Element | null) {
 }
 
 export function Teleporter({ homeLabel }: { homeLabel: string }) {
+  // Read through a ref: switching language changes it, and the teleporter must not restart mid-trip because of that.
+  const home = useRef(homeLabel);
+  useEffect(() => { home.current = homeLabel; }, [homeLabel]);
+
   useEffect(() => {
     let busy = false;
     const layer = document.createElement('div');
@@ -509,7 +535,7 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
         await pixels.cover(way, t => shift(drift * PULL * t * t, 1 - .03 * t * t, 1 - .45 * t));
         // The trip, while behind the pixels a section built by robots is delivered finished and the page jumps.
         const id = href.slice(1);
-        const trip = pixels.travel(labelFor(href, homeLabel), way);
+        const trip = pixels.travel(labelFor(href, home.current), way);
         if (id === 'sobre') finishScene('about');
         if (id === 'contato') window.dispatchEvent(new CustomEvent('site:finish-build', { detail: 'contato' }));
         await frame();
@@ -549,19 +575,43 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
     };
     document.addEventListener('click', onClick);
 
-    // ——— Switching language: the way out here, the way in on the other version of the page. ———
-    activeSwitch = async (href, way) => {
+    // ——— Switching language: normally both ways at once, inside the app; after a full page load (the fallback), the way
+    // in picks the trip up from the note left by the way out. ———
+    activeSwitch = async (href, way, label, navigate) => {
       if (busy) return;
       busy = true;
       // Going right into the other language, the page is pulled away to the left (and the other one comes in from the
       // right), and the other way round.
       const drift = way === 'right' ? -1 : 1;
       axis = 'x';
-      const pixels = screen();
-      centre();
-      await pixels.cover(way, t => shift(drift * PULL * t * t, 1 - .03 * t * t, 1 - .45 * t));
-      // The page stays covered while the other version loads; it picks the trip up from here.
-      window.location.href = href;
+      try {
+        const anchor = currentAnchor();
+        const pixels = screen();
+        centre();
+        await pixels.cover(way, t => shift(drift * PULL * t * t, 1 - .03 * t * t, 1 - .45 * t));
+        // Behind the trip screen: anything still being built is finished (so nothing is left half done in the other
+        // language), the copy is swapped, and the visitor is put back at the same point of the page.
+        const trip = pixels.travel(label, way);
+        if (isSceneRunning('about')) finishScene('about');
+        if (document.querySelector('#contato[data-stage="playing"]')) window.dispatchEvent(new CustomEvent('site:finish-build', { detail: 'contato' }));
+        navigate(href);
+        await languageIs(langOf(href));
+        await frame();
+        shift(0, 1, 1);
+        landAt(anchor);
+        centre();
+        shift(-drift * PULL, 1.03, .55);
+        await trip;
+        await pixels.reveal(way, { x: window.innerWidth / 2, y: window.innerHeight / 2 }, () => window.dispatchEvent(new Event('lang-arrived')), t => {
+          const eased = 1 - (1 - t) * (1 - t);
+          shift(-drift * PULL * (1 - eased), 1 + .03 * (1 - eased), .55 + .45 * eased);
+        });
+        await tween(260, t => shift(drift * SETTLE * Math.sin(Math.PI * t), 1, 1));
+      } finally {
+        shift(0, 1, 1, true);
+        axis = 'y';
+        busy = false;
+      }
     };
     async function arriveInLanguage(note: SwitchNote) {
       // Only once this teleporter is sure to stay (a development double mount goes away before the next frame) does it
@@ -569,11 +619,7 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
       await frame();
       if (disposed) return;
       try { sessionStorage.removeItem('lang-switch'); } catch {}
-      const land = () => {
-        const element = document.getElementById(note.id);
-        const top = element ? element.getBoundingClientRect().top + window.scrollY : 0;
-        window.scrollTo({ top: Math.max(0, top + note.offset), behavior: 'instant' });
-      };
+      const land = () => landAt(note);
       land();
       if (!note.animate || reducedMotion()) { delete document.documentElement.dataset.langSwitch; return; }
       busy = true;
@@ -618,6 +664,6 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
       layer.remove();
       document.querySelectorAll('.tp-screen').forEach(element => element.remove());
     };
-  }, [homeLabel]);
+  }, []);
   return null;
 }

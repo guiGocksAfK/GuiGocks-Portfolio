@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { CREW_HEIGHT, CREW_WIDTH, RobotSprite, crewMarkup, type RobotMood } from '@/components/robot-sprite';
-import { registerStep } from '@/components/scene';
+import { registerStep, sceneFinished } from '@/components/scene';
 import { say } from '@/components/say';
 
 type Step = { year: string; text: string };
@@ -32,12 +32,15 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
   const [operatorOut, setOperatorOut] = useState(false);
   const [operatorMood, setOperatorMood] = useState<RobotMood>('normal');
   const siteRef = useRef<HTMLDivElement>(null);
+  // Once built it stays built: switching language brings new floor texts (and this effect runs again), but the
+  // building mustn't go back to being a site.
+  const builtRef = useRef(false);
   const cableRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const site = siteRef.current;
     const cable = cableRef.current;
-    if (!site || !cable || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!site || !cable || builtRef.current || sceneFinished('about') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const crane: HTMLSpanElement = cable;
     const area: HTMLDivElement = site;
     const floors = [...area.querySelectorAll<HTMLElement>('.floor-step')];
@@ -274,6 +277,7 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
       crane.style.removeProperty('height');
       setOperatorOut(false);
       setOperatorMood('normal');
+      builtRef.current = true;
       setPhase('done');
     };
 
@@ -281,7 +285,7 @@ export function CareerBuilding({ steps, next }: { steps: readonly Step[]; next: 
     const unregister = [
       registerStep('about', 2, async () => { setPhase('building'); await raiseFloors(); }, finish),
       registerStep('about', 3, sprayNextFloor, finish),
-      registerStep('about', 4, async () => { await dismantle(); setPhase('done'); }, finish),
+      registerStep('about', 4, async () => { await dismantle(); builtRef.current = true; setPhase('done'); }, finish),
     ];
 
     return () => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { pixelMarkup } from '@/components/robot-sprite';
 import { switchLanguage } from '@/components/teleport';
 
@@ -35,6 +36,10 @@ export function LangSwitch({ current, target, href, tripLabel, action }: LangSwi
   const [flipped, setFlipped] = useState(false);
   const [cheering, setCheering] = useState(false);
   const busy = useRef(false);
+  const router = useRouter();
+  // The other version is fetched as soon as the drone shows up, so it's ready by the click.
+  const prefetch = () => router.prefetch(href);
+  const navigate = (to: string) => router.push(to, { scroll: false });
 
   // Arriving from the other language, it rises for a moment and does a spin.
   useEffect(() => {
@@ -49,17 +54,17 @@ export function LangSwitch({ current, target, href, tripLabel, action }: LangSwi
     event.preventDefault();
     if (busy.current) return;
     busy.current = true;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { void switchLanguage(href, tripLabel); return; }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { void switchLanguage(href, tripLabel, navigate); return; }
     // Up it comes (if it wasn't already hovering there), the hologram glitches over, a spin, and off we go.
     setSwitching(true);
     setTimeout(() => setFlipped(true), PEEK);
     setTimeout(() => setCheering(true), PEEK + FLIP);
-    setTimeout(() => { void switchLanguage(href, tripLabel); }, PEEK + FLIP + SPIN);
+    setTimeout(() => { void switchLanguage(href, tripLabel, navigate); }, PEEK + FLIP + SPIN);
   }
 
   const state = `${switching ? ' lang-switching' : ''}${flipped ? ' lang-flipped' : ''}${cheering ? ' lang-cheering' : ''}`;
   return (
-    <a href={href} hrefLang={target.toLowerCase()} className={`lang-switch font-mono${state}`} aria-label={action} onClick={choose}>
+    <a href={href} hrefLang={target.toLowerCase()} className={`lang-switch font-mono${state}`} aria-label={action} onClick={choose} onMouseEnter={prefetch} onFocus={prefetch}>
       <span className="lang-code lang-current" aria-hidden="true">{current}</span>
       <span className="lang-slash" aria-hidden="true">/</span>
       <span className="lang-code lang-target" aria-hidden="true">{target}</span>
