@@ -42,6 +42,12 @@ const LANDINGS: Record<string, string> = { projetos: '#projects-title', sobre: '
 
 type Teleport = (href: string, origin?: Element | null) => Promise<void>;
 let active: Teleport | null = null;
+let activeSwitch: ((href: string) => Promise<void>) | null = null;
+// The sections, top to bottom, to find where the visitor is when switching language.
+const SECTIONS = ['main', 'projetos', 'sobre', 'capacidades', 'contato'];
+// What a language switch leaves for the other version of the page (in sessionStorage, read by the boot script and by
+// the teleporter there): where the visitor was, what to call the destination on the trip screen, and whether to animate.
+type SwitchNote = { id: string; offset: number; label: string; animate: boolean };
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Grows a little past full size and settles back (0..1 → 0..1, peaking about 1.05).
@@ -96,6 +102,31 @@ function titleSpot(title: HTMLElement) {
   const lines = [...range.getClientRects()].filter(rect => rect.width > 0);
   const box = lines.length ? lines[lines.length - 1] : title.getBoundingClientRect();
   return { x: Math.min(box.right, window.innerWidth - 20), y: box.top + box.height / 2 };
+}
+
+// The section the visitor is in, and how far into it.
+function currentAnchor() {
+  let id = SECTIONS[0];
+  let offset = window.scrollY;
+  for (const section of SECTIONS) {
+    const element = document.getElementById(section);
+    if (!element) continue;
+    const top = element.getBoundingClientRect().top + window.scrollY;
+    if (top <= window.scrollY + 80) { id = section; offset = window.scrollY - top; }
+  }
+  return { id, offset };
+}
+
+// Switches to the page in the other language ("/en" or "/"), teleporting there: the pixel curtain covers the page, the
+// other version loads behind it and the trip carries on there, landing at the same point of the page. The choice is
+// remembered for the next visit.
+export function switchLanguage(href: string, label: string) {
+  try { localStorage.setItem('lang', href.startsWith('/en') ? 'en' : 'pt'); } catch {}
+  const note: SwitchNote = { ...currentAnchor(), label, animate: !!activeSwitch && !reducedMotion() };
+  try { sessionStorage.setItem('lang-switch', JSON.stringify(note)); } catch {}
+  if (note.animate && activeSwitch) return activeSwitch(href);
+  window.location.href = href;
+  return Promise.resolve();
 }
 
 // Teleports to a destination on the page ("#projetos", "#main", ...); origin is what was clicked.
@@ -238,6 +269,11 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
         // In: the curtain carries on the same way and opens the destination behind it, each pixel playing the way out
         // backwards (the page's colour, dark blue, blue, light blue, then shrinking away). onOpen fires as the curtain
         // passes the given height (the destination's title), for the robot to beam in there.
+        // Covered at once (the page arriving from a language switch, already covered on the way out).
+        fill() {
+          context.fillStyle = page;
+          context.fillRect(0, 0, width, height);
+        },
         async reveal(down: boolean, titleY: number, onOpen: () => void, onProgress: (t: number) => void) {
           canvas.style.pointerEvents = 'none';
           cells.forEach(cell => { cell.delay = reach(cell.y + CELL / 2, down, SWEEP) + ragged[cell.col]; });
@@ -480,9 +516,55 @@ export function Teleporter({ homeLabel }: { homeLabel: string }) {
       void teleport(href, link);
     };
     document.addEventListener('click', onClick);
+
+    // ——— Switching language: the way out here, the way in on the other version of the page. ———
+    activeSwitch = async href => {
+      if (busy) return;
+      busy = true;
+      const pixels = screen();
+      centre();
+      await pixels.cover(true, t => shift(-PULL * t * t, 1 - .03 * t * t, 1 - .45 * t));
+      // The page stays covered while the other version loads; it picks the trip up from here.
+      window.location.href = href;
+    };
+    async function arriveInLanguage(note: SwitchNote) {
+      const land = () => {
+        const element = document.getElementById(note.id);
+        const top = element ? element.getBoundingClientRect().top + window.scrollY : 0;
+        window.scrollTo({ top: Math.max(0, top + note.offset), behavior: 'instant' });
+      };
+      land();
+      if (!note.animate || reducedMotion()) { delete document.documentElement.dataset.langSwitch; return; }
+      busy = true;
+      try {
+        const pixels = screen();
+        pixels.fill();
+        delete document.documentElement.dataset.langSwitch;
+        centre();
+        shift(PULL, 1.03, .55);
+        await pixels.travel(note.label, true);
+        land();
+        await pixels.reveal(true, window.innerHeight / 2, () => window.dispatchEvent(new Event('lang-arrived')), t => {
+          const eased = 1 - (1 - t) * (1 - t);
+          shift(PULL * (1 - eased), 1 + .03 * (1 - eased), .55 + .45 * eased);
+        });
+        await tween(260, t => shift(-SETTLE * Math.sin(Math.PI * t), 1, 1));
+      } finally {
+        shift(0, 1, 1, true);
+        busy = false;
+      }
+    }
+    let note: SwitchNote | null = null;
+    try {
+      const saved = sessionStorage.getItem('lang-switch');
+      if (saved) { sessionStorage.removeItem('lang-switch'); note = JSON.parse(saved) as SwitchNote; }
+    } catch {}
+    if (note) void arriveInLanguage(note);
+    else delete document.documentElement.dataset.langSwitch;
     return () => {
       document.removeEventListener('click', onClick);
       active = null;
+      activeSwitch = null;
       layer.remove();
       document.querySelectorAll('.tp-screen').forEach(element => element.remove());
     };
