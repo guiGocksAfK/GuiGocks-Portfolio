@@ -914,7 +914,7 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .depot-crate-back { animation: depot-crate-back .5s ease-out both; }
 @keyframes depot-crate-back { 0% { transform: translateY(-18px); opacity: 0; } 70% { transform: translateY(1px); opacity: 1; } 100% { transform: none; } }
 /* The forklift faces left, forks first towards the pallet; parked against the right end. */
-.depot-truck { position: absolute; z-index: 3; right: 14px; bottom: 8px; width: 42px; height: 30px; }
+.depot-truck { position: absolute; z-index: 3; right: 14px; bottom: 8px; width: 56px; height: 40px; }
 .depot-truck svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; transform: scaleX(-1); }
 .project-card { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
 .project-card:hover, .project-card:focus-within { border-color: var(--accent); }
