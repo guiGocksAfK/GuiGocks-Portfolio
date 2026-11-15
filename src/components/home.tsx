@@ -41,8 +41,8 @@ export function Home({ content }: { content: SiteContent }) {
           <ProjectStamp label={project.stamp.label} tone={project.stamp.tone} />
           {project.screenshot && project.screenshotStyle === 'tall'
             // A tall print (a chat app's screen) stands in the middle of the frame, on the app's own background, and
-            // fades out at the bottom instead of being cropped to a strip.
-            ? <div className="project-shot project-shot-tall"><Image src={project.screenshot} alt={project.screenshotAlt} width={571} height={673} quality={90} sizes="(max-width: 600px) 46vw, 400px" className="project-image-tall" loading="eager" /></div>
+            // is shown whole instead of being cropped to a strip.
+            ? <div className="project-shot project-shot-tall"><Image src={project.screenshot} alt={project.screenshotAlt} width={571} height={673} quality={90} sizes="360px" className="project-image-tall" loading="eager" /></div>
             : project.screenshot ? <div className="project-shot"><Image src={project.screenshot} alt={project.screenshotAlt} fill quality={90} sizes="(max-width: 900px) 100vw, 1200px" className="project-image" loading="eager" /></div> :
             <div className="screenshot-placeholder"><span className="placeholder-number font-mono" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><span className="font-mono">{projects.screenshotLabel}</span></div>}
         </div>
