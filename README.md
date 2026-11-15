@@ -9,7 +9,7 @@ The site comes in Brazilian Portuguese and English; the code and this README are
 ## Features
 
 - **01 · Introduction** — name, role and a short pitch, with the tech stack typed out group by group (backend, frontend, infra) in a code-style panel.
-- **02 · Featured projects** — one card per project with a screenshot, a status stamp, the stack, links to the live site and the repositories, and a drawer of **technical decisions** explaining the choices behind each project.
+- **02 · Featured projects** — the three main projects up front and the rest behind a "see more" button, each card with a screenshot, a status stamp, the stack, a link to the live site when there is a public one, and a drawer of **technical decisions** explaining the choices behind each project.
 - **03 · About** — an ID badge with photo and what I'm looking for, a short story, and a career timeline drawn as the floors of a building, with an empty next floor waiting for "your company?".
 - **04 · Capabilities** — a tool store: every technology is a crate on a shelf by area. Clicking a crate shows which projects used it and what was used from it.
 - **05 · Contact** — e-mail (copied with one click), WhatsApp with a message ready to send and the résumé as a PDF, closed by a park scene as the page's happy ending.

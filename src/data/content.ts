@@ -3,6 +3,7 @@ const MYRANK = 'MyRank';
 const AJT = 'AJT Viagens e Turismo';
 const ESCOLA = 'Escola Imaculada';
 const PORTFOLIO = 'Este portfólio';
+const JARVIS = 'Project Jarvis';
 
 // All visible copy and destinations live here. Future sections can be added here.
 export const content = {
@@ -80,18 +81,18 @@ export const content = {
     shelves: [
       { label: 'Linguagens', items: [
         { name: 'Java', projects: [AJT, MYRANK] },
-        { name: 'TypeScript', projects: [ESCOLA, PORTFOLIO, AJT] },
+        { name: 'TypeScript', projects: [JARVIS, ESCOLA, PORTFOLIO, AJT] },
         { name: 'JavaScript', projects: [MYRANK] },
-        { name: 'Python', projects: [`${MYRANK} (bot do Discord)`] },
+        { name: 'Python', projects: [JARVIS, `${MYRANK} (bot do Discord)`] },
       ] },
       { label: 'Backend', items: [
         { name: 'Spring Boot', projects: [MYRANK, AJT], used: ['Web', 'Data JPA', 'Security (JWT)', 'Validation', 'WebSocket', 'Cache + Caffeine', 'OpenFeign'] },
-        { name: 'Node.js', projects: [ESCOLA], used: ['NestJS'] },
+        { name: 'Node.js', projects: [JARVIS, ESCOLA], used: ['NestJS'] },
         { name: 'Prisma', projects: [ESCOLA] },
         { name: 'Flyway', projects: [MYRANK, AJT] },
       ] },
       { label: 'Frontend', items: [
-        { name: 'React', projects: [PORTFOLIO, MYRANK] },
+        { name: 'React', projects: [JARVIS, PORTFOLIO, MYRANK] },
         { name: 'Angular', projects: [ESCOLA, AJT], used: ['Angular Material'] },
         { name: 'Tailwind CSS', projects: [PORTFOLIO, MYRANK, AJT] },
         { name: 'Vite', projects: [MYRANK] },
@@ -99,15 +100,15 @@ export const content = {
       ] },
       { label: 'Banco de dados', items: [
         { name: 'SQL', projects: [MYRANK, AJT, ESCOLA], used: ['Migrações em SQL (Flyway)'] },
-        { name: 'PostgreSQL', projects: [AJT, ESCOLA, MYRANK] },
+        { name: 'PostgreSQL', projects: [JARVIS, AJT, ESCOLA, MYRANK] },
       ] },
       { label: 'Infra e DevOps', items: [
-        { name: 'Docker', projects: [ESCOLA, AJT, MYRANK], used: ['Docker Compose'] },
+        { name: 'Docker', projects: [JARVIS, ESCOLA, AJT, MYRANK], used: ['Docker Compose'] },
         { name: 'Caddy', projects: [MYRANK, ESCOLA] },
-        { name: 'Oracle Cloud', projects: [ESCOLA, MYRANK] },
+        { name: 'Oracle Cloud', projects: [JARVIS, ESCOLA, MYRANK] },
         { name: 'Neon', projects: [ESCOLA, MYRANK] },
         { name: 'Vercel', projects: [ESCOLA, MYRANK, PORTFOLIO] },
-        { name: 'Git e GitHub', projects: [AJT, ESCOLA, MYRANK, PORTFOLIO] },
+        { name: 'Git e GitHub', projects: [JARVIS, AJT, ESCOLA, MYRANK, PORTFOLIO] },
       ] },
     ],
     // Clicking a crate sends it to the office counter, where a robot takes out what is inside.
@@ -130,13 +131,33 @@ export const content = {
     countLabel: 'projetos',
     screenshotLabel: 'Screenshot em breve',
     siteLabel: 'Ver site',
-    repositoryLabel: 'Repositório',
-    missingLinkLabel: 'Link ainda não informado',
-    codeLabel: 'Código:',
-    missingCodeLabel: 'não informado',
     drawerOpenLabel: 'Ver decisões técnicas',
     drawerCloseLabel: 'Esconder decisões técnicas',
+    // The first cards are always shown; the rest wait behind the "see more" button.
+    featured: 3,
+    moreLabel: 'Ver mais projetos',
+    lessLabel: 'Mostrar menos',
     items: [
+      {
+        name: JARVIS,
+        category: 'Assistente pessoal com IA',
+        description: 'Um assistente pessoal por voz inspirado no JARVIS do Homem de Ferro: você chama pelo nome, ele responde com voz clonada em português, escolhe sozinho qual IA usar para cada pergunta e continua funcionando sem internet. Tem uma interface futurista com uma entidade 3D que reage ao que ele está fazendo.',
+        highlights: [
+          { title: 'Roteador de IAs sem chamada extra', text: 'Hora e data saem do código, sem modelo. O resto vai ao Haiku, que responde direto ou começa com um marcador pedindo o Sonnet, na mesma chamada, sem gastar uma consulta só para decidir. O Opus só entra a pedido. Avaliado em 152 pedidos reais: 93% de acerto.' },
+          { title: 'Claude pela assinatura, com processo quente', text: 'Usa o Claude Code oficial em vez da API paga, sem chave nenhuma no PC. Um processo fica aberto por conversa, e a primeira palavra caiu de ~6 s para ~0,8 s. Tokens e custo equivalente são medidos em cada chamada.' },
+          { title: 'Funciona sem internet, sem perguntar ao Claude', text: 'Um teste de rede de 800 ms, que só faz o aperto de mão TLS sem enviar dado nenhum, separa “sem internet” de “o Claude falhou”. Sem internet, um modelo local responde no processador com uma voz reserva; quando a rede volta, ele troca e descarrega o modelo sozinho.' },
+          { title: 'Voz clonada que fala enquanto pensa', text: 'A voz do Jarvis foi clonada e escolhida numa audição contra outros dois modelos. A fala começa com ~2 s de áudio prontos e a legenda aparece palavra por palavra no ritmo da voz. Datas e números são convertidos para como se fala em português antes de virar áudio.' },
+          { title: 'Servidor sem nenhuma porta aberta', text: 'Servidor, banco e HUD rodam numa VM ARM da Oracle acessível só pela rede privada da Tailscale. O agente do PC é quem conecta no servidor, nunca o contrário, então nenhuma porta do notebook fica exposta.' },
+          { title: 'Login sem senha na URL', text: 'O HUD entra com um código de uso único, válido por 30 s, que vai depois do `#` da URL, parte que o navegador nunca envia ao servidor nem grava em log. Outros aparelhos entram com um código de pareamento de 60 s, e revogar um derruba as conexões dele na hora.' },
+          { title: 'Prompt injection testado, não suposto', text: 'Num teste real, o modelo local obedeceu a uma ordem escondida nos dados, mesmo avisado de que dados não são ordens. Por isso, conteúdo de terceiros nunca chega a ele, as ações vêm de uma lista fechada e texto livre nunca vira comando, caminho ou URL.' },
+          { title: 'Ativação treinada no próprio PC (em andamento)', text: 'O detector pronto de “hey Jarvis” ignorava a pronúncia brasileira: 0 de 20 com vozes brasileiras. Treinei um detector próprio no notebook, com 75 vozes artificiais e as gravações do dono: 8 de 9. Uma conferência de voz de ~20 ms decide só pelo “Jarvis” se quem chamou é o dono, sem nenhum áudio sair do PC.' },
+        ],
+        stack: ['React', 'React Three Fiber', 'TypeScript', 'NestJS', 'Socket.IO', 'PostgreSQL', 'Python', 'Whisper', 'Claude', 'Ollama', 'Docker', 'Tailscale'],
+        stamp: { label: 'Em desenvolvimento', tone: 'accent' },
+        site: null,
+        screenshot: '/projects/Jarvis.png',
+        screenshotAlt: 'Entidade do Jarvis: uma esfera de linhas de luz azul girando sobre fundo preto',
+      },
       {
         name: MYRANK,
         category: 'Plataforma social',
@@ -154,7 +175,6 @@ export const content = {
         stack: ['React 19', 'Vite', 'Tailwind CSS', 'Spring Boot 3', 'Java 17', 'PostgreSQL', 'Flyway', 'Docker'],
         stamp: { label: 'Em produção', tone: 'accent' },
         site: 'https://myrank-oficial.vercel.app',
-        repositories: [{ label: 'Frontend', href: 'https://github.com/guiGocksAfK/MyRank-frontend' }, { label: 'Backend', href: 'https://github.com/guiGocksAfK/MyRank-backend' }, { label: 'Bot Discord', href: 'https://github.com/guiGocksAfK/MyRank-discordBot' }],
         screenshot: '/projects/MyRank.png',
         screenshotAlt: 'Página inicial do MyRank com capas de filmes e o slogan “Seu gosto. Seu ranking. Sua identidade.”',
       },
@@ -171,7 +191,6 @@ export const content = {
         stack: ['Angular', 'NestJS', 'PostgreSQL', 'Prisma'],
         stamp: { label: 'Em uso real', tone: 'accent' },
         site: 'https://escola-imaculada.vercel.app',
-        repositories: [{ label: 'Frontend', href: 'https://github.com/guiGocksAfK/EscolaImaculada-frontend' }, { label: 'Backend', href: 'https://github.com/guiGocksAfK/EscolaImaculada-backend' }],
         screenshot: '/projects/EscolaImaculada.png',
         screenshotAlt: 'Tela de login do Registro de Classe da Escola Imaculada',
       },
@@ -188,7 +207,6 @@ export const content = {
         stack: ['Angular', 'Spring Boot 3', 'Java 17', 'Spring Security', 'PostgreSQL', 'Flyway'],
         stamp: { label: 'Projeto acadêmico', tone: 'muted' },
         site: null,
-        repositories: [{ label: 'Frontend', href: 'https://github.com/k9milly/AJT-Frontend' }, { label: 'Backend', href: 'https://github.com/guiPinheiroAfK/AJT-Backend' }],
         screenshot: '/projects/AJT.png',
         screenshotAlt: 'Painel administrativo do AJT Viagens com resumo de transfers e ordens de serviço',
       },
@@ -198,7 +216,7 @@ export const content = {
       highlights: readonly { title: string; text: string }[];
       // Status stamped on the card by the inspector robot.
       stamp: { label: string; tone: 'accent' | 'muted' };
-      stack: readonly string[]; site: string | null; repositories: readonly { label: string; href: string }[];
+      stack: readonly string[]; site: string | null;
       // Save images in public/projects/ and use a path such as /projects/myrank.webp.
       screenshot: string | null; screenshotAlt: string;
     }[],
