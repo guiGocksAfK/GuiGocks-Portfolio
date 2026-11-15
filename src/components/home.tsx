@@ -19,6 +19,7 @@ import { ContactStage } from '@/components/contact-stage';
 import { SiteFooter } from '@/components/site-footer';
 import { Teleporter } from '@/components/teleport';
 import { LangSwitch } from '@/components/lang-switch';
+import { MoreProjects } from '@/components/more-projects';
 
 function Arrow() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="arrow"><path d="M6 18 18 6M6 6h12v12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -32,6 +33,33 @@ function DownArrow() {
 // The whole page, in one language: the Portuguese page (/) and the English one (/en) both render it with their own copy.
 export function Home({ content }: { content: SiteContent }) {
   const { hero, contact, projects, about, capabilities, contactSection } = content;
+  // One project card; index numbers it and names its anchors (#project-0, ...), counting the folded ones too.
+  const projectCard = (project: (typeof projects.items)[number], index: number) => (
+    <Reveal key={project.name}>
+      <article className="project-card" aria-labelledby={`project-${index}`}>
+        <div className="project-visual">
+          <ProjectStamp label={project.stamp.label} tone={project.stamp.tone} />
+          {project.screenshot ? <div className="project-shot"><Image src={project.screenshot} alt={project.screenshotAlt} fill quality={90} sizes="(max-width: 900px) 100vw, 1200px" className="project-image" /></div> :
+            <div className="screenshot-placeholder"><span className="placeholder-number font-mono" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><span className="font-mono">{projects.screenshotLabel}</span></div>}
+        </div>
+        <div className="project-details">
+          <p className="project-eyebrow font-mono"><span>{String(index + 1).padStart(2, '0')}</span>{project.category}</p>
+          <h3 id={`project-${index}`}>{project.name}</h3>
+          <p className="project-description">{project.description}</p>
+          <ul className="project-stack font-mono" aria-label={project.stack.join(', ')}>{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul>
+          {/* The live site, when there's a public one to visit. */}
+          {project.site && (
+            <div className="project-links font-mono">
+              <a href={project.site} target="_blank" rel="noopener noreferrer" aria-label={`${projects.siteLabel} — ${project.name}`}>{projects.siteLabel}<Arrow /></a>
+            </div>
+          )}
+          <ProjectDrawer items={project.highlights} openLabel={projects.drawerOpenLabel} closeLabel={projects.drawerCloseLabel} slotId={`drawer-slot-${index}`} />
+        </div>
+        {/* Full-width slot under the card where the decisions drawer opens. */}
+        <div className="project-drawer-slot" id={`drawer-slot-${index}`} />
+      </article>
+    </Reveal>
+  );
   return (
     <div className="site-shell">
       <a className="skip-link" href="#main">{content.accessibility.skip}</a>
@@ -79,45 +107,12 @@ export function Home({ content }: { content: SiteContent }) {
       <div className="hero-footer font-mono"><span>{hero.section}</span><span>{hero.location}</span><PatrolRobot /></div>
       <section id="projetos" aria-labelledby="projects-title" className="projects-section">
         <h2 id="projects-title">{projects.title}</h2>
-        <div className="project-list">
-          {projects.items.map((project, index) => (
-            <Reveal key={project.name}>
-              <article className="project-card" aria-labelledby={`project-${index}`}>
-                <div className="project-visual">
-                  <ProjectStamp label={project.stamp.label} tone={project.stamp.tone} />
-                  {project.screenshot ? <div className="project-shot"><Image src={project.screenshot} alt={project.screenshotAlt} fill quality={90} sizes="(max-width: 900px) 100vw, 1200px" className="project-image" /></div> :
-                    <div className="screenshot-placeholder"><span className="placeholder-number font-mono" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><span className="font-mono">{projects.screenshotLabel}</span></div>}
-                </div>
-                <div className="project-details">
-                  <p className="project-eyebrow font-mono"><span>{String(index + 1).padStart(2, '0')}</span>{project.category}</p>
-                  <h3 id={`project-${index}`}>{project.name}</h3>
-                  <p className="project-description">{project.description}</p>
-                  <ul className="project-stack font-mono" aria-label={project.stack.join(', ')}>{project.stack.map(tech => <li key={tech}>{tech}</li>)}</ul>
-                  {/* One compact row: the live site, then the repositories as short labels. */}
-                  <div className="project-links font-mono">
-                    {project.site
-                      ? <a href={project.site} target="_blank" rel="noopener noreferrer" aria-label={`${projects.siteLabel} — ${project.name}`}>{projects.siteLabel}<Arrow /></a>
-                      : <span className="link-missing" aria-disabled="true" title={projects.missingLinkLabel}>{projects.siteLabel}<Arrow /></span>}
-                    <span className="project-code">
-                      <span className="code-label">{projects.codeLabel}</span>
-                      {project.repositories.length
-                        ? project.repositories.map((repo, repoIndex) => (
-                          <span key={repo.href} className="code-link">
-                            {repoIndex > 0 && <span className="code-separator" aria-hidden="true">·</span>}
-                            <a href={repo.href} target="_blank" rel="noopener noreferrer" aria-label={`${projects.repositoryLabel} ${repo.label} — ${project.name}`}>{repo.label.toLowerCase()}</a>
-                          </span>
-                        ))
-                        : <span className="link-missing" aria-disabled="true" title={projects.missingLinkLabel}>{projects.missingCodeLabel}</span>}
-                    </span>
-                  </div>
-                  <ProjectDrawer items={project.highlights} openLabel={projects.drawerOpenLabel} closeLabel={projects.drawerCloseLabel} slotId={`drawer-slot-${index}`} />
-                </div>
-                {/* Full-width slot under the card where the decisions drawer opens. */}
-                <div className="project-drawer-slot" id={`drawer-slot-${index}`} />
-              </article>
-            </Reveal>
-          ))}
-        </div>
+        <div className="project-list">{projects.items.slice(0, projects.featured).map(projectCard)}</div>
+        {projects.items.length > projects.featured && (
+          <MoreProjects count={projects.items.length - projects.featured} moreLabel={projects.moreLabel} lessLabel={projects.lessLabel}>
+            {projects.items.slice(projects.featured).map((project, index) => projectCard(project, projects.featured + index))}
+          </MoreProjects>
+        )}
         {/* Each section ends with its number and name, like the hero. */}
         <div className="section-footer font-mono"><span>{projects.section}</span><span>{projects.items.length} {projects.countLabel}</span><PatrolRobot /></div>
       </section>
