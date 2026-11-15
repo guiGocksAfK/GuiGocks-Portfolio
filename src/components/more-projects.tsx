@@ -10,7 +10,7 @@ import { forkliftMarkup } from '@/components/robot-sprite';
 // put on screen). Clicking again puts them away. The cards stay in the page while folded (only hidden), and a link to
 // one of them (a tool crate's project link) unfolds the list at once, before the teleport measures where to go.
 
-const SPEED = 150; // px/s, the forklift on the depot floor
+const SPEED = 380; // px/s, the forklift on the depot floor
 const PARK = 14; // px, the parked forklift's distance from the right end
 const FORKS = 14; // px of the forks reaching under a crate
 const GAP = 28; // px between cards (the project list's gap)
@@ -96,7 +96,7 @@ export function MoreProjects({ names, moreLabel, lessLabel, children }: { names:
     const inView = () => { const box = depot.current!.getBoundingClientRect(); return box.top < window.innerHeight && box.bottom > 0; };
     const follow = inView();
     let grown = 0;
-    await tween(700, t => {
+    await tween(420, t => {
       const size = (height + gap) * ease(t);
       card.style.height = `${Math.max(0, size - gap)}px`;
       card.style.marginTop = `${Math.min(gap, size)}px`;
@@ -125,21 +125,21 @@ export function MoreProjects({ names, moreLabel, lessLabel, children }: { names:
       // Forks first (the truck faces left): its left edge under the crate's right part.
       const pick = box.right - floorLeft - FORKS;
       await drive(x, pick);
-      await wait(250);
+      await wait(80);
       // Forks up a little, then it reverses to the middle with the crate.
       crate.classList.add('depot-crate-lifted');
-      await tween(250, t => { crate.style.transform = `translate(0px, ${-4 * t}px)`; });
+      await tween(120, t => { crate.style.transform = `translate(0px, ${-4 * t}px)`; });
       const to = Math.max(pick, middle);
       await drive(pick, to, crate, 4);
       x = to;
       // The forks lift the crate high, its lid pops off and the card grows up out of it.
-      await tween(350, t => { crate.style.transform = `translate(${to - pick}px, ${-4 - 18 * ease(t)}px)`; });
+      await tween(180, t => { crate.style.transform = `translate(${to - pick}px, ${-4 - 18 * ease(t)}px)`; });
       crate.classList.add('depot-crate-gone');
       const card = cards()[index];
       if (card) await grow(card, gap);
       crate.style.transform = '';
       crate.classList.remove('depot-crate-lifted');
-      await wait(300);
+      await wait(60);
     }
     await drive(x, park);
     truck.current!.style.cssText = '';
@@ -153,7 +153,7 @@ export function MoreProjects({ names, moreLabel, lessLabel, children }: { names:
     const sizes = cards().map(card => card.offsetHeight + gap);
     for (const card of cards()) card.style.overflow = 'hidden';
     let shrunk = 0;
-    await tween(500, t => {
+    await tween(320, t => {
       cards().forEach((card, index) => {
         const size = sizes[index] * (1 - ease(t));
         card.style.height = `${Math.max(0, size - gap)}px`;
