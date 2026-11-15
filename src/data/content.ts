@@ -4,6 +4,7 @@ const AJT = 'AJT Viagens e Turismo';
 const ESCOLA = 'Escola Imaculada';
 const PORTFOLIO = 'Este portfólio';
 const JARVIS = 'Project Jarvis';
+const MYRANK_BOT = 'MyRank Bot';
 
 // All visible copy and destinations live here. Future sections can be added here.
 export const content = {
@@ -83,7 +84,7 @@ export const content = {
         { name: 'Java', projects: [AJT, MYRANK] },
         { name: 'TypeScript', projects: [JARVIS, ESCOLA, PORTFOLIO, AJT] },
         { name: 'JavaScript', projects: [MYRANK] },
-        { name: 'Python', projects: [JARVIS, `${MYRANK} (bot do Discord)`] },
+        { name: 'Python', projects: [JARVIS, MYRANK_BOT] },
       ] },
       { label: 'Backend', items: [
         { name: 'Spring Boot', projects: [MYRANK, AJT], used: ['Web', 'Data JPA', 'Security (JWT)', 'Validation', 'WebSocket', 'Cache + Caffeine', 'OpenFeign'] },
@@ -135,8 +136,8 @@ export const content = {
     drawerCloseLabel: 'Esconder decisões técnicas',
     // The first cards are always shown; the rest wait behind the "see more" button.
     featured: 3,
-    moreLabel: 'Ver mais projetos',
-    lessLabel: 'Mostrar menos',
+    moreLabel: 'Descarregar mais projetos',
+    lessLabel: 'Guardar no depósito',
     items: [
       {
         name: JARVIS,
@@ -210,6 +211,27 @@ export const content = {
         screenshot: '/projects/AJT.png',
         screenshotAlt: 'Painel administrativo do AJT Viagens com resumo de transfers e ordens de serviço',
       },
+      {
+        name: MYRANK_BOT,
+        category: 'Bot do Discord',
+        description: 'O MyRank dentro do Discord: com comandos de barra você vê seu perfil, seu ranking e suas conquistas, busca um filme, jogo, série, anime ou livro com capa, dá a nota e edita ou remove obras, tudo sem sair do servidor. É só um cliente da API do MyRank, sem banco próprio e sem regra de negócio.',
+        highlights: [
+          { title: 'Duas fronteiras, e só uma conhece o Discord', text: 'A pasta `myrank/` é HTTP puro e nunca importa `discord.py`; só `ui/` fala com o Discord. Por isso a camada de API inteira é testada sem token, sem gateway e sem rede, com um transporte falso. São 39 testes, mais ruff e mypy.' },
+          { title: 'A janela de 3 segundos do Discord', text: 'Toda chamada HTTP estoura o prazo de resposta de uma interação, e um modal só pode ser a primeira resposta, nunca vem depois de um `defer`. Então o `/add` foi dividido em dois cliques: “Ver detalhes” faz a consulta, e “É esta! Dar nota” abre o modal sem rede nenhuma. Um teste com a API travada prova que a confirmação sai antes dela responder.' },
+          { title: 'Nenhum comando escapa do tratamento de erro', text: 'O decorator `@guarded` faz o `defer` e captura qualquer exceção, e esquecer de usá-lo no tratamento é impossível por construção, não por disciplina. O erro é traduzido em dois pontos fixos (status → exceção na API, exceção → mensagem no Discord) e sempre aparece só para quem chamou, porque costuma carregar dado de conta.' },
+          { title: 'Um 401 com três causas diferentes', text: 'O backend responde 401 para chave do bot inválida, header ausente e conta sem vínculo, e só a mensagem distingue. Só o último vira “vincule sua conta”; os outros dois são problema nosso, então viram erro genérico para o usuário e o detalhe vai pro log. Mostrar o aviso errado mandaria a pessoa se vincular por um bug que não é dela.' },
+          { title: 'Descobrir o que a API realmente permite', text: 'A chave do bot só vale em quatro grupos de rotas, e `/users` está fora, então não existe endpoint de perfil. O `/perfil` foi refeito com obras e conquistas, e o nome e o avatar vêm do próprio Discord. A resposta real também desmentiu dois palpites meus: o identificador da conquista é `code` e o da busca é `externalId`, e cada um virou teste de regressão.' },
+          { title: 'Palpite de categoria que sabe falhar', text: 'As categorias são texto livre de cada usuário, então o bot compara o nome (sem acento nem emoji, então “📺 Séries & Animes” casa) com pistas da mídia. Sem match confiável ele pergunta num select, e nunca escolhe nem cria categoria sozinho.' },
+          { title: 'Quem clica é quem chamou', text: 'O ID do Discord vem sempre de `interaction.user.id`, nunca de algo digitado, e todo botão e select só responde ao autor do comando. Remover uma obra pede confirmação e cancela sozinho em 30 segundos.' },
+          { title: 'Segredo fora do log, sem porta aberta', text: 'Token e chave aparecem como `***` no `repr`, e um teste garante que não vazam. Um erro 5xx vira texto genérico, com o detalhe só no journald. O bot sobe como serviço `systemd` com usuário dedicado, `NoNewPrivileges` e `ProtectSystem=strict`, sem expor nenhuma porta, e usa `Intents.none()`: não lê nenhuma mensagem.' },
+        ],
+        stack: ['Python', 'discord.py', 'httpx', 'pytest', 'mypy', 'ruff', 'systemd'],
+        stamp: { label: 'Em desenvolvimento', tone: 'accent' },
+        site: null,
+        screenshot: '/projects/MyRank-bot.png',
+        screenshotStyle: 'tall',
+        screenshotAlt: 'Resultado de busca do /add no Discord, com a capa da obra e o aviso para comparar os resultados',
+      },
     ] as readonly {
       name: string; category: string; description: string;
       // Technical decisions shown in the card's drawer; `backticks` in text render as inline code.
@@ -218,7 +240,8 @@ export const content = {
       stamp: { label: string; tone: 'accent' | 'muted' };
       stack: readonly string[]; site: string | null;
       // Save images in public/projects/ and use a path such as /projects/myrank.webp.
-      screenshot: string | null; screenshotAlt: string;
+      // tall: a portrait print, shown standing in the frame instead of filling it.
+      screenshot: string | null; screenshotAlt: string; screenshotStyle?: 'tall';
     }[],
   },
   // Last section: an editorial list of the ways to get in touch. A null href shows the row as coming soon.

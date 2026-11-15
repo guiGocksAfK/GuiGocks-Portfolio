@@ -39,7 +39,11 @@ export function Home({ content }: { content: SiteContent }) {
       <article className="project-card" aria-labelledby={`project-${index}`}>
         <div className="project-visual">
           <ProjectStamp label={project.stamp.label} tone={project.stamp.tone} />
-          {project.screenshot ? <div className="project-shot"><Image src={project.screenshot} alt={project.screenshotAlt} fill quality={90} sizes="(max-width: 900px) 100vw, 1200px" className="project-image" /></div> :
+          {project.screenshot && project.screenshotStyle === 'tall'
+            // A tall print (a chat app's screen) stands in the middle of the frame, on the app's own background, and
+            // fades out at the bottom instead of being cropped to a strip.
+            ? <div className="project-shot project-shot-tall"><Image src={project.screenshot} alt={project.screenshotAlt} width={571} height={673} quality={90} sizes="(max-width: 600px) 46vw, 400px" className="project-image-tall" /></div>
+            : project.screenshot ? <div className="project-shot"><Image src={project.screenshot} alt={project.screenshotAlt} fill quality={90} sizes="(max-width: 900px) 100vw, 1200px" className="project-image" /></div> :
             <div className="screenshot-placeholder"><span className="placeholder-number font-mono" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><span className="font-mono">{projects.screenshotLabel}</span></div>}
         </div>
         <div className="project-details">
@@ -109,7 +113,7 @@ export function Home({ content }: { content: SiteContent }) {
         <h2 id="projects-title">{projects.title}</h2>
         <div className="project-list">{projects.items.slice(0, projects.featured).map(projectCard)}</div>
         {projects.items.length > projects.featured && (
-          <MoreProjects count={projects.items.length - projects.featured} moreLabel={projects.moreLabel} lessLabel={projects.lessLabel}>
+          <MoreProjects names={projects.items.slice(projects.featured).map(project => project.name)} moreLabel={projects.moreLabel} lessLabel={projects.lessLabel}>
             {projects.items.slice(projects.featured).map((project, index) => projectCard(project, projects.featured + index))}
           </MoreProjects>
         )}

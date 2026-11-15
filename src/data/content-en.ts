@@ -6,6 +6,7 @@ const AJT = 'AJT Viagens e Turismo';
 const ESCOLA = 'Escola Imaculada';
 const PORTFOLIO = 'This portfolio';
 const JARVIS = 'Project Jarvis';
+const MYRANK_BOT = 'MyRank Bot';
 
 // The English version of the site's copy (the page at /en), the same shape as the Portuguese one in content.ts.
 // Section anchors (#projetos, #sobre...) stay the same in both, so switching language can land on the same spot.
@@ -71,7 +72,7 @@ export const contentEn = {
         { name: 'Java', projects: [AJT, MYRANK] },
         { name: 'TypeScript', projects: [JARVIS, ESCOLA, PORTFOLIO, AJT] },
         { name: 'JavaScript', projects: [MYRANK] },
-        { name: 'Python', projects: [JARVIS, `${MYRANK} (Discord bot)`] },
+        { name: 'Python', projects: [JARVIS, MYRANK_BOT] },
       ] },
       { label: 'Backend', items: [
         { name: 'Spring Boot', projects: [MYRANK, AJT], used: ['Web', 'Data JPA', 'Security (JWT)', 'Validation', 'WebSocket', 'Cache + Caffeine', 'OpenFeign'] },
@@ -115,8 +116,8 @@ export const contentEn = {
     drawerOpenLabel: 'See technical decisions',
     drawerCloseLabel: 'Hide technical decisions',
     featured: content.projects.featured,
-    moreLabel: 'See more projects',
-    lessLabel: 'Show fewer',
+    moreLabel: 'Unload more projects',
+    lessLabel: 'Back to the depot',
     items: [
       {
         name: JARVIS,
@@ -189,6 +190,27 @@ export const contentEn = {
         site: null,
         screenshot: '/projects/AJT.png',
         screenshotAlt: 'AJT Viagens admin dashboard with a summary of transfers and service orders',
+      },
+      {
+        name: MYRANK_BOT,
+        category: 'Discord bot',
+        description: 'MyRank inside Discord: with slash commands you see your profile, your ranking and your achievements, search for a film, game, series, anime or book with its cover, rate it and edit or remove works, all without leaving the server. It’s only a client of the MyRank API, with no database and no business logic of its own.',
+        highlights: [
+          { title: 'Two boundaries, and only one knows Discord', text: 'The `myrank/` folder is plain HTTP and never imports `discord.py`; only `ui/` talks to Discord. That’s why the whole API layer is tested with no token, no gateway and no network, using a fake transport. There are 39 tests, plus ruff and mypy.' },
+          { title: 'Discord’s 3-second window', text: 'Any HTTP call can blow an interaction’s response deadline, and a modal can only be the first response, never after a `defer`. So `/add` was split into two clicks: “See details” runs the lookup, and “This one! Rate it” opens the modal with no network at all. A test with a stalled API proves the confirmation goes out before it answers.' },
+          { title: 'No command escapes error handling', text: 'The `@guarded` decorator runs the `defer` and catches any exception, and forgetting to use it is impossible by construction, not by discipline. Errors are translated at two fixed points (status → exception in the API, exception → message in Discord) and are only ever shown to the caller, since they often carry account data.' },
+          { title: 'One 401, three different causes', text: 'The backend answers 401 for an invalid bot key, a missing header and an unlinked account, and only the message tells them apart. Only the last one becomes “link your account”; the other two are our problem, so the user gets a generic error and the details go to the log. Showing the wrong notice would send people to link their account over a bug that isn’t theirs.' },
+          { title: 'Finding out what the API really allows', text: 'The bot key only works on four groups of routes, and `/users` isn’t one of them, so there’s no profile endpoint. `/perfil` was rebuilt from works and achievements, with the name and avatar coming from Discord itself. The real response also proved two of my guesses wrong: the achievement’s identifier is `code` and the search’s is `externalId`, and each became a regression test.' },
+          { title: 'A category guess that knows how to fail', text: 'Categories are free text for each user, so the bot compares the name (ignoring accents and emoji, so “📺 Séries & Animes” matches) with hints from the media. Without a confident match it asks in a select, and it never picks or creates a category on its own.' },
+          { title: 'Whoever clicks is whoever asked', text: 'The Discord ID always comes from `interaction.user.id`, never from something typed, and every button and select only answers the command’s author. Removing a work asks for confirmation and cancels itself after 30 seconds.' },
+          { title: 'Secrets out of the log, no open ports', text: 'The token and the key show as `***` in their `repr`, and a test makes sure they don’t leak. A 5xx error becomes generic text, with the details only in journald. The bot runs as a `systemd` service with a dedicated user, `NoNewPrivileges` and `ProtectSystem=strict`, exposes no ports and uses `Intents.none()`: it reads no messages at all.' },
+        ],
+        stack: ['Python', 'discord.py', 'httpx', 'pytest', 'mypy', 'ruff', 'systemd'],
+        stamp: { label: 'In development', tone: 'accent' },
+        site: null,
+        screenshot: '/projects/MyRank-bot.png',
+        screenshotStyle: 'tall',
+        screenshotAlt: 'Results of the /add search in Discord, with the work’s cover and a hint to compare the results',
       },
     ] as typeof content.projects.items,
   },
