@@ -890,12 +890,42 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .projects-section .section-footer { margin-top: 90px; }
 .projects-section h2, .about-section h2, .capabilities-section h2, .contact-section h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 600; letter-spacing: -.045em; line-height: 1.15; margin-bottom: 44px; }
 .project-list { display: grid; gap: 28px; }
+/* The cards past the featured ones, stored in the depot under the list (more-projects.tsx): each card has its own
+   top margin, so a card still waiting to be unloaded takes no room at all. */
+.project-more > * { margin-top: 28px; }
+.project-more[hidden] { display: none; }
+.more-card-waiting { height: 0; margin-top: 0 !important; overflow: hidden; }
+/* The depot: a sign, then a strip of floor with a pallet of labelled crates and a forklift parked on the right. The
+   whole strip is the button. */
+.depot { position: relative; display: block; width: 100%; margin-top: 28px; padding: 0; border: 1px dashed #3a404c; border-radius: 8px; background: #11151b; color: var(--foreground); text-align: left; cursor: pointer; transition: border-color .2s; }
+.depot:hover, .depot:focus-visible { border-color: var(--accent); outline: none; }
+.depot-sign { position: absolute; z-index: 1; left: 16px; top: 14px; display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 3px; background: #151a24; color: var(--accent); font-size: 11px; letter-spacing: .04em; }
+.depot-sign::after { content: '\2193'; }
+.depot[aria-expanded="true"] .depot-sign::after { content: '\2191'; }
+.depot-floor { position: relative; display: block; height: 104px; overflow: hidden; border-radius: 8px; background: repeating-linear-gradient(90deg, transparent 0 38px, #161b24 38px 40px); }
+.depot-floor::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: repeating-linear-gradient(-45deg, #2c313b 0 6px, #232831 6px 12px); }
+.depot-pallet { position: absolute; left: 16px; bottom: 8px; display: flex; align-items: flex-end; gap: 6px; padding-bottom: 4px; border-bottom: 4px solid #6b4a24; }
+.depot-crate { position: relative; display: inline-block; padding: 8px 10px 7px; border: 1px solid #3a4a6b; border-top-width: 3px; border-radius: 3px 3px 0 0; background: #151a24; color: var(--foreground); font-size: 10px; white-space: nowrap; }
+.depot-lid { position: absolute; left: -1px; right: -1px; top: -4px; height: 3px; border-radius: 3px 3px 0 0; background: #3a4a6b; transform-origin: 0 100%; transition: transform .38s ease; }
+.depot:hover .depot-crate .depot-lid, .depot:focus-visible .depot-crate .depot-lid, .depot-crate-lifted .depot-lid { transform: translateY(-3px) rotate(-8deg); }
+.depot-crate-lifted { z-index: 2; }
+/* Unloaded: the crate opened into its card, leaving an empty spot on the pallet. */
+.depot-crate-gone { visibility: hidden; }
+.depot-crate-back { animation: depot-crate-back .5s ease-out both; }
+@keyframes depot-crate-back { 0% { transform: translateY(-18px); opacity: 0; } 70% { transform: translateY(1px); opacity: 1; } 100% { transform: none; } }
+/* The forklift faces left, forks first towards the pallet; parked against the right end. */
+.depot-truck { position: absolute; z-index: 3; right: 14px; bottom: 8px; width: 56px; height: 40px; }
+.depot-truck svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; transform: scaleX(-1); }
 .project-card { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
 .project-card:hover, .project-card:focus-within { border-color: var(--accent); }
 .project-visual { position: relative; background: #11151b; min-height: 260px; border-right: 1px solid var(--border); }
 /* Screenshots fill the frame; both current prints keep their key content in the centre.
    Filling the height makes a wide print render ~1200px wide, which is why page.tsx asks next/image for that size. */
 .project-image { object-fit: cover; object-position: center; }
+/* A tall print (the Discord bot): on Discord's own background with a faint blurple glow, the whole print standing in the
+   middle of the frame. */
+.project-shot-tall { overflow: hidden; background: radial-gradient(ellipse at 50% 30%, rgb(88 101 242 / .16), transparent 65%), #1a1a1e; }
+.project-image-tall { position: absolute; left: 50%; top: 50%; width: auto; height: calc(100% - 44px); translate: -50% -50%; border: 1px solid #2c2c33; border-radius: 8px; box-shadow: 0 18px 40px rgb(0 0 0 / .45); }
 /* Screenshots fill the whole frame; the inspector's stamp sits on top of them. */
 .project-shot { position: absolute; inset: 0; }
 .screenshot-placeholder { height: 100%; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; color: var(--muted); font-size: 12px; }
@@ -915,11 +945,6 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
 .project-links a { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; }
 .project-links a:hover { color: var(--accent); }
 .project-links .arrow { width: 15px; height: 15px; }
-.link-missing { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); opacity: .6; cursor: not-allowed; }
-.project-code { display: inline-flex; flex-wrap: wrap; align-items: center; column-gap: 8px; }
-.code-label { color: var(--muted); }
-.code-link { display: inline-flex; align-items: center; gap: 8px; }
-.code-separator { color: var(--border); }
 /* Drawer with the technical decisions. Its height is driven by the robot in project-drawer.tsx; the toggle is a soft pill. */
 .drawer { margin-top: 12px; }
 .drawer-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 6px 13px; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--accent) 8%, transparent); color: var(--accent); font-size: 12px; cursor: pointer; transition: background-color .18s, border-color .18s; }
@@ -1004,6 +1029,11 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
   main .projects-section, main .about-section, main .capabilities-section { padding-top: 36px; }
   main :is(.projects-section, .about-section, .capabilities-section, .contact-section) h2 { font-size: 28px; margin-bottom: 20px; }
   .project-list { gap: 20px; }
+  .project-more > *, .depot { margin-top: 20px; }
+  .project-image-tall { height: calc(100% - 24px); }
+  .depot-floor { height: 96px; }
+  .depot-sign { left: 12px; top: 10px; font-size: 10px; }
+  .depot-pallet { left: 10px; }
   main .project-visual { aspect-ratio: 2 / 1; }
   .stamp-area { top: 10px; left: 10px; }
   .project-stamp { padding: 3px 7px; font-size: 9px; border-width: 1.5px; }
@@ -1014,8 +1044,6 @@ html[data-build='pending'] .stage-holes { position: absolute; inset: 0; z-index:
   .project-stack li { padding: 3px 6px; }
   .project-links { column-gap: 18px; margin-top: 8px; }
   .project-links a { min-height: 40px; }
-  .project-code { column-gap: 12px; }
-  .code-separator { display: none; }
   /* Capabilities: the hint under the title (its desktop pull-up would overlap the smaller title), and no ladder, so
      the crates get the width back. */
   main .yard-hint { margin: -10px 0 14px; }

@@ -5,6 +5,8 @@ const MYRANK = 'MyRank';
 const AJT = 'AJT Viagens e Turismo';
 const ESCOLA = 'Escola Imaculada';
 const PORTFOLIO = 'This portfolio';
+const JARVIS = 'Project Jarvis';
+const MYRANK_BOT = 'MyRank Bot';
 
 // The English version of the site's copy (the page at /en), the same shape as the Portuguese one in content.ts.
 // Section anchors (#projetos, #sobre...) stay the same in both, so switching language can land on the same spot.
@@ -68,18 +70,18 @@ export const contentEn = {
     shelves: [
       { label: 'Languages', items: [
         { name: 'Java', projects: [AJT, MYRANK] },
-        { name: 'TypeScript', projects: [ESCOLA, PORTFOLIO, AJT] },
+        { name: 'TypeScript', projects: [JARVIS, ESCOLA, PORTFOLIO, AJT] },
         { name: 'JavaScript', projects: [MYRANK] },
-        { name: 'Python', projects: [`${MYRANK} (Discord bot)`] },
+        { name: 'Python', projects: [JARVIS, MYRANK_BOT] },
       ] },
       { label: 'Backend', items: [
         { name: 'Spring Boot', projects: [MYRANK, AJT], used: ['Web', 'Data JPA', 'Security (JWT)', 'Validation', 'WebSocket', 'Cache + Caffeine', 'OpenFeign'] },
-        { name: 'Node.js', projects: [ESCOLA], used: ['NestJS'] },
+        { name: 'Node.js', projects: [JARVIS, ESCOLA], used: ['NestJS'] },
         { name: 'Prisma', projects: [ESCOLA] },
         { name: 'Flyway', projects: [MYRANK, AJT] },
       ] },
       { label: 'Frontend', items: [
-        { name: 'React', projects: [PORTFOLIO, MYRANK] },
+        { name: 'React', projects: [JARVIS, PORTFOLIO, MYRANK] },
         { name: 'Angular', projects: [ESCOLA, AJT], used: ['Angular Material'] },
         { name: 'Tailwind CSS', projects: [PORTFOLIO, MYRANK, AJT] },
         { name: 'Vite', projects: [MYRANK] },
@@ -87,15 +89,15 @@ export const contentEn = {
       ] },
       { label: 'Databases', items: [
         { name: 'SQL', projects: [MYRANK, AJT, ESCOLA], used: ['SQL migrations (Flyway)'] },
-        { name: 'PostgreSQL', projects: [AJT, ESCOLA, MYRANK] },
+        { name: 'PostgreSQL', projects: [JARVIS, AJT, ESCOLA, MYRANK] },
       ] },
       { label: 'Infra and DevOps', items: [
-        { name: 'Docker', projects: [ESCOLA, AJT, MYRANK], used: ['Docker Compose'] },
+        { name: 'Docker', projects: [JARVIS, ESCOLA, AJT, MYRANK], used: ['Docker Compose'] },
         { name: 'Caddy', projects: [MYRANK, ESCOLA] },
-        { name: 'Oracle Cloud', projects: [ESCOLA, MYRANK] },
+        { name: 'Oracle Cloud', projects: [JARVIS, ESCOLA, MYRANK] },
         { name: 'Neon', projects: [ESCOLA, MYRANK] },
         { name: 'Vercel', projects: [ESCOLA, MYRANK, PORTFOLIO] },
-        { name: 'Git and GitHub', projects: [AJT, ESCOLA, MYRANK, PORTFOLIO] },
+        { name: 'Git and GitHub', projects: [JARVIS, AJT, ESCOLA, MYRANK, PORTFOLIO] },
       ] },
     ],
     counter: { hint: 'Click a crate to see what’s inside', nudge: 'Taking too long? Switch the pump off.', pumpOff: 'Switch the pump off (no animation)', pumpOn: 'Switch the pump on (with animation)', projects: 'Projects', used: 'Used' },
@@ -111,13 +113,32 @@ export const contentEn = {
     countLabel: 'projects',
     screenshotLabel: 'Screenshot coming soon',
     siteLabel: 'Visit site',
-    repositoryLabel: 'Repository',
-    missingLinkLabel: 'Link not available yet',
-    codeLabel: 'Code:',
-    missingCodeLabel: 'not available',
     drawerOpenLabel: 'See technical decisions',
     drawerCloseLabel: 'Hide technical decisions',
+    featured: content.projects.featured,
+    moreLabel: 'Unload more projects',
+    lessLabel: 'Back to the depot',
     items: [
+      {
+        name: JARVIS,
+        category: 'AI personal assistant',
+        description: 'A voice-driven personal assistant inspired by Iron Man’s JARVIS: you call it by name, it answers in a cloned voice in Portuguese, picks on its own which AI to use for each question and keeps working offline. It has a futuristic interface with a 3D entity that reacts to what it’s doing.',
+        highlights: [
+          { title: 'An AI router with no extra call', text: 'Time and date come from code, with no model. Everything else goes to Haiku, which either answers or starts with a marker asking for Sonnet, in the same call, without spending a request just to decide. Opus only comes in when asked for. Tested on 152 real requests: 93% right.' },
+          { title: 'Claude through the subscription, kept warm', text: 'It uses the official Claude Code instead of the paid API, with no key on the PC. One process stays open per conversation, and the first word dropped from ~6 s to ~0.8 s. Tokens and the equivalent cost are measured on every call.' },
+          { title: 'Works offline, without asking Claude', text: 'An 800 ms network check, which only does the TLS handshake and sends no data, tells “no internet” apart from “Claude failed”. Offline, a local model answers on the CPU with a backup voice; when the network is back, it switches over and unloads the model on its own.' },
+          { title: 'A cloned voice that talks while it thinks', text: 'Jarvis’s voice was cloned and picked in an audition against two other models. Speech starts with ~2 s of audio ready, and the captions appear word by word in time with the voice. Dates and numbers are turned into how they’re said in Portuguese before becoming audio.' },
+          { title: 'A server with no open ports', text: 'Server, database and HUD run on an Oracle ARM VM reachable only through Tailscale’s private network. The PC’s agent connects to the server, never the other way round, so no port on the laptop is exposed.' },
+          { title: 'No password in the URL', text: 'The HUD signs in with a one-time code, valid for 30 s, placed after the URL’s `#`, the part the browser never sends to the server or writes to a log. Other devices join with a 60 s pairing code, and revoking one drops its connections at once.' },
+          { title: 'Prompt injection tested, not assumed', text: 'In a real test, the local model obeyed an order hidden in the data, even after being told that data aren’t orders. So third-party content never reaches it, actions come from a closed list and free text never becomes a command, a path or a URL.' },
+          { title: 'Wake word trained on the PC itself (in progress)', text: 'The off-the-shelf “hey Jarvis” detector ignored the Brazilian accent: 0 out of 20 with Brazilian voices. I trained my own detector on the laptop, with 75 synthetic voices and the owner’s recordings: 8 out of 9. A ~20 ms voice check decides from “Jarvis” alone whether the caller is the owner, with no audio leaving the PC.' },
+        ],
+        stack: ['React', 'React Three Fiber', 'TypeScript', 'NestJS', 'Socket.IO', 'PostgreSQL', 'Python', 'Whisper', 'Claude', 'Ollama', 'Docker', 'Tailscale'],
+        stamp: { label: 'In development', tone: 'accent' },
+        site: null,
+        screenshot: '/projects/Jarvis.png',
+        screenshotAlt: 'Jarvis’s entity: a sphere of blue light lines spinning on a black background',
+      },
       {
         name: MYRANK,
         category: 'Social platform',
@@ -135,7 +156,6 @@ export const contentEn = {
         stack: ['React 19', 'Vite', 'Tailwind CSS', 'Spring Boot 3', 'Java 17', 'PostgreSQL', 'Flyway', 'Docker'],
         stamp: { label: 'In production', tone: 'accent' },
         site: 'https://myrank-oficial.vercel.app',
-        repositories: [{ label: 'Frontend', href: 'https://github.com/guiGocksAfK/MyRank-frontend' }, { label: 'Backend', href: 'https://github.com/guiGocksAfK/MyRank-backend' }, { label: 'Discord bot', href: 'https://github.com/guiGocksAfK/MyRank-discordBot' }],
         screenshot: '/projects/MyRank.png',
         screenshotAlt: 'MyRank’s home page with film posters and the slogan “Your taste. Your ranking. Your identity.”',
       },
@@ -152,7 +172,6 @@ export const contentEn = {
         stack: ['Angular', 'NestJS', 'PostgreSQL', 'Prisma'],
         stamp: { label: 'In real use', tone: 'accent' },
         site: 'https://escola-imaculada.vercel.app',
-        repositories: [{ label: 'Frontend', href: 'https://github.com/guiGocksAfK/EscolaImaculada-frontend' }, { label: 'Backend', href: 'https://github.com/guiGocksAfK/EscolaImaculada-backend' }],
         screenshot: '/projects/EscolaImaculada.png',
         screenshotAlt: 'Login screen of Escola Imaculada’s class register',
       },
@@ -169,9 +188,29 @@ export const contentEn = {
         stack: ['Angular', 'Spring Boot 3', 'Java 17', 'Spring Security', 'PostgreSQL', 'Flyway'],
         stamp: { label: 'Academic project', tone: 'muted' },
         site: null,
-        repositories: [{ label: 'Frontend', href: 'https://github.com/k9milly/AJT-Frontend' }, { label: 'Backend', href: 'https://github.com/guiPinheiroAfK/AJT-Backend' }],
         screenshot: '/projects/AJT.png',
         screenshotAlt: 'AJT Viagens admin dashboard with a summary of transfers and service orders',
+      },
+      {
+        name: MYRANK_BOT,
+        category: 'Discord bot',
+        description: 'MyRank inside Discord: with slash commands you see your profile, your ranking and your achievements, search for a film, game, series, anime or book with its cover, rate it and edit or remove works, all without leaving the server. It’s only a client of the MyRank API, with no database and no business logic of its own.',
+        highlights: [
+          { title: 'Two boundaries, and only one knows Discord', text: 'The `myrank/` folder is plain HTTP and never imports `discord.py`; only `ui/` talks to Discord. That’s why the whole API layer is tested with no token, no gateway and no network, using a fake transport. There are 39 tests, plus ruff and mypy.' },
+          { title: 'Discord’s 3-second window', text: 'Any HTTP call can blow an interaction’s response deadline, and a modal can only be the first response, never after a `defer`. So `/add` was split into two clicks: “See details” runs the lookup, and “This one! Rate it” opens the modal with no network at all. A test with a stalled API proves the confirmation goes out before it answers.' },
+          { title: 'No command escapes error handling', text: 'The `@guarded` decorator runs the `defer` and catches any exception, and forgetting to use it is impossible by construction, not by discipline. Errors are translated at two fixed points (status → exception in the API, exception → message in Discord) and are only ever shown to the caller, since they often carry account data.' },
+          { title: 'One 401, three different causes', text: 'The backend answers 401 for an invalid bot key, a missing header and an unlinked account, and only the message tells them apart. Only the last one becomes “link your account”; the other two are our problem, so the user gets a generic error and the details go to the log. Showing the wrong notice would send people to link their account over a bug that isn’t theirs.' },
+          { title: 'Finding out what the API really allows', text: 'The bot key only works on four groups of routes, and `/users` isn’t one of them, so there’s no profile endpoint. `/perfil` was rebuilt from works and achievements, with the name and avatar coming from Discord itself. The real response also proved two of my guesses wrong: the achievement’s identifier is `code` and the search’s is `externalId`, and each became a regression test.' },
+          { title: 'A category guess that knows how to fail', text: 'Categories are free text for each user, so the bot compares the name (ignoring accents and emoji, so “📺 Séries & Animes” matches) with hints from the media. Without a confident match it asks in a select, and it never picks or creates a category on its own.' },
+          { title: 'Whoever clicks is whoever asked', text: 'The Discord ID always comes from `interaction.user.id`, never from something typed, and every button and select only answers the command’s author. Removing a work asks for confirmation and cancels itself after 30 seconds.' },
+          { title: 'Secrets out of the log, no open ports', text: 'The token and the key show as `***` in their `repr`, and a test makes sure they don’t leak. A 5xx error becomes generic text, with the details only in journald. The bot runs as a `systemd` service with a dedicated user, `NoNewPrivileges` and `ProtectSystem=strict`, exposes no ports and uses `Intents.none()`: it reads no messages at all.' },
+        ],
+        stack: ['Python', 'discord.py', 'httpx', 'pytest', 'mypy', 'ruff', 'systemd'],
+        stamp: { label: 'In development', tone: 'accent' },
+        site: null,
+        screenshot: '/projects/MyRank-bot.png',
+        screenshotStyle: 'tall',
+        screenshotAlt: 'Results of the /add search in Discord, with the work’s cover and a hint to compare the results',
       },
     ] as typeof content.projects.items,
   },
