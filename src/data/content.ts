@@ -226,7 +226,7 @@ export const content = {
           { title: 'Segredo fora do log, sem porta aberta', text: 'Token e chave aparecem como `***` no `repr`, e um teste garante que não vazam. Um erro 5xx vira texto genérico, com o detalhe só no journald. O bot sobe como serviço `systemd` com usuário dedicado, `NoNewPrivileges` e `ProtectSystem=strict`, sem expor nenhuma porta, e usa `Intents.none()`: não lê nenhuma mensagem.' },
         ],
         stack: ['Python', 'discord.py', 'httpx', 'pytest', 'mypy', 'ruff', 'systemd'],
-        stamp: { label: 'Em desenvolvimento', tone: 'accent' },
+        stamp: { label: 'Em produção', tone: 'accent' },
         site: null,
         screenshot: '/projects/MyRank-bot.png',
         screenshotStyle: 'tall',
