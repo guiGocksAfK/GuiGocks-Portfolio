@@ -206,7 +206,7 @@ export const contentEn = {
           { title: 'Secrets out of the log, no open ports', text: 'The token and the key show as `***` in their `repr`, and a test makes sure they don’t leak. A 5xx error becomes generic text, with the details only in journald. The bot runs as a `systemd` service with a dedicated user, `NoNewPrivileges` and `ProtectSystem=strict`, exposes no ports and uses `Intents.none()`: it reads no messages at all.' },
         ],
         stack: ['Python', 'discord.py', 'httpx', 'pytest', 'mypy', 'ruff', 'systemd'],
-        stamp: { label: 'In development', tone: 'accent' },
+        stamp: { label: 'In production', tone: 'accent' },
         site: null,
         screenshot: '/projects/MyRank-bot.png',
         screenshotStyle: 'tall',

@@ -10,7 +10,8 @@ import { forkliftMarkup } from '@/components/robot-sprite';
 // put on screen). Clicking again puts them away. The cards stay in the page while folded (only hidden), and a link to
 // one of them (a tool crate's project link) unfolds the list at once, before the teleport measures where to go.
 
-const SPEED = 380; // px/s, the forklift on the depot floor
+const SPEED = 480; // px/s, the forklift on the depot floor
+const MAX_DRIVE = 1000; // ms: on a wide screen it crosses the floor faster rather than taking longer
 const PARK = 14; // px, the parked forklift's distance from the right end
 const FORKS = 14; // px of the forks reaching under a crate
 const GAP = 28; // px between cards (the project list's gap)
@@ -75,7 +76,7 @@ export function MoreProjects({ names, moreLabel, lessLabel, children }: { names:
   // Drives the forklift from one spot to another (x is its left edge on the floor), with the crate on its forks, if
   // it carries one, riding along (picked up at `from`, so its offset is measured from there).
   const drive = (from: number, to: number, crate?: HTMLElement, lift = 0) => {
-    const ms = Math.abs(to - from) / SPEED * 1000;
+    const ms = Math.min(MAX_DRIVE, Math.abs(to - from) / SPEED * 1000);
     return tween(ms, t => {
       const x = from + (to - from) * ease(t);
       const bump = Math.round(Math.sin(t * ms / 70)) * .5;
@@ -117,7 +118,6 @@ export function MoreProjects({ names, moreLabel, lessLabel, children }: { names:
     for (const card of cards()) card.classList.add('more-card-waiting');
     const width = truck.current!.offsetWidth;
     const park = floor.clientWidth - width - PARK;
-    const middle = (floor.clientWidth - width) / 2;
     const floorLeft = floor.getBoundingClientRect().left;
     let x = park;
     for (const [index, crate] of crates.entries()) {
@@ -125,21 +125,22 @@ export function MoreProjects({ names, moreLabel, lessLabel, children }: { names:
       // Forks first (the truck faces left): its left edge under the crate's right part.
       const pick = box.right - floorLeft - FORKS;
       await drive(x, pick);
-      await wait(80);
+      await wait(150);
       // Forks up a little, then it reverses to the middle with the crate.
       crate.classList.add('depot-crate-lifted');
-      await tween(120, t => { crate.style.transform = `translate(0px, ${-4 * t}px)`; });
-      const to = Math.max(pick, middle);
+      await tween(200, t => { crate.style.transform = `translate(0px, ${-4 * t}px)`; });
+      // It only backs out a little before lifting, instead of crossing to the middle of the floor.
+      const to = pick + 70;
       await drive(pick, to, crate, 4);
       x = to;
       // The forks lift the crate high, its lid pops off and the card grows up out of it.
-      await tween(180, t => { crate.style.transform = `translate(${to - pick}px, ${-4 - 18 * ease(t)}px)`; });
+      await tween(280, t => { crate.style.transform = `translate(${to - pick}px, ${-4 - 18 * ease(t)}px)`; });
       crate.classList.add('depot-crate-gone');
       const card = cards()[index];
       if (card) await grow(card, gap);
       crate.style.transform = '';
       crate.classList.remove('depot-crate-lifted');
-      await wait(60);
+      await wait(150);
     }
     await drive(x, park);
     truck.current!.style.cssText = '';
